@@ -26,6 +26,12 @@
     - Attribuer des classes aux chargés
     - Voir les statistiques des classes et du batiment 
 
+- **Admin**
+    - Se connecter
+    - Ajouter un étudiant 
+    - Ajouter une chargé
+    - Ajouter un responsable administratif
+
 ## Les entités:
 - **Un étudiant**
     - Matricule
@@ -74,7 +80,7 @@
     - Libelle
 
 - **Professeur**
-    - Id
+    - Id 
     - Nom complet
     - Mail
     - Téléphone
