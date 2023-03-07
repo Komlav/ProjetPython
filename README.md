@@ -5,16 +5,16 @@
     - Se connecter
     - Voir ses notes
     - Faire une réclammation ou un commentaire sur ses notes
-    - Modifier son profil
+    - Modifier son Type
 
 - **La chargé de classe** 
     - Se connecter
-    - Voir toutes les notes d'une classe
+    - Voir toutes les notes des étudiants d'une classe
     - Voir les notes d'un étudiant
     - Modifier les notes d'une classe ou d'un étudiant
     - Voir les commentaires et réclammations
     - Faire un commentaire 
-    - Modifier son profil
+    - Modifier son Type
 
 - **Les écoles partenaires**
     - Se connecter
@@ -38,14 +38,21 @@
     - Nom complet
     - Date de naissance
     - Nationnalité
-    - Niveau
     - Classe
-    - Filière
     - Ses Notes
     - Son mail
     - Son login et mot de passe
     - Téléphone
-    - Profil
+    - Type
+
+- **Partenaire**
+    - Id
+    - Libelle
+    - Mail
+    - Login
+    - Password
+    - Téléphone
+    
 
 - **La chargé de classe**
     - Matricule
@@ -54,7 +61,7 @@
     - Login et password
     - Classes
     - Téléphone
-    - Profil
+    - Type
 
 - **Le responsable administratif**
     - Matricule
@@ -63,7 +70,7 @@
     - Téléphone
     - Login et password
     - Classes
-    - Profil
+    - Type
 
 - **Une classe**
     - Id
@@ -86,7 +93,7 @@
     - Téléphone
     - Modules
     - Classes
-    - Profil
+    - Type
 
 - **Niveau**
     - Id
@@ -101,6 +108,6 @@
     - Etudiant
     - Libelle (note elle même)
 
-- **Profil**
+- **Type**
     - Id
     - Libelle
