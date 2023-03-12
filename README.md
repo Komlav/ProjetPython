@@ -33,6 +33,16 @@
     - Ajouter un responsable administratif
 
 ## Les entités:
+- **User**
+    - Matricule
+    - Nom
+    - Prénom
+    - Mail
+    - Téléphone
+    - Login
+    - Password
+    - TypeP
+
 - **Un étudiant**
     - Matricule
     - Nom complet
@@ -78,7 +88,8 @@
     - Filière
     - Niveau
     - Effectif
-    - Notes
+    - Etudiants
+    - Modules
     - Professeurs
     - Chargé de classe
 
@@ -93,7 +104,6 @@
     - Téléphone
     - Modules
     - Classes
-    - Type
 
 - **Niveau**
     - Id
