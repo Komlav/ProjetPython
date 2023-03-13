@@ -1,6 +1,6 @@
 from Classe import Classe
 
-class Filière:
+class Filiere:
     def __init__(self, idN:int, libelle:str, classes:list = []) -> None:
         self.id = idN
         self.libelle = libelle

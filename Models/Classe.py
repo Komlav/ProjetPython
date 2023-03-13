@@ -1,12 +1,12 @@
 from Niveau import Niveau
-from Filiere import Filière
+from Filiere import Filiere
 from Etudiant import Etudiant
 from Chargé import Chargé
 from Module import Module
 from Professeur import Professeur
 
 class Classe:
-    def __init__(self, idC:int, libelle:str, filière:Filière, niveau:Niveau, effectif:int, chargéClasse:Chargé, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
+    def __init__(self, idC:int, libelle:str, filière:Filiere, niveau:Niveau, effectif:int, chargéClasse:Chargé, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
         self.idC = idC
         self.libelle = libelle
         self.filière = filière
