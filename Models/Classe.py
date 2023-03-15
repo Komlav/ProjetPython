@@ -1,12 +1,12 @@
-from Niveau import Niveau
-from Filiere import Filiere
-from Etudiant import Etudiant
-from Chargé import Chargé
-from Module import Module
-from Professeur import Professeur
+# from Niveau import Niveau
+# from Filiere import Filiere
+# from Etudiant import Etudiant
+# from Chargé import Chargé
+# from Module import Module
+# from Professeur import Professeur
 
 class Classe:
-    def __init__(self, idC:int, libelle:str, filière:Filiere, niveau:Niveau, effectif:int, chargéClasse:Chargé, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
+    def __init__(self, idC:int, libelle:str, filière, niveau, effectif:int, chargéClasse, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
         self.idC = idC
         self.libelle = libelle
         self.filière = filière
@@ -30,16 +30,16 @@ class Classe:
     def setEffectif(self, newEffectif) -> None:
         self.effectif = newEffectif
         
-    def setModule(self, newModule: Module) -> None:
+    def setModule(self, newModule) -> None:
         self.modules.append(newModule)
         
-    def setProfesseur(self, newProfesseur: Professeur) -> None:
+    def setProfesseur(self, newProfesseur) -> None:
         self.professeurs.append(newProfesseur)
         
-    def setChargé(self, newChargé: Chargé) -> None:
+    def setChargé(self, newChargé) -> None:
         self.chargé = newChargé
         
-    def setEtudiant(self, newEtudiant: Etudiant) -> None:
+    def setEtudiant(self, newEtudiant) -> None:
         self.étudiants.append(newEtudiant)
         
     #Getters
@@ -49,7 +49,7 @@ class Classe:
     def getLibelle(self) -> str:
         return self.libelle
         
-    def getNiveau(self) -> Niveau:
+    def getNiveau(self):
         return self.niveau
         
     def getEffectif(self) -> int:
@@ -61,7 +61,7 @@ class Classe:
     def getProfesseur(self) -> list:
         return self.professeurs
         
-    def getChargé(self) -> Chargé:
+    def getChargé(self):
         return self.chargé 
     
     def getEtudiant(self) -> list:

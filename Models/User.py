@@ -1,5 +1,4 @@
 class User:
-    __mariam = "MAriam"
     def __init__(self, matricule:str, nom:str, prénom:str, mail:str, téléphone:int, login:str, password:str, typeP:str) -> None:
         self.matricule = matricule
         self.nom = nom

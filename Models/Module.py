@@ -1,5 +1,3 @@
-from Classe import *
-from Professeur import *
 
 class Module:
     def __init__(self, idN:int, libelle:str, professeurs:list = [], classes:list = []) -> None:
@@ -15,10 +13,10 @@ class Module:
     def setLibelle(self, newLibelle:str) -> None:
         self.libelle = newLibelle
         
-    def setClasse(self, newClasse: Classe) -> None:
+    def setClasse(self, newClasse) -> None:
         self.classes.append(newClasse)
     
-    def setProfesseur(self, newProfesseur: Professeur) -> None:
+    def setProfesseur(self, newProfesseur) -> None:
         self.professeurs.append(newProfesseur)
         
     #Getters

@@ -1,8 +1,4 @@
 from User import User
-from Classe import Classe
-from Chargé import Chargé
-from Etudiant import Etudiant
-from ResponsableAdmin import ResponsableAdmin
 
 class Admin(User):
     def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = []) -> None:
@@ -12,13 +8,13 @@ class Admin(User):
         self.responsableAdmins = responsableAdmin
         
     # Setters
-    def setEtudiant(self, newEtudiant:Etudiant) -> None:
+    def setEtudiant(self, newEtudiant) -> None:
         self.etudiants.append(newEtudiant)
         
-    def setChargé(self, newChargé:Chargé) -> None:
+    def setChargé(self, newChargé) -> None:
         self.chargés.append(newChargé)
         
-    def setResponsableAdmin(self, newResponsableAdmin:ResponsableAdmin) -> None:
+    def setResponsableAdmin(self, newResponsableAdmin) -> None:
         self.responsableAdmins.append(newResponsableAdmin)
         
     # Getters

@@ -1,10 +1,10 @@
 from User import User
-from Note import Note
-from TypeP import TypeP
-from Classe import Classe
+# from Note import Note
+# from TypeP import TypeP
+# from Classe import Classe
 
 class Etudiant(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe:Classe, notes:list = []) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes:list = []) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.dateNaissance = dateNaissance
         self.nationnalité = nationnalité
@@ -18,10 +18,10 @@ class Etudiant(User):
     def setNationnalité(self, newNationnalité: str) -> None:
         self.nationnalité = newNationnalité
         
-    def setNote(self, newNote:Note) -> None:
+    def setNote(self, newNote) -> None:
         self.notes.append(newNote)
         
-    def setClasse(self, newClasse:Classe) -> None:
+    def setClasse(self, newClasse) -> None:
         self.classe = newClasse
         
     #Getters
@@ -34,5 +34,5 @@ class Etudiant(User):
     def getNote(self) -> list:
         return self.notes
 
-    def getClasse(self) -> Classe:
+    def getClasse(self):
         return self.classe
