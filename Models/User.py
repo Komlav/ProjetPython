@@ -58,4 +58,6 @@ class User:
             
     def getTypeP(self) -> str:
         return self.typeP      
+    
+
 
