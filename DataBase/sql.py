@@ -1,5 +1,7 @@
 import sqlite3
+
 BASE_FILE = "./Database.sqlite3"
+
 class MySql:
     
     def __init__(self) -> None:
@@ -49,15 +51,15 @@ class MySql:
             self.curseur.execute(requete)
             return self.curseur.fetchall()
 
-
-    def insert(self,table, value):
+    
+    def insert(self,table:str, value:tuple):
         with self.base:
-            requette = f"INSERT INTO {table} VLAUES({value})"
+            requette = f"INSERT INTO {table} VALUES {value}"
             self.curseur.execute(requette)
             self.base.commit()
         
         
-    def getUserData(self,tables:dict) -> dict:
+    def getUserData(self, tables:dict) -> dict:
         #Initialisation du dictionnaire qui va contenir les users
         data = dict()
         
@@ -91,7 +93,3 @@ class MySql:
             
         #Retour du dictionnaire
         return data
-    
-data = MySql()
-
-print(data.datas)
