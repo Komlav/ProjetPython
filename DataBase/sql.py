@@ -1,10 +1,10 @@
 import sqlite3
-
+BASE_FILE = "./Database.sqlite3"
 class MySql:
     
     def __init__(self) -> None:
         #Connexion à la base de donnée
-        self.base = sqlite3.connect('./Database.sqlite3')
+        self.base = sqlite3.connect(BASE_FILE)
         #Initialisation du curseur de connexion
         self.curseur = self.base.cursor()
         
@@ -91,3 +91,7 @@ class MySql:
             
         #Retour du dictionnaire
         return data
+    
+data = MySql()
+
+print(data.datas)
