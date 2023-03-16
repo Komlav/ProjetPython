@@ -1,6 +1,7 @@
 import sqlite3
 
 class MySql:
+    
     def __init__(self) -> None:
         #Connexion à la base de donnée
         self.base = sqlite3.connect('./Database.sqlite3')
