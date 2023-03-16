@@ -17,6 +17,7 @@ class MySql:
             "partenaires": ["Matricule", "libelle", "mail", "Telephone", "Login", "Password", "TypeP", "etudiants"],
             "responsableAdmin": ["Matricule", "Nom", "Prenom", "mail", "Telephone", "number", "Login", "Password", "TypeP", "classes", "Chargés"]
         }
+        
         self.TABLES_OTHER = {
             "Etudiants":"Matricule text, Nom text, Prenom text, DateNaissance text, Nationnalité text, Mail text, Telephone number, Login text, PassWord text, TypeP text, IdClasse number, Notes text", 
             "Chargé":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text,  Classes text", 
@@ -38,6 +39,8 @@ class MySql:
         #Fermeture de la base de donnée
         self.base.close()
 
+    def updateBase(self):
+        pass
         
     def initTables(self,tables:dict):
         with self.base:
