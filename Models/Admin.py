@@ -27,3 +27,4 @@ class Admin(User):
     def getResponsableAdmin(self) -> list:
         return self.responsableAdmins
         
+    
