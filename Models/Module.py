@@ -1,6 +1,6 @@
 
 class Module:
-    def __init__(self, idN:int, libelle:str, professeurs:list = [], classes:list = []) -> None:
+    def __init__(self, idN:int, libelle:str, professeurs:list = [], classes:list = [], notes:list = []) -> None:
         self.id = idN
         self.libelle = libelle
         self.classes = classes
