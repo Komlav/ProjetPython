@@ -1,6 +1,9 @@
-# import ProjetPython.DataBase.sql as m
+import ProjetPython.DataBase.sql as m
 
 from Admin import Admin
+
+def me(r=object):
+    return r()
 
 DEFAULT_PASSWORD = "passer@123"
 
@@ -31,7 +34,7 @@ class AdminUseCases(Admin):
         self.setEtudiant(newEtu)
         mail_Etu = f"{newEtu.get('Prénom').replace(' ', '-').lower()}.{newEtu.get('Nom').lower()}@ism.edu.sn" # type: ignore
         
-        Etudiant = (
+        return (
             newEtu.get("Matricule"),
             newEtu.get("Nom"),
             newEtu.get("Prénom"),
@@ -41,6 +44,12 @@ class AdminUseCases(Admin):
             newEtu.get("Téléphone"),
             mail_Etu, #Login etudiant
             DEFAULT_PASSWORD,
-            
+            "Etudiant",
+            newEtu.get("Classe"),
+            newEtu.get("Note")
             )
-        # MySql.insert(Etudiant)
+        
+        
+    def addNewChargé(self, newChargé:dict):
+        self.setChargé(newChargé)
+         
