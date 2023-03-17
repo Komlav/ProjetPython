@@ -8,6 +8,27 @@ class ResponsableAdmin(User):
         self.classes = classes
         self.chargés = chargés
         
+    #Fonctionnalité de la responsable
+    def ajouterComponent(self, libelle:str, componentData:list):
+        for component in componentData:
+            if component.get('Libelle') == libelle:
+                return (len(componentData)+1, libelle)
+        return False
+
+    def ajouterProf(self, nom:str, prénom:str, mail:str, téléphone: int, modules:list, classes:list, data:list):
+        for prof in data:
+            if prof.get("Téléphone") == téléphone:
+                return (f"PROF-{len(data)+1}", nom, prénom, mail, téléphone, modules, classes)
+        return False
+    
+    def listerComponent(self):pass
+    
+    def listerProf(self):pass
+    
+    def listerChargés(self):pass
+    
+    def listerClasses(self):pass
+    
     # Setters
     def setClasse(self, newClasse: Classe) -> None:
         self.classes.append(newClasse)

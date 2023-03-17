@@ -22,7 +22,7 @@
   - Lister les étudiants
   - Consulter le dossier d'un étudiant
 
-- **Le responsable administratif**
+- **Le responsable administratif**é00
   - Se connecter
   - Voir les notes des classes
   - Lister tous les étudiants -> Filière, classe, niveau
