@@ -1,11 +1,9 @@
-import ProjetPython.DataBase.sql as m
-
 from Admin import Admin
+# from DataBase.sql import MySql
 
-def me(r=object):
-    return r()
 
 DEFAULT_PASSWORD = "passer@123"
+TAILLE_SCREEN = 100
 
 class DefaultUseCases:
     def __init__(self) -> None:
@@ -20,6 +18,19 @@ class DefaultUseCases:
                     return user
         return {}
     
+    def ligne(self, motif:str = "-", nombre:int = TAILLE_SCREEN):
+        print(motif*nombre)
+        pass
+    
+    def showComponents(self, attributs:list, data:list):
+        self.ligne("=")
+        for attribut in attributs: print(f"{attribut}", end=" ")
+        self.ligne("=")
+        
+        for user in data:
+            for i in range(len(attributs)): print(f"{user.get(attributs[i])}", end=" ")
+            self.ligne()
+            
 class AdminUseCases(Admin):
     #Use case d'ajout
     # - Etudiant
@@ -29,27 +40,76 @@ class AdminUseCases(Admin):
     
     def __init__(self, admin_data:dict) -> None:
         super().__init__(admin_data.get("Matricule"),admin_data.get("Nom"),admin_data.get("Prénom"),admin_data.get("Mail"),admin_data.get("Téléphone"),admin_data.get("Login"),admin_data.get("Password"),admin_data.get("TypeP"),admin_data.get("Etudiants"),admin_data.get("Chargés"),admin_data.get("ResponsableAdmin"), admin_data.get("Partenaires")) # type: ignore
+        self.all_etudiants = self.getEtudiant()
+        self.all_chargés = self.getChargé()
+        self.all_responsables = self.getResponsableAdmin()
+        self.all_partenaires = self.getPartenaire()
         
-    def addNewEtudiant(self, newEtu:dict):
+    def setUserMail(self, user:dict, domaine:str = "ism.edu",):
+        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
+        
+    def user(self, newEtu:dict):
         self.setEtudiant(newEtu)
-        mail_Etu = f"{newEtu.get('Prénom').replace(' ', '-').lower()}.{newEtu.get('Nom').lower()}@ism.edu.sn" # type: ignore
-        
+        self.mail = self.setUserMail(newEtu)
         return (
             newEtu.get("Matricule"),
             newEtu.get("Nom"),
             newEtu.get("Prénom"),
             newEtu.get("DateNaissance"),
             newEtu.get("Nationnalité"),
-            mail_Etu, #Mail etudiant
-            newEtu.get("Téléphone"),
-            mail_Etu, #Login etudiant
+            self.mail, #Mail etudiant
+            newEtu.get("Telephone"),
+            self.mail, #Login etudiant
             DEFAULT_PASSWORD,
             "Etudiant",
-            newEtu.get("Classe"),
-            newEtu.get("Note")
-            )
-        
+            newEtu.get("Classes"),
+            newEtu.get("Notes")
+        )
         
     def addNewChargé(self, newChargé:dict):
         self.setChargé(newChargé)
+        self.mail = self.setUserMail(newChargé, "groupeism")
+        return (
+            newChargé.get("Matricule"),
+            newChargé.get("Nom"),
+            newChargé.get("Prénom"),
+            self.mail, #Mail chargé
+            newChargé.get("Telephone"),
+            self.mail, #Login chargé
+            DEFAULT_PASSWORD,
+            "Chargé",
+            newChargé.get("Classe")
+            )
+        
+    def addNewResponsableAdmin(self, newResponsableAdmin:dict):
+        self.setResponsableAdmin(newResponsableAdmin)
+        self.mail = self.setUserMail(newResponsableAdmin, "groupeism")
+        return (
+            newResponsableAdmin.get("Matricule"),
+            newResponsableAdmin.get("Nom"),
+            newResponsableAdmin.get("Prénom"),
+            self.mail, #Mail ResponsableAdmin
+            newResponsableAdmin.get("Telephone"),
+            self.mail, #Login ResponsableAdmin
+            DEFAULT_PASSWORD,
+            "ResponsableAdmin",
+            newResponsableAdmin.get("Classes"),
+            newResponsableAdmin.get("Chargés")
+        )
+        
+    def addNewPartenaire(self, newPartenaire:dict):
+        self.setPartenaire(newPartenaire)
+        return (
+            newPartenaire.get("Matricule"),
+            newPartenaire.get("Libelle"),
+            newPartenaire.get("Mail"), #Mail Partenaire
+            newPartenaire.get("Telephone"),
+            newPartenaire.get("Mail"), #Login Partenaire
+            DEFAULT_PASSWORD,
+            "Partenaire",
+            newPartenaire.get("Etudiants")
+        )
+        
+    
+        
          

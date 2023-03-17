@@ -1,4 +1,6 @@
+from Controller import DefaultUseCases, TAILLE_SCREEN
 from User import User
+
 # from Note import Note
 # from TypeP import TypeP
 # from Classe import Classe
@@ -9,8 +11,23 @@ class Etudiant(User):
         self.dateNaissance = dateNaissance
         self.nationnalité = nationnalité
         self.notes = notes 
-        self.classe = classe
+        self.classe = classe #id de la classe
+        self.commentaires = []
         
+    #Fonctionnalités de l'étudiant
+    def setCommentaire(self, newCommentaire):
+        self.commentaires.append(newCommentaire)
+        self.classe.getChargé().setCommentaires({"idClasse": self.classe, "idEtu":self.getMatricule(), "Commentaire":newCommentaire})
+        
+    def listeCommentaire(self):
+        print("="*TAILLE_SCREEN)
+        print("Commentaire")
+        print("="*TAILLE_SCREEN)
+        for commentaire in self.commentaires:
+            print(commentaire)
+            print('-'*TAILLE_SCREEN)
+    
+    
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None:
         self.dateNaissance = newDateNaissance

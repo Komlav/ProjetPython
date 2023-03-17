@@ -11,26 +11,33 @@ class MySql:
         self.curseur = self.base.cursor()
         
         self.TABLES_USER = {
-            "Admin": ["Matricule", "Nom", "Prenom", "mail", "Telephone", "Login","Password","TypeP", "Etudiants", "Chargés", "responsableAdmin", "classes"],
-            "Chargé": ["Matricule", "Nom", "Prenom", "mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
-            "Etudiants": [ "Matricule", "Nom", "Prénom", "DateNaissance", "Nationnalité", "Mail", "Téléphone", "Login", "Password", "TypeP","IdClasse", "Notes"],
-            "partenaires": ["Matricule", "libelle", "mail", "Telephone", "Login", "Password", "TypeP", "etudiants"],
-            "responsableAdmin": ["Matricule", "Nom", "Prenom", "mail", "Telephone", "number", "Login", "Password", "TypeP", "classes", "Chargés"]
+            "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP", "Etudiants", "Chargés", "responsableAdmin", "classes"],
+            "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
+            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Téléphone", "Login", "Password", "TypeP","IdClasse", "Notes"],
+            "partenaires": ["Matricule", "libelle", "Mail", "Telephone", "Login", "Password", "TypeP", "etudiants"],
+            "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP", "Classes", "Chargés"]
         }
         
-        self.TABLES_OTHER = {
+        self.TABLES_OTHERS = {
+            "filiere": ["idF","libelle","classes"], 
+            "Modules": ["idM", "libelle", "classes", "professeurs", "notes"],
+            "Niveau": ["idN","libelle","classes"],
+            "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "Classes", "modules"]
+        }
+        
+        self.TABLES = {
             "Etudiants":"Matricule text, Nom text, Prenom text, DateNaissance text, Nationnalité text, Mail text, Telephone number, Login text, PassWord text, TypeP text, IdClasse number, Notes text", 
             "Chargé":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text,  Classes text", 
             "Admin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, Etudiants text, Chargés text, responsableAdmin text, classes text", 
-            "filiere":"idF number, libelle text, classes text", 
+            "Filiere":"idF number, libelle text, classes text", 
             "Modules":"idM number, libelle text, classes text, professeurs text, notes text", 
             "Niveau":"idN number, libelle text, classes text", 
             "partenaires":"Matricule text, libelle text, mail text, Telephone number, Login text, Password text, TypeP text, etudiants text", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
-            "responsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, classes text, Chargés text"
+            "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, classes text, Chargés text"
         }
         
-        self.initTables(self.TABLES_OTHER)
+        self.initTables(self.TABLES)
         
         self.datas = self.getUserData(self.TABLES_USER)
         

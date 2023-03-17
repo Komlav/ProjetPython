@@ -10,7 +10,7 @@ class User:
         self.typeP = typeP
     
     #Setters
-    def setId(self, newMatricule:str) -> None:
+    def setMatricule(self, newMatricule:str) -> None:
         self.matricule = newMatricule
     
     def setNom(self, newNom:str) -> None:
@@ -35,7 +35,7 @@ class User:
         self.typeP = newTypeP
         
     #Getters
-    def getId(self) -> str:
+    def getMatricule(self) -> str:
         return self.matricule 
     
     def getNom(self) -> str:

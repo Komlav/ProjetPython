@@ -31,4 +31,6 @@ class Admin(User):
     def getResponsableAdmin(self) -> list:
         return self.responsableAdmins
         
+    def getPartenaire(self) -> list:
+        return self.partenaires
     
