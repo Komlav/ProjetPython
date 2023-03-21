@@ -1,7 +1,7 @@
 import sqlite3
 DEFAULT_PASSWORD = "passer@123"
 TAILLE_SCREEN = 100
-BASE_FILE = "./Database.sqlite3"
+BASE_FILE = "./DataBase/Database.sqlite3"
 
 
 ###########################################################
@@ -57,7 +57,7 @@ class MySql:
         
     def initTables(self,tables:dict):
         with self.base:
-            for key,value in tables.items():
+            for key, value in tables.items(): 
                 requete = f"CREATE TABLE IF NOT EXISTS {key}({value})"
                 self.curseur.execute(requete)
                 self.base.commit()
