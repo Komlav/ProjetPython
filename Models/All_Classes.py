@@ -1,5 +1,4 @@
 import sqlite3
-from Controller import TAILLE_SCREEN
 DEFAULT_PASSWORD = "passer@123"
 TAILLE_SCREEN = 100
 BASE_FILE = "./Database.sqlite3"
