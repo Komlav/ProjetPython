@@ -1,5 +1,4 @@
--- SQLite
--- SQLite
+-- Commande runner
 CREATE TABLE Felrock(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom VARCHAR(50),
@@ -39,4 +38,4 @@ UPDATE USER
 SET "mail" = "hadji-mariam.balarabe@ism.edu.sn"
 WHERE id = 2;
 
-ALTER TABLE USER RENAME e_mail TO mail;
+ALTER TABLE USER RENAME mail TO mail;
