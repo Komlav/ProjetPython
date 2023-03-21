@@ -8,5 +8,3 @@ CREATE TABLE Felrock(
 ALTER TABLE Felrock ADD prénom VARCHAR(250);
 
 ALTER TABLE user RENAME phone TO telephone;
-
- 
