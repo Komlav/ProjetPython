@@ -1,1 +1,1 @@
-TYPEP=["Admin","Chargé","Etudiant","ResponsableAdmin","Partenaire"]
+TYPEP=["Admin", "Chargé", "Etudiant", "ResponsableAdmin", "Partenaire"]

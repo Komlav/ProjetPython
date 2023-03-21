@@ -1,5 +1,6 @@
-from Controller import DefaultUseCases, TAILLE_SCREEN
+from Controller import TAILLE_SCREEN
 from User import User
+
 
 # from Note import Note
 # from TypeP import TypeP
