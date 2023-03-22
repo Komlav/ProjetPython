@@ -40,7 +40,8 @@ class MySql:
             "Niveau":"idN number, libelle text, classes text", 
             "partenaires":"Matricule text, libelle text, mail text, Telephone number, Login text, Password text, TypeP text, etudiants text", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
-            "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, classes text, Chargés text"
+            "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, classes text, Chargés text",
+            "Classe":"idC number, Libelle text, Filiere text, niveau number, effectif number, chargé text, professeurs text, modules text, etudiants text"
         }
         
         self.initTables(self.TABLES)
@@ -52,8 +53,11 @@ class MySql:
         #Fermeture de la base de donnée
         self.base.close()
 
-    def updateBase(self):
-        pass
+    def updateBase(self,attribut:str,newValue,key:str,value,table:str):
+        requete=f" UPDATE {table} SET {attribut}={newValue} WHERE {key}={value}"
+        self.curseur.execute(requete)
+        self.base.commit()
+        
         
     def initTables(self,tables:dict):
         with self.base:
@@ -276,7 +280,49 @@ class DefaultUseCases:
         for user in data:
             for i in range(len(attributs)): print(f"{user.get(attributs[i])}", end=" ")
             self.ligne()
+    
+    def control(self,key:str,value,data:list):
+        for element in data:
+            if(element.get(key)==value):
+                return True
+        return False
+    
+    def DoWhile(self,key:str,data:list):
+        while True :
+            value=input(f"saisir le {key}: ")
+            if(self.control(key,value,data)): #type:ignore
+                return value
+    
+    def getComponentByKey(self,key,value,data) ->dict:
+        for element in data:
+            if(element.get(key)==value):
+                return element
+        return {}
 
+
+    def listerLesEtudiants(self,data:dict,valeur,filtre="Tous"):
+        All_Etudiants=data.get("Etudiants")     
+        if(filtre=="Tous"):
+            donnees=All_Etudiants
+        elif(filtre=="Niveau"):
+            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau")==valeur)]  #type:ignore
+            # for etu in All_Etudiants: #type:ignore
+            #     if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau")==valeur):
+            #         donnees.append(etu)
+        elif(filtre=="Filiere"):
+            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Filiere")==valeur)]  #type:ignore
+        elif(filtre=="Classe"):
+            donnees=[etu for etu in All_Etudiants if(etu.get("Classe")==valeur)]  #type:ignore
+        else:
+            donnees=[etu for etu in All_Etudiants if(etu.get("Nationnalité")==valeur)]  #type:ignore    
+        
+        print(f"{'Matricule':<10}{'Nom':<10}{'Prenom':<30}{'Date-Naissance':<10}{'Nationnalité':<10}{'Mail':<20}{'Telephone':<10}{'Classe':<10}")
+        for etu in donnees: #type:ignore
+            print(f"{etu.get('Matricule'):<10}{etu.get('Nom'):<10}{etu.get('Prenom'):<30}{etu.get('Date-Naissance'):<10}{etu.get('Nationnalité'):<10}{etu.get('Mail'):<20}{etu.get('Telephone'):<10}{etu.get('Classe'):<10}")
+        
+    
+    
+    
 ###########################################################
 ################### Quelsques classes #####################
 ###########################################################
@@ -612,6 +658,8 @@ class ResponsableAdmin(User):
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.classes = classes
         self.chargés = chargés
+        self.default=DefaultUseCases()
+        self.sql=MySql()
         
     #Fonctionnalité de la responsable
     def ajouterComponent(self, libelle:str, componentData:list):
@@ -644,15 +692,63 @@ class ResponsableAdmin(User):
             print(f"{prof.get('Matricule'):<10}{prof.get('Nom'):<15}{prof.get('Prénom'):<20}{prof.get('Mail'):<20}{prof.get('Téléphone'):<10}{prof.get('Modules'):<20}{prof.get('Classes'):<20}")
             print("-"*TAILLE_SCREEN)
     
-    def listerChargés(self):pass
+    def listerChargés(self,data:list):
+        print("="*TAILLE_SCREEN)
+        print(f"{'Matricule':<10}{'Nom':<15}{'Prénom':<20}{'Mail':<20}{'Téléphone':<10}{'Classes':<10}")
+        print("="*TAILLE_SCREEN)
+        
+        for chargé in data:
+            print(f"{chargé.get('Matricule'):<10}{chargé.get('Nom'):<15}{chargé.get('Prénom'):<20}{chargé.get('Mail'):<20}{chargé.get('Téléphone'):<10}{chargé.get('Classes'):<20}")
+            print("-"*TAILLE_SCREEN)
     
-    def listerClasses(self):pass
+    def listerClasses(self,data:list):
+        print("="*TAILLE_SCREEN)
+        print(f"{'IdClasse':<10}{'Libelle':<15}{'Filiere':<20}{'Niveau':<20}{'Effectif':<10}{'Chargé':<10}")
+        print("="*TAILLE_SCREEN)
+        
+        for classe in data:
+            print(f"{classe.get('idC'):<10}{classe.get('Libelle'):<15}{classe.get('Filiere'):<20}{classe.get('Niveau'):<20}{classe.get('Effectif'):<10}{classe.get('Chargé'):<20}")
+            print("-"*TAILLE_SCREEN)
     
+    
+    
+    def ajoutClasseChargé(self,data:dict):
+        chargés=data.get('Chargés')
+        classes=data.get('Classes')
+        
+        self.listerClasses(classes) #type:ignore
+        idClasse=self.default.DoWhile("idC",classes) #type:ignore
+        
+        while True:
+            self.listerChargés(chargés) #type:ignore
+            matricule=self.default.DoWhile("Matricule",chargés) #type:ignore
+            ClassesChargé=self.default.getComponentByKey("Matricule",matricule,chargés).get("Classes")
+
+            if(idClasse not in ClassesChargé):break #type:ignore 
+            else:print("La classe y est deja")
+            
+        newValue=str(ClassesChargé.append(idClasse))   #type:ignore 
+        self.sql.updateBase("Classes",newValue,"Matricule",matricule,"Chargés")
+        self.sql.updateBase("Chargé",matricule,"idC",idClasse,"Classes")
+        
+            
+        
+                
+
+        
+        
+        
+        
+        
+            
+        
+        
+        
     # Setters
     def setClasse(self, newClasse:str) -> None:
         self.classes.append(newClasse)
         
-    def setChargé(self, newChargé: Chargé) -> None:
+    def setclasse(self, newChargé: Chargé) -> None:
         self.chargés.append(newChargé)
         
     # Getters     

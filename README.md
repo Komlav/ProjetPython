@@ -24,12 +24,12 @@
 
 - **Le responsable administratif**é00
   - Se connecter
-  - Voir les notes des classes
-  - Lister tous les étudiants -> Filière, classe, niveau
+  - Voir la moyenne des etudiants d'une classe/ de la classe
+  - Lister tous les étudiants -> Filière, classe, niveau,nationnalité
   - Lister les classes
   - Lister les chargés
   - Attribuer des classes aux chargés
-  - Voir les statistiques des classes et du batiment
+  - Voir les statistiques des classes et de la filiere
 
 - **Admin**
   - Se connecter
