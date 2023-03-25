@@ -1,7 +1,13 @@
 import sqlite3
 import os
-import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
+import time as t
 
+import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
+from colorama import init
+init(autoreset=True)
+
+ERROR = color.Fore.RED
+SUCCESS  = color.Fore.GREEN
 DEFAULT_PASSWORD = "passer@123"
 TAILLE_SCREEN = 100
 BASE_FILE = "./DataBase/Database.sqlite3"
@@ -263,7 +269,10 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = {} #Données des filières et autres infos
     
+    
+    
     def accueil(self):
+        cpt = 0
         while True:
             self.clear()
             print("="*TAILLE_SCREEN)
@@ -274,16 +283,26 @@ class DefaultUseCases:
             psw = input("\t\t\t\t\tEntrez votre mot de passe : ")
             print("\t\t\t\t--------------------------------------------")
             
-            connecting = self.connect(login, psw)
-            if connecting != {}:
-                print("Well done !")
-                break
+            user_connect = self.connect(login, psw)
+            if user_connect != {}:
+                return user_connect
             else:
-                pass
-        
-        
-    def showMsg(self, msg:str):
-        print(f"\n\n\t\t\t\t\t{color.Fore.RED}{msg}{color.Fore.RESET}")
+                cpt += 1
+                self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ")    
+                if cpt == 1:
+                    self.clear()
+                    self.ligne("=")
+                    choix = input("\n\t\tVous avez essayer de vous connecter trois(3) fois de suites sans succes !\n\t\t\t\t[oui: Pour continuer : non: Pour quitter] : ").lower()
+                    if choix != "oui":
+                        exit(0)
+                    cpt = 0
+    
+    def showMsg(self, msg:str, couleur = ERROR):
+        self.clear()
+        self.ligne("=")
+        print(f"\n\n\t\t\t\t{couleur}{msg}\n\n")
+        self.ligne("=")
+        t.sleep(2)
     
     def clear(self):
         if os.name == 'nt':
@@ -347,6 +366,13 @@ class DefaultUseCases:
         print(f"{'Matricule':<10}{'Nom':<10}{'Prenom':<30}{'Date-Naissance':<10}{'Nationnalité':<10}{'Mail':<20}{'Telephone':<10}{'Classe':<10}")
         for etu in donnees: #type:ignore
             print(f"{etu.get('Matricule'):<10}{etu.get('Nom'):<10}{etu.get('Prenom'):<30}{etu.get('Date-Naissance'):<10}{etu.get('Nationnalité'):<10}{etu.get('Mail'):<20}{etu.get('Telephone'):<10}{etu.get('Classe'):<10}")
+        
+        
+class Application:
+    def __init__(self) -> None:
+        self.useCases = DefaultUseCases()
+        self.user_connect = self.useCases.accueil()
+        
         
 ###########################################################
 ################### Quelsques classes #####################
@@ -771,6 +797,4 @@ class ResponsableAdmin(User):
                 
                 
 if __name__ == "__main__":
-    # d = DefaultUseCases()
-    # d.accueil()
-    print(f"{color.Fore.GREEN} Hello{color.Fore.RESET}")
+    Application()
