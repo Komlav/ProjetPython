@@ -1,5 +1,7 @@
 import sqlite3
 import os
+import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
+
 DEFAULT_PASSWORD = "passer@123"
 TAILLE_SCREEN = 100
 BASE_FILE = "./DataBase/Database.sqlite3"
@@ -262,9 +264,27 @@ class DefaultUseCases:
         self.all_Other_Data = {} #Données des filières et autres infos
     
     def accueil(self):
-        self.clear()
+        while True:
+            self.clear()
+            print("="*TAILLE_SCREEN)
+            print("="*TAILLE_SCREEN)
+            
+            login = input("\n\n\t\t\t\t\tEntrez votre login : ")
+            print("\t\t\t\t--------------------------------------------")
+            psw = input("\t\t\t\t\tEntrez votre mot de passe : ")
+            print("\t\t\t\t--------------------------------------------")
+            
+            connecting = self.connect(login, psw)
+            if connecting != {}:
+                print("Well done !")
+                break
+            else:
+                pass
         
         
+    def showMsg(self, msg:str):
+        print(f"\n\n\t\t\t\t\t{color.Fore.RED}{msg}{color.Fore.RESET}")
+    
     def clear(self):
         if os.name == 'nt':
             os.system("cls") 
@@ -748,3 +768,9 @@ class ResponsableAdmin(User):
     def getChargé(self) -> list:
         return self.chargés
                 
+                
+                
+if __name__ == "__main__":
+    # d = DefaultUseCases()
+    # d.accueil()
+    print(f"{color.Fore.GREEN} Hello")
