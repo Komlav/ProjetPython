@@ -1,4 +1,5 @@
 import sqlite3
+import os
 DEFAULT_PASSWORD = "passer@123"
 TAILLE_SCREEN = 100
 BASE_FILE = "./DataBase/Database.sqlite3"
@@ -259,7 +260,16 @@ class DefaultUseCases:
         self.sql = MySql()
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = {} #Données des filières et autres infos
+    
+    def accueil(self):
+        self.clear()
         
+        
+    def clear(self):
+        if os.name == 'nt':
+            os.system("cls") 
+        else:
+            os.system("clear")
 
     def connect(self, login:str, password:str)-> dict:
         for liste_user in self.all_User_Data.values():
@@ -270,8 +280,7 @@ class DefaultUseCases:
     
     def ligne(self, motif:str = "-", nombre:int = TAILLE_SCREEN):
         print(motif*nombre)
-        pass
-    
+     
     def showComponents(self, attributs:list, data:list):
         self.ligne("=")
         for attribut in attributs: print(f"{attribut}", end=" ")
@@ -299,30 +308,26 @@ class DefaultUseCases:
                 return element
         return {}
 
-
     def listerLesEtudiants(self,data:dict,valeur,filtre="Tous"):
         All_Etudiants=data.get("Etudiants")     
-        if(filtre=="Tous"):
+        if(filtre == "Tous"):
             donnees=All_Etudiants
-        elif(filtre=="Niveau"):
-            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau")==valeur)]  #type:ignore
+        elif(filtre == "Niveau"):
+            donnees = [etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau") == valeur)]  #type:ignore
             # for etu in All_Etudiants: #type:ignore
-            #     if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau")==valeur):
+            #     if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau") == valeur):
             #         donnees.append(etu)
-        elif(filtre=="Filiere"):
-            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Filiere")==valeur)]  #type:ignore
-        elif(filtre=="Classe"):
-            donnees=[etu for etu in All_Etudiants if(etu.get("Classe")==valeur)]  #type:ignore
+        elif(filtre == "Filiere"):
+            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Filiere") == valeur)]  #type:ignore
+        elif(filtre == "Classe"):
+            donnees=[etu for etu in All_Etudiants if(etu.get("Classe") == valeur)]  #type:ignore
         else:
-            donnees=[etu for etu in All_Etudiants if(etu.get("Nationnalité")==valeur)]  #type:ignore    
+            donnees=[etu for etu in All_Etudiants if(etu.get("Nationnalité") == valeur)]  #type:ignore    
         
         print(f"{'Matricule':<10}{'Nom':<10}{'Prenom':<30}{'Date-Naissance':<10}{'Nationnalité':<10}{'Mail':<20}{'Telephone':<10}{'Classe':<10}")
         for etu in donnees: #type:ignore
             print(f"{etu.get('Matricule'):<10}{etu.get('Nom'):<10}{etu.get('Prenom'):<30}{etu.get('Date-Naissance'):<10}{etu.get('Nationnalité'):<10}{etu.get('Mail'):<20}{etu.get('Telephone'):<10}{etu.get('Classe'):<10}")
         
-    
-    
-    
 ###########################################################
 ################### Quelsques classes #####################
 ###########################################################
@@ -335,10 +340,10 @@ class AdminUseCases(Admin):
     
     def __init__(self, admin_data:dict) -> None:
         super().__init__(admin_data.get("Matricule"),admin_data.get("Nom"),admin_data.get("Prénom"),admin_data.get("Mail"),admin_data.get("Téléphone"),admin_data.get("Login"),admin_data.get("Password"),admin_data.get("TypeP"),admin_data.get("Etudiants"),admin_data.get("Chargés"),admin_data.get("ResponsableAdmin"), admin_data.get("Partenaires")) # type: ignore
-        self.all_etudiants = self.getEtudiant()
-        self.all_chargés = self.getChargé()
-        self.all_responsables = self.getResponsableAdmin()
-        self.all_partenaires = self.getPartenaire()
+        # self.all_etudiants = self.getEtudiant()
+        # self.all_chargés = self.getChargé()
+        # self.all_responsables = self.getResponsableAdmin()
+        # self.all_partenaires = self.getPartenaire()
         
     def setUserMail(self, user:dict, domaine:str = "ism.edu",):
         return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
@@ -408,6 +413,7 @@ class AdminUseCases(Admin):
 ###########################################################
 ################## Class de l'etudiant ####################
 ###########################################################
+
 class Etudiant(User):
     def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes:list = []) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
@@ -429,8 +435,7 @@ class Etudiant(User):
         for commentaire in self.commentaires:
             print(commentaire)
             print('-'*TAILLE_SCREEN)
-    
-    
+     
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None:
         self.dateNaissance = newDateNaissance
@@ -709,20 +714,18 @@ class ResponsableAdmin(User):
         for classe in data:
             print(f"{classe.get('idC'):<10}{classe.get('Libelle'):<15}{classe.get('Filiere'):<20}{classe.get('Niveau'):<20}{classe.get('Effectif'):<10}{classe.get('Chargé'):<20}")
             print("-"*TAILLE_SCREEN)
-    
-    
-    
+     
     def ajoutClasseChargé(self,data:dict):
-        chargés=data.get('Chargés')
-        classes=data.get('Classes')
+        chargés = data.get('Chargés')
+        classes = data.get('Classes')
         
         self.listerClasses(classes) #type:ignore
-        idClasse=self.default.DoWhile("idC",classes) #type:ignore
+        idClasse = self.default.DoWhile("idC",classes) #type:ignore
         
         while True:
             self.listerChargés(chargés) #type:ignore
-            matricule=self.default.DoWhile("Matricule",chargés) #type:ignore
-            ClassesChargé=self.default.getComponentByKey("Matricule",matricule,chargés).get("Classes")
+            matricule = self.default.DoWhile("Matricule",chargés) #type:ignore
+            ClassesChargé = self.default.getComponentByKey("Matricule",matricule,chargés).get("Classes")
 
             if(idClasse not in ClassesChargé):break #type:ignore 
             else:print("La classe y est deja")
@@ -730,19 +733,6 @@ class ResponsableAdmin(User):
         newValue=str(ClassesChargé.append(idClasse))   #type:ignore 
         self.sql.updateBase("Classes",newValue,"Matricule",matricule,"Chargés")
         self.sql.updateBase("Chargé",matricule,"idC",idClasse,"Classes")
-        
-            
-        
-                
-
-        
-        
-        
-        
-        
-            
-        
-        
         
     # Setters
     def setClasse(self, newClasse:str) -> None:
@@ -757,15 +747,4 @@ class ResponsableAdmin(User):
         
     def getChargé(self) -> list:
         return self.chargés
-                 
-###########################################################
-############### Class de l'administrateur #################
-###########################################################
-        
-###########################################################
-############### Class de l'administrateur #################
-###########################################################
-
-
-test = DefaultUseCases()
-print(test.all_User_Data)
+                
