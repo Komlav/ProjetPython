@@ -773,4 +773,4 @@ class ResponsableAdmin(User):
 if __name__ == "__main__":
     # d = DefaultUseCases()
     # d.accueil()
-    print(f"{color.Fore.GREEN} Hello")
+    print(f"{color.Fore.GREEN} Hello{color.Fore.RESET}")
