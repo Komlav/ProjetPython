@@ -16,6 +16,7 @@
   - Modifier les notes d'une classe ou d'un étudiant
   - Voir les commentaires et réclammations
   - Faire un commentaire
+  - Lister les professeurs
 
 - **Les écoles partenaires**
   - Se connecter
@@ -28,6 +29,8 @@
   - Lister tous les étudiants -> Filière, classe, niveau,nationnalité
   - Lister les classes
   - Lister les chargés
+  - Ajouter un prof
+  - Lister les professeurs
   - Attribuer des classes aux chargés
   - Voir les statistiques des classes et de la filiere
 

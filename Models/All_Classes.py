@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import time as t
+import datetime 
 
 import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
 from colorama import init
@@ -197,8 +198,52 @@ class Admin(User):
         self.chargés = chargés
         self.responsableAdmins = responsableAdmin
         self.partenaires = partenaires
+        self.usecase=DefaultUseCases()
+        self.traitement(self.MenuAdmin())
+   
+    def MenuAdmin(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Ajouter un etudiant") 
+            print("2-Lister les etudiant") 
+            print("3-Ajouter un chargé") 
+            print("4-Lister les chargés") 
+            print("5-Ajouter un responsable Administratif") 
+            print("6-Lister les responsables Administratifs") 
+            print("7-Quitter") 
+            choix=self.usecase.Saisie("Faites un choix",1,7)
+            if not str(choix).isdigit():
+                self.usecase.clear()
+            else:
+                return choix
         
-    # Setters
+        
+    def traitement(self,choix):
+        while True:
+            match(choix):
+                case 1:
+                    # ajouterEtudiant()
+                    pass
+                case 2:
+                    # ajouterEtudiant()
+                    pass
+                case 3:
+                    # ajouterEtudiant()
+                    pass
+                case 4:
+                    # ajouterEtudiant()
+                    pass
+                case 5:
+                    # ajouterEtudiant()
+                    pass
+                case 6:
+                    # ajouterEtudiant()
+                    pass
+                case 7:
+                    break
+            
+        
+    #Setters
     def setEtudiant(self, newEtudiant:dict) -> None:
         self.etudiants.append(newEtudiant)
         
@@ -224,6 +269,80 @@ class Admin(User):
     def getPartenaire(self) -> list:
         return self.partenaires
     
+    
+    def setUserMail(self, user:dict, domaine:str = "ism.edu",):
+        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
+        
+    def ajoutEtudiant(self):
+        time = datetime.datetime.now()
+        a,m,j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
+        etudiant = dict()
+        matricule= f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])}-{m}{j}"
+        # nom=input("Saisir l
+        etudiant={"Matricule":matricule,"Nom":self.usecase.test("Saisir le Nom: "),"Prenom":self.usecase.test("Saisir le Prenom: "),"Date de Naissance":self.usecase.ver_date(),"Nationnalité":self.usecase.test("Saisir la nationnalité: "),"Telephone":self.usecase.agree_number("Etudiant"),"Type":"Etudiant","IdClasse": }
+
+    def user(self, newEtu:dict):
+        self.setEtudiant(newEtu)
+        self.mail = self.setUserMail(newEtu)
+        return (
+            newEtu.get("Matricule"),
+            newEtu.get("Nom"),
+            newEtu.get("Prénom"),
+            newEtu.get("DateNaissance"),
+            newEtu.get("Nationnalité"),
+            self.mail, #Mail etudiant
+            newEtu.get("Telephone"),
+            self.mail, #Login etudiant
+            DEFAULT_PASSWORD,
+            "Etudiant",
+            newEtu.get("Classes"),
+            newEtu.get("Notes")
+        )
+        
+    def addNewChargé(self, newChargé:dict):
+        self.setChargé(newChargé)
+        self.mail = self.setUserMail(newChargé, "groupeism")
+        return (
+            newChargé.get("Matricule"),
+            newChargé.get("Nom"),
+            newChargé.get("Prénom"),
+            self.mail, #Mail chargé
+            newChargé.get("Telephone"),
+            self.mail, #Login chargé
+            DEFAULT_PASSWORD,
+            "Chargé",
+            newChargé.get("Classe")
+            )
+        
+    def addNewResponsableAdmin(self, newResponsableAdmin:dict):
+        self.setResponsableAdmin(newResponsableAdmin)
+        self.mail = self.setUserMail(newResponsableAdmin, "groupeism")
+        return (
+            newResponsableAdmin.get("Matricule"),
+            newResponsableAdmin.get("Nom"),
+            newResponsableAdmin.get("Prénom"),
+            self.mail, #Mail ResponsableAdmin
+            newResponsableAdmin.get("Telephone"),
+            self.mail, #Login ResponsableAdmin
+            DEFAULT_PASSWORD,
+            "ResponsableAdmin",
+            newResponsableAdmin.get("Classes"),
+            newResponsableAdmin.get("Chargés")
+        )
+        
+    def addNewPartenaire(self, newPartenaire:dict):
+        self.setPartenaire(newPartenaire)
+        return (
+            newPartenaire.get("Matricule"),
+            newPartenaire.get("Libelle"),
+            newPartenaire.get("Mail"), #Mail Partenaire
+            newPartenaire.get("Telephone"),
+            newPartenaire.get("Mail"), #Login Partenaire
+            DEFAULT_PASSWORD,
+            "Partenaire",
+            newPartenaire.get("Etudiants")
+        )
+    
 ###########################################################
 #################### Class du chargé ######################
 ###########################################################
@@ -232,6 +351,7 @@ class Chargé(User):
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.classes = classes #les ids des classes
         self.commentaires = commentaires
+        self.usecase=DefaultUseCases()
         
     def makeCommentaire(self,matriculeEtu:int, newCommentaire:str, data:list):
         for etudiant in data:
@@ -251,6 +371,23 @@ class Chargé(User):
         for com in self.commentaires:
             print(f"{com.get('idClasse'):<20}{com.get('idEtu'):<20}{com.get('Commentaire')}")
             print('-'*TAILLE_SCREEN)
+    
+    def MenuCharge(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Lister les Etudiants d'une classe") 
+            print("2-Voir les notes des etudiants d'une classe") 
+            print("3-Voir les notes d'un etudiant") 
+            print("4-Modifier la note d'un etudiant") 
+            print("5-Modifier les notes d'une classe") 
+            print("6-Voir les commentaires") 
+            print("7-Faire un commentaire") 
+            print("8-Quitter") 
+            choix=self.usecase.Saisie("Faites un choix",1,8)
+            if not str(choix).isdigit():
+                self.usecase.clear()
+            else:
+                return choix
     
     #Setters
     def setClasse(self, newClasse:str) -> None:
@@ -366,95 +503,63 @@ class DefaultUseCases:
         print(f"{'Matricule':<10}{'Nom':<10}{'Prenom':<30}{'Date-Naissance':<10}{'Nationnalité':<10}{'Mail':<20}{'Telephone':<10}{'Classe':<10}")
         for etu in donnees: #type:ignore
             print(f"{etu.get('Matricule'):<10}{etu.get('Nom'):<10}{etu.get('Prenom'):<30}{etu.get('Date-Naissance'):<10}{etu.get('Nationnalité'):<10}{etu.get('Mail'):<20}{etu.get('Telephone'):<10}{etu.get('Classe'):<10}")
+    
+    def Saisie(self,message,min,max):
+        nbre = input(f"{message}\n")
+        ver = nbre.replace("-","")
+        if ver.isdigit() and (int(nbre) >= min and int(nbre) <= max):
+            return int(nbre)
+        else:
+            print("Le nombre saisi ne correspond à aucune foncionnalité")
+            
+    def MenuUser(self,user:dict): 
+        Profil=user.get("TypeP")
+        match(Profil):
+            case "Admin":
+                return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            
+    def test(self,message):
+        while True:
+            element=input(message)
+            if(element!=""):
+                return element
+                
+    def ver_date(self):
+        annee = "{:04d}".format(self.Saisie("Entrez l'annee :",1900,9999))
+        mois = "{:02d}".format(self.Saisie("Entrez le mois :",1,12))
+        jour = "{:02d}".format(self.Saisie("Entrez le jour :",1,31))
+        return f"{jour}-{mois}-{annee}"
+            
+    def agree_number(self,msg=''):
+        phone = [70,75,76,77,78]
+        while True:
+            number = self.Saisie(f"Entrez le numéro de téléphone {msg}:",700000000,790000000)
+            if (number // 10000000) in phone:   #type:ignore
+                return number
         
+    def getIdClasse(self):
+        niveau=["L1","L2","L3","Master1","Master2"]
+        filiere=input("Saisir la filiere: ")
+        niveau = self.Saisie("1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\nChoisissez le niveau de l'étudiant : \n",1,5)
         
+    
+    
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
         self.user_connect = self.useCases.accueil()
+        self.user_active=self.useCases.MenuUser(self.user_connect)
+        
+    
+    
+    
+    
+    
         
         
 ###########################################################
 ################### Quelsques classes #####################
 ###########################################################
-class AdminUseCases(Admin):
-    #Use case d'ajout
-    # - Etudiant
-    # - Chargé
-    # - Responsable Adminstratif
-    # - Partenaires
-    
-    def __init__(self, admin_data:dict) -> None:
-        super().__init__(admin_data.get("Matricule"),admin_data.get("Nom"),admin_data.get("Prénom"),admin_data.get("Mail"),admin_data.get("Téléphone"),admin_data.get("Login"),admin_data.get("Password"),admin_data.get("TypeP"),admin_data.get("Etudiants"),admin_data.get("Chargés"),admin_data.get("ResponsableAdmin"), admin_data.get("Partenaires")) # type: ignore
-        # self.all_etudiants = self.getEtudiant()
-        # self.all_chargés = self.getChargé()
-        # self.all_responsables = self.getResponsableAdmin()
-        # self.all_partenaires = self.getPartenaire()
-        
-    def setUserMail(self, user:dict, domaine:str = "ism.edu",):
-        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
-        
-    def user(self, newEtu:dict):
-        self.setEtudiant(newEtu)
-        self.mail = self.setUserMail(newEtu)
-        return (
-            newEtu.get("Matricule"),
-            newEtu.get("Nom"),
-            newEtu.get("Prénom"),
-            newEtu.get("DateNaissance"),
-            newEtu.get("Nationnalité"),
-            self.mail, #Mail etudiant
-            newEtu.get("Telephone"),
-            self.mail, #Login etudiant
-            DEFAULT_PASSWORD,
-            "Etudiant",
-            newEtu.get("Classes"),
-            newEtu.get("Notes")
-        )
-        
-    def addNewChargé(self, newChargé:dict):
-        self.setChargé(newChargé)
-        self.mail = self.setUserMail(newChargé, "groupeism")
-        return (
-            newChargé.get("Matricule"),
-            newChargé.get("Nom"),
-            newChargé.get("Prénom"),
-            self.mail, #Mail chargé
-            newChargé.get("Telephone"),
-            self.mail, #Login chargé
-            DEFAULT_PASSWORD,
-            "Chargé",
-            newChargé.get("Classe")
-            )
-        
-    def addNewResponsableAdmin(self, newResponsableAdmin:dict):
-        self.setResponsableAdmin(newResponsableAdmin)
-        self.mail = self.setUserMail(newResponsableAdmin, "groupeism")
-        return (
-            newResponsableAdmin.get("Matricule"),
-            newResponsableAdmin.get("Nom"),
-            newResponsableAdmin.get("Prénom"),
-            self.mail, #Mail ResponsableAdmin
-            newResponsableAdmin.get("Telephone"),
-            self.mail, #Login ResponsableAdmin
-            DEFAULT_PASSWORD,
-            "ResponsableAdmin",
-            newResponsableAdmin.get("Classes"),
-            newResponsableAdmin.get("Chargés")
-        )
-        
-    def addNewPartenaire(self, newPartenaire:dict):
-        self.setPartenaire(newPartenaire)
-        return (
-            newPartenaire.get("Matricule"),
-            newPartenaire.get("Libelle"),
-            newPartenaire.get("Mail"), #Mail Partenaire
-            newPartenaire.get("Telephone"),
-            newPartenaire.get("Mail"), #Login Partenaire
-            DEFAULT_PASSWORD,
-            "Partenaire",
-            newPartenaire.get("Etudiants")
-        )
          
 ###########################################################
 ################## Class de l'etudiant ####################
@@ -468,7 +573,20 @@ class Etudiant(User):
         self.notes = notes 
         self.classe = classe #id de la classe
         self.commentaires = []
+        self.usecase=DefaultUseCases()
         
+    def MenuEtudiant(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Voir mes notes") 
+            print("2-Voir mes commentaires") 
+            print("3-Faire un commentaire") 
+            print("4-Quitter") 
+            choix=self.usecase.Saisie("Faites un choix",1,4)
+            if not str(choix).isdigit():
+                self.usecase.clear()
+            else:
+                return choix    
     #Fonctionnalités de l'étudiant
     def setCommentaire(self, newCommentaire):
         self.commentaires.append(newCommentaire)
@@ -629,7 +747,19 @@ class Partenaire(User):
     def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, fichierEtudiant:str) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.etudiants = fichierEtudiant
+        self.usecase=DefaultUseCases()
     
+    def MenuPartenaire(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Lister les etudiants") 
+            print("2-Consuletr le dossier d'un etudiant") 
+            print("3-Quitter") 
+            choix=self.usecase.Saisie("Faites un choix",1,3)
+            if not str(choix).isdigit():
+                self.usecase.clear()
+            else:
+                return choix     
     # Setters
     def setEtudiant(self, newfichierEtudiant:str) -> None:
         self.etudiants = newfichierEtudiant
@@ -711,6 +841,24 @@ class ResponsableAdmin(User):
         self.chargés = chargés
         self.default=DefaultUseCases()
         self.sql=MySql()
+        
+    def MenuResponsableAdmin(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Ajouter un professeurs")
+            print("2-Lister les etudiants(Possibilité de filtre)") 
+            print("3-Lister les classes") 
+            print("4-Lister les chargés")
+            print("5-Lister les professeurs")
+            print("6-Attribuer une classe à un chargé") 
+            print("7-Voir les statistiques") 
+            print("8-Voir la moyenne des etudiants d'une classe") 
+            print("9-Quitter") 
+            choix=self.default.Saisie("Faites un choix",1,9)
+            if not str(choix).isdigit():
+                self.default.clear()
+            else:
+                return choix     
         
     #Fonctionnalité de la responsable
     def ajouterComponent(self, libelle:str, componentData:list):
