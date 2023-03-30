@@ -1,7 +1,7 @@
 from random import randint
 import sqlite3
 import os
-from time import sleep 
+from time import sleep, time 
 from datetime import datetime
 
 
@@ -214,7 +214,7 @@ class Admin(User):
         self.usecase=DefaultUseCases()
         self.usecase.ligne()
         self.usecase.ligne()
-        self.traitement(self.usecase.menuUse(l))
+        self.traitement(self.usecase.menuUse("Menu principal",l))
         self.usecase.Saisie('Faites un choix',1,4)
    
     # def MenuAdmin(self) -> int|None:
@@ -424,17 +424,27 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = {} #Données des filières et autres infos
     
-    def menuUse(self, fonctionnalités:list, Fermer=True):
-        self.clear()
-        options = list()
-        choices = list()
+    def header(self,titre:str):
+        self.ligne()
+        self.ligne()
+        self.opération(titre)
+    
+    def opération(self,title:str):
+        self.showMsg(title,clear=False)
+    
+    def menuUse(self,titre, fonctionnalités:list, Fermer=True):
+        # self.clear()
+        self.opération(titre)
+        options = []
+        choices = []
         numChoix, position, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
         m = position*len(fonctionnalités)
         l = TAILLE_SCREEN-m
-        if l > 0:position += l // nbreFonction-5
-        else: position = TAILLE_SCREEN // nbreFonction-5
+        t = (TAILLE_SCREEN//nbreFonction)
+        if l > 0:position += (l // nbreFonction)
+        else:position = TAILLE_SCREEN // nbreFonction-5
         for useCase in  fonctionnalités:
-            options.append([BLUE + useCase,position+5, 'center'])
+            options.append([useCase,position, 'center'])
             choices.append([numChoix, position, 'center'])
             numChoix += 1
         self.ligneMenu(numChoix,position,'haut')
@@ -444,12 +454,9 @@ class DefaultUseCases:
         
     def ligneMenu(self,nombre:int,longueur:int,niveau:str=""):
         match niveau:
-            case 'haut': 
-                cotéG, cotéD, separateur = '╔','╗','╦'
-            case 'bas': 
-                cotéG, cotéD, separateur = '╚','╝','╩'
-            case 'milieu': 
-                cotéG, cotéD, separateur = '╠','╣','╩'
+            case 'haut':  cotéG, cotéD, separateur = '╔','╗','╦'
+            case 'bas': cotéG, cotéD, separateur = '╚','╝','╩'
+            case 'milieu': cotéG, cotéD, separateur = '╠','╣','╩'
                 
         début = list('{}{}'.format('-'*(longueur-1), separateur))*(nombre-1)#type:ignore
         début.pop(-1)
@@ -486,23 +493,17 @@ class DefaultUseCases:
                     iCmpt +=1
         else: print("error")
         print("")   
-             
-    def task(self,msg:str,motif:str=EGALE) -> None:
-        self.ligne(motif,TAILLE_SCREEN)
-        lon = (TAILLE_SCREEN//2 -len(msg)//2) - 2
-        print(f"{'-'*lon} {color.Fore.GREEN}  {msg} {color.Style.RESET_ALL}  {'-'*(lon-3)}")
-        self.ligne(motif,TAILLE_SCREEN)
    
     def showMsg(self,msg:str, clear:bool = True,color=SUCCESS, motif:str='═', screen:int = TAILLE_SCREEN) -> None:
         if clear: self.clear()
-        print(f"""╔{motif*(screen-2)}╗\n║\n║{color}{msg:^{screen}}{WHITE}{'║'} \n║\n╚{motif*(screen-2)}╝""")
-        sleep(2)
+        print(f"""╔{motif*(screen-2)}╗\n║{' '*(screen-2)}║\n║{color}{msg:^{screen}}{WHITE}\b\b║\n║{' '*(screen-2)}║\n╚{motif*(screen-2)}╝""")
+        if clear:sleep(2)
         
     def pause(self):
         os.system("pause")
     
     def showWord(self,mot:str, police:str = "standard")-> str:
-        return figlet_format(mot, font = police)
+        return figlet_format(mot, font=police)
     
     def start(self):
         space = ' '
@@ -668,8 +669,9 @@ class DefaultUseCases:
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        self.user_connect = self.useCases.accueil()
-        self.user_active=self.useCases.createUser(self.user_connect)
+        # self.user_connect = self.useCases.accueil()
+        # self.user_active=self.useCases.createUser(self.user_connect)
+        self.useCases.menuUse("menu",l)
         
 
 ###########################################################
