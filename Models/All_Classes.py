@@ -434,7 +434,7 @@ class DefaultUseCases:
         if l > 0:position += l // nbreFonction-5
         else: position = TAILLE_SCREEN // nbreFonction-5
         for useCase in  fonctionnalités:
-            options.append([SUCCESS + useCase,position+5, 'center'])
+            options.append([BLUE + useCase,position+5, 'center'])
             choices.append([numChoix, position, 'center'])
             numChoix += 1
         self.ligneMenu(numChoix,position,'haut')
