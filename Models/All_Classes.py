@@ -27,7 +27,7 @@ BASE_FILE = "./DataBase/Database.sqlite3"
 EGALE = "="
 
 POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
-l = ["Ajouter un nouveau", "Voir toute les list", "Modifier une information", "Se déconnecter"]
+l = ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"]
 
 ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
 
