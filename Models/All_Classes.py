@@ -1,17 +1,35 @@
+from random import randint
 import sqlite3
 import os
-import time as t
-import datetime 
+from time import sleep 
+from datetime import datetime
 
+
+from pyfiglet import figlet_format
 import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
 from colorama import init
 init(autoreset=True)
 
+#Couleur utilisées dans le code !
 ERROR = color.Fore.RED
 SUCCESS  = color.Fore.GREEN
+WHITE  = color.Fore.WHITE
+RED  = color.Fore.RED
+YELLOW  = color.Fore.YELLOW
+BLUE  = color.Fore.BLUE
+CYAN  = color.Fore.CYAN
+MAGENTA  = color.Fore.MAGENTA
+WHITE  = color.Fore.WHITE
+
 DEFAULT_PASSWORD = "passer@123"
-TAILLE_SCREEN = 100
+TAILLE_SCREEN = 150
 BASE_FILE = "./DataBase/Database.sqlite3"
+EGALE = "="
+
+POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
+l = ["Ajouter un nouveau", "Voir toute les listes", "Modifier une information", "Se déconnecter"]
+
+ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
 
 
 ###########################################################
@@ -274,12 +292,12 @@ class Admin(User):
         return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
         
     def ajoutEtudiant(self):
-        time = datetime.datetime.now()
+        time = datetime.now()
         a,m,j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
         etudiant = dict()
         matricule= f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])}-{m}{j}"
         # nom=input("Saisir l
-        etudiant={"Matricule":matricule,"Nom":self.usecase.test("Saisir le Nom: "),"Prenom":self.usecase.test("Saisir le Prenom: "),"Date de Naissance":self.usecase.ver_date(),"Nationnalité":self.usecase.test("Saisir la nationnalité: "),"Telephone":self.usecase.agree_number("Etudiant"),"Type":"Etudiant","IdClasse": }
+        etudiant={"Matricule":matricule,"Nom":self.usecase.test("Saisir le Nom: "),"Prenom":self.usecase.test("Saisir le Prenom: "),"Date de Naissance":self.usecase.ver_date(),"Nationnalité":self.usecase.test("Saisir la nationnalité: "),"Telephone":self.usecase.agree_number("Etudiant"),"Type":"Etudiant"}
 
     def user(self, newEtu:dict):
         self.setEtudiant(newEtu)
@@ -401,45 +419,132 @@ class Chargé(User):
 ################### Quelsques classes #####################
 ###########################################################
 class DefaultUseCases:
+
     def __init__(self) -> None:
         self.sql = MySql()
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = {} #Données des filières et autres infos
     
+    def menuUse(self, fonctionnalités:list):
+        options = list()
+        choices = list()
+        i = 1
+        for useCase in  fonctionnalités:
+            options.append([SUCCESS + useCase, 35, 'center'])
+            choices.append([i, 30, 'center'])
+            i += 1
+        ""
+        print(f"╔{'-'*29}╦{'-'*29}╦{'-'*29}╦{'-'*28}╗")
+        self.showMenu(options,screen=500)
+        self.showMenu(choices)
+        print(f"╚{'-'*29}╩{'-'*29}╩{'-'*29}╩{'-'*28}╝")
+
+    def showMenu(self, listeOptions:list,tracer = True, endE = "|", screen:int = TAILLE_SCREEN):
+        """
+        ### Summary:
+            Cette fonction nous permet d'affichez une liste d'option pour l'utilisateur
+        ### Args:
+            - listeOptions (list): qui contient: exemple : ["Ajouter un étudiant", 50, "Center"]
+                - Le libelle 
+                - La taille qu'occupera la position dans le menu
+                - La position du libelle
+            - tracer
+            - endE (str, optional): Ce sont les bords de l'option. Defaults to "|".
+            - screen (int, optional): C'est la taille de l'écran. Defaults to TAILLE_SCREEN.
+        """        
+        Som = 0
+        iCmpt = 1
+        for j in listeOptions: Som+=j[1]
+        if Som <= screen:
+            for i in listeOptions:
+                if type(i) == type([]) and type(i[1]) == type(1):
+                    if iCmpt == len(listeOptions):
+                        if i[2] == "left": print(f"{endE}{i[0]:<{i[1]-2}}{endE}", end="")
+                        elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-2}}{endE}", end="")
+                        elif i[2]  == "center": print(f"{endE}{i[0]:^{i[1]-2}}{endE}", end="")
+                    else:
+                        if i[2] == "left": print(f"{endE}{i[0]:<{i[1]-1}}", end="")
+                        elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-1}}", end="")
+                        elif i[2]  == "center": print(f"{endE}{i[0]:^{i[1]-1}}", end="")
+                    iCmpt +=1
+        print("")   
+             
+    def task(self,msg:str,motif:str=EGALE) -> None:
+        self.ligne(motif,TAILLE_SCREEN)
+        lon = (TAILLE_SCREEN//2 -len(msg)//2) - 2
+        print(f"{'-'*lon} {color.Fore.GREEN}  {msg} {color.Style.RESET_ALL}  {'-'*(lon-3)}")
+        self.ligne(motif,TAILLE_SCREEN)
+   
+    def showMsg(self,msg:str, clear:bool = True,color=SUCCESS, motif:str='═', screen:int = TAILLE_SCREEN) -> None:
+        if clear: self.clear()
+        print(f"""╔{motif*(screen-2)}╗\n║\n║{color}{msg:^{screen}}{WHITE}{'║'} \n║\n╚{motif*(screen-2)}╝""")
+        sleep(2)
+        
+    def pause(self):
+        os.system("pause")
     
+    def showWord(self,mot:str, police:str = "standard")-> str:
+        return figlet_format(mot, font = police)
     
+    def start(self):
+        space = ' '
+        self.clear()
+        print("\n\n")
+        print("="*TAILLE_SCREEN)
+        print(SUCCESS + self.showWord(f"{space*20}Gestionnaire"))
+        print(SUCCESS + self.showWord(f"{space*41}de"))
+        print(SUCCESS + self.showWord(f"{space*33}notes"))
+        print("="*TAILLE_SCREEN)
+        j, l = 0, 4
+        for i in range(1,51):
+            l -= 1
+            print(f"Loading{'.'*j}{' '*l}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*(TAILLE_SCREEN-20-(2*i))}  " + f"{2*i}%", end='\r')
+            j += 1
+            if j > 3:j, l = 0, 4
+            sleep(randint(1, 50)/1000)
+        sleep(3)
+        
     def accueil(self):
-        cpt = 0
+        cpt = 1
+        self.start()
         while True:
+            tab = '\t'
             self.clear()
             print("="*TAILLE_SCREEN)
+            print(SUCCESS + self.showWord('Connexion'))
             print("="*TAILLE_SCREEN)
             
-            login = input("\n\n\t\t\t\t\tEntrez votre login : ")
-            print("\t\t\t\t--------------------------------------------")
-            psw = input("\t\t\t\t\tEntrez votre mot de passe : ")
-            print("\t\t\t\t--------------------------------------------")
+            login = input(f"\n{tab*3}Entrez votre login : {SUCCESS}")
+            print(BLUE + f"{tab*3}{'='*(len(login)+21)}")
+            psw = input(f"\n{tab*3}Entrez votre mot de passe : {SUCCESS}")
+            print(BLUE + f"{tab*3}{'='*(len(psw)+28)}")
+            sleep(0.5)
             
             user_connect = self.connect(login, psw)
-            if user_connect != {}:
-                return user_connect
+            if user_connect != {}: return user_connect
             else:
-                cpt += 1
-                self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ")    
-                if cpt == 1:
+                # self.showMsg(ERROR + self.showWord("invalide"))
+                if cpt == 3:
                     self.clear()
                     self.ligne("=")
-                    choix = input("\n\t\tVous avez essayer de vous connecter trois(3) fois de suites sans succes !\n\t\t\t\t[oui: Pour continuer : non: Pour quitter] : ").lower()
-                    if choix != "oui":
-                        exit(0)
+                    print(f"\n\t\t{BLUE} {'Vous avez essayer de vous connecter trois(3) fois de suites sans succes'.upper()} !\n")
+                    print(f"╔{'-'*(TAILLE_SCREEN-2)}╗")
+                    self.showMenu([["        Quitter ?", TAILLE_SCREEN, "center"]])
+                    print(f"╠{'-'*52}╦{'-'*45}╣")
+                    self.showMenu([[f"{RED}Oui", 58, "center"],[f"{SUCCESS}Non{WHITE}", 57, "center"]], screen=(TAILLE_SCREEN+20))
+                    print(f"╚{'-'*52}╩{'-'*45}╝")
+                    choix = input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()
+                    if choix == "oui": self.quitter()
                     cpt = 0
-    
-    def showMsg(self, msg:str, couleur = ERROR):
+                else: self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ",color=ERROR)   
+                cpt += 1
+                              
+    def quitter(self):
         self.clear()
-        self.ligne("=")
-        print(f"\n\n\t\t\t\t{couleur}{msg}\n\n")
-        self.ligne("=")
-        t.sleep(2)
+        print(SUCCESS + self.showWord("a bientot :)"))
+        sleep(5)
+        self.clear()
+        exit(0)
     
     def clear(self):
         if os.name == 'nt':
@@ -512,7 +617,7 @@ class DefaultUseCases:
         else:
             print("Le nombre saisi ne correspond à aucune foncionnalité")
             
-    def MenuUser(self,user:dict): 
+    def createUser(self,user:dict): 
         Profil=user.get("TypeP")
         match(Profil):
             case "Admin":
@@ -541,22 +646,15 @@ class DefaultUseCases:
         niveau=["L1","L2","L3","Master1","Master2"]
         filiere=input("Saisir la filiere: ")
         niveau = self.Saisie("1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\nChoisissez le niveau de l'étudiant : \n",1,5)
-        
-    
     
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        self.user_connect = self.useCases.accueil()
-        self.user_active=self.useCases.MenuUser(self.user_connect)
+        # self.user_connect = self.useCases.accueil()
+        # self.user_active=self.useCases.createUser(self.user_connect)
+        self.useCases.menuUse(l)
         
-    
-    
-    
-    
-    
-        
-        
+
 ###########################################################
 ################### Quelsques classes #####################
 ###########################################################
@@ -946,3 +1044,4 @@ class ResponsableAdmin(User):
                 
 if __name__ == "__main__":
     Application()
+    
