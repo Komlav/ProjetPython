@@ -27,7 +27,7 @@ BASE_FILE = "./DataBase/Database.sqlite3"
 EGALE = "="
 
 POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
-l = ["Ajouter un nouveau", "Voir toute les listes", "Modifier une information", "Se déconnecter"]
+l = ["Ajouter un nouveau", "Voir toute les list", "Modifier une information", "Se déconnecter"]
 
 ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
 
@@ -217,48 +217,52 @@ class Admin(User):
         self.responsableAdmins = responsableAdmin
         self.partenaires = partenaires
         self.usecase=DefaultUseCases()
-        self.traitement(self.MenuAdmin())
+        self.usecase.ligne()
+        self.usecase.ligne()
+        self.traitement(self.usecase.menuUse(l))
+        self.usecase.Saisie('Faites un choix',1,4)
    
-    def MenuAdmin(self) -> int|None:
-        retour=1
-        while(retour==1):
-            print("1-Ajouter un etudiant") 
-            print("2-Lister les etudiant") 
-            print("3-Ajouter un chargé") 
-            print("4-Lister les chargés") 
-            print("5-Ajouter un responsable Administratif") 
-            print("6-Lister les responsables Administratifs") 
-            print("7-Quitter") 
-            choix=self.usecase.Saisie("Faites un choix",1,7)
-            if not str(choix).isdigit():
-                self.usecase.clear()
-            else:
-                return choix
+    # def MenuAdmin(self) -> int|None:
+    #     retour=1
+    #     while(retour==1):
+    #         print("1-Ajouter un etudiant") 
+    #         print("2-Lister les etudiant") 
+    #         print("3-Ajouter un chargé") 
+    #         print("4-Lister les chargés") 
+    #         print("5-Ajouter un responsable Administratif") 
+    #         print("6-Lister les responsables Administratifs") 
+    #         print("7-Quitter") 
+    #         choix=self.usecase.Saisie("Faites un choix",1,7)
+    #         if not str(choix).isdigit():
+    #             self.usecase.clear()
+    #         else:
+    #             return choix
         
         
     def traitement(self,choix):
-        while True:
-            match(choix):
-                case 1:
-                    # ajouterEtudiant()
-                    pass
-                case 2:
-                    # ajouterEtudiant()
-                    pass
-                case 3:
-                    # ajouterEtudiant()
-                    pass
-                case 4:
-                    # ajouterEtudiant()
-                    pass
-                case 5:
-                    # ajouterEtudiant()
-                    pass
-                case 6:
-                    # ajouterEtudiant()
-                    pass
-                case 7:
-                    break
+        # while True:
+        #     match(choix):
+        #         case 1:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 2:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 3:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 4:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 5:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 6:
+        #             # ajouterEtudiant()
+        #             pass
+        #         case 7:
+        #             break
+        pass
             
         
     #Setters
@@ -425,20 +429,38 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = {} #Données des filières et autres infos
     
-    def menuUse(self, fonctionnalités:list):
+    def menuUse(self, fonctionnalités:list, Fermer=True):
+        self.clear()
         options = list()
         choices = list()
-        i = 1
+        numChoix, position, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
+        m = position*len(fonctionnalités)
+        l = TAILLE_SCREEN-m
+        if l > 0:position += l // nbreFonction-5
+        else: position = TAILLE_SCREEN // nbreFonction-5
         for useCase in  fonctionnalités:
-            options.append([SUCCESS + useCase, 35, 'center'])
-            choices.append([i, 30, 'center'])
-            i += 1
-        ""
-        print(f"╔{'-'*29}╦{'-'*29}╦{'-'*29}╦{'-'*28}╗")
-        self.showMenu(options,screen=500)
+            options.append([SUCCESS + useCase,position+5, 'center'])
+            choices.append([numChoix, position, 'center'])
+            numChoix += 1
+        self.ligneMenu(numChoix,position,'haut')
+        self.showMenu(options)
         self.showMenu(choices)
-        print(f"╚{'-'*29}╩{'-'*29}╩{'-'*29}╩{'-'*28}╝")
-
+        if Fermer:self.ligneMenu(numChoix,position,'bas')
+        
+    def ligneMenu(self,nombre:int,longueur:int,niveau:str=""):
+        match niveau:
+            case 'haut': 
+                cotéG, cotéD, separateur = '╔','╗','╦'
+            case 'bas': 
+                cotéG, cotéD, separateur = '╚','╝','╩'
+            case 'milieu': 
+                cotéG, cotéD, separateur = '╠','╣','╩'
+                
+        début = list('{}{}'.format('-'*(longueur-1), separateur))*(nombre-1)#type:ignore
+        début.pop(-1)
+        début[0], début[-1]= f'{cotéG}-',f'{cotéD}'#type:ignore
+        print("".join(début))
+        
     def showMenu(self, listeOptions:list,tracer = True, endE = "|", screen:int = TAILLE_SCREEN):
         """
         ### Summary:
@@ -467,6 +489,7 @@ class DefaultUseCases:
                         elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-1}}", end="")
                         elif i[2]  == "center": print(f"{endE}{i[0]:^{i[1]-1}}", end="")
                     iCmpt +=1
+        else: print("error")
         print("")   
              
     def task(self,msg:str,motif:str=EGALE) -> None:
@@ -490,15 +513,15 @@ class DefaultUseCases:
         space = ' '
         self.clear()
         print("\n\n")
-        print("="*TAILLE_SCREEN)
+        print("="*(TAILLE_SCREEN-30))
         print(SUCCESS + self.showWord(f"{space*20}Gestionnaire"))
         print(SUCCESS + self.showWord(f"{space*41}de"))
         print(SUCCESS + self.showWord(f"{space*33}notes"))
-        print("="*TAILLE_SCREEN)
+        print("="*(TAILLE_SCREEN-30))
         j, l = 0, 4
         for i in range(1,51):
             l -= 1
-            print(f"Loading{'.'*j}{' '*l}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*(TAILLE_SCREEN-20-(2*i))}  " + f"{2*i}%", end='\r')
+            print(f"Loading{'.'*j}{' '*l}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*((TAILLE_SCREEN-50)-20-(2*i))}  " + f"{2*i}%", end='\r')
             j += 1
             if j > 3:j, l = 0, 4
             sleep(randint(1, 50)/1000)
@@ -510,9 +533,9 @@ class DefaultUseCases:
         while True:
             tab = '\t'
             self.clear()
-            print("="*TAILLE_SCREEN)
+            print("="*(TAILLE_SCREEN-50))
             print(SUCCESS + self.showWord('Connexion'))
-            print("="*TAILLE_SCREEN)
+            print("="*(TAILLE_SCREEN-50))
             
             login = input(f"\n{tab*3}Entrez votre login : {SUCCESS}")
             print(BLUE + f"{tab*3}{'='*(len(login)+21)}")
@@ -526,17 +549,17 @@ class DefaultUseCases:
                 # self.showMsg(ERROR + self.showWord("invalide"))
                 if cpt == 3:
                     self.clear()
-                    self.ligne("=")
+                    self.ligne("=",100)
                     print(f"\n\t\t{BLUE} {'Vous avez essayer de vous connecter trois(3) fois de suites sans succes'.upper()} !\n")
-                    print(f"╔{'-'*(TAILLE_SCREEN-2)}╗")
-                    self.showMenu([["        Quitter ?", TAILLE_SCREEN, "center"]])
+                    print(f"╔{'-'*((TAILLE_SCREEN-50)-2)}╗")
+                    self.showMenu([["        Quitter ?", (TAILLE_SCREEN-50), "center"]])
                     print(f"╠{'-'*52}╦{'-'*45}╣")
-                    self.showMenu([[f"{RED}Oui", 58, "center"],[f"{SUCCESS}Non{WHITE}", 57, "center"]], screen=(TAILLE_SCREEN+20))
+                    self.showMenu([[f"{RED}Oui", 58, "center"],[f"{SUCCESS}Non{WHITE}", 57, "center"]], screen=((TAILLE_SCREEN-50)+20))
                     print(f"╚{'-'*52}╩{'-'*45}╝")
                     choix = input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()
                     if choix == "oui": self.quitter()
                     cpt = 0
-                else: self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ",color=ERROR)   
+                else: self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ",color=ERROR,screen=100)   
                 cpt += 1
                               
     def quitter(self):
@@ -650,9 +673,8 @@ class DefaultUseCases:
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        # self.user_connect = self.useCases.accueil()
-        # self.user_active=self.useCases.createUser(self.user_connect)
-        self.useCases.menuUse(l)
+        self.user_connect = self.useCases.accueil()
+        self.user_active=self.useCases.createUser(self.user_connect)
         
 
 ###########################################################

@@ -1,5 +1,6 @@
- # print(f"╔{'-'*(TAILLE_SCREEN-2)}╗")
-        # self.showMenu([["        Quitter ?", TAILLE_SCREEN, "center"]])
-        # print(f"╠{'-'*52}╦{'-'*45}╣")
-        # self.showMenu([[f"{RED}Oui", 58, "center"],[f"{SUCCESS}Non{WHITE}", 57, "center"]], screen=(TAILLE_SCREEN+20))
-        # print(f"╚{'-'*52}╩{'-'*45}╝")
+ # if Fermer:self.ligneMenu(numChoix,position,'bas')
+        # choix=self.Saisie("Faites un choix",1,4)
+        # if not str(choix).isdigit():
+        #     self.clear()
+        # else:
+        #     return choix
