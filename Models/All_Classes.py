@@ -31,11 +31,6 @@ l = ["Ajouter un nouveau", "Voir toute les list", "Modifier une information", "S
 
 ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
 
-
-###########################################################
-############### Class de l'administrateur #################
-###########################################################
-
 class MySql:
     
     def __init__(self) -> None:
