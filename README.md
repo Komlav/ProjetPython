@@ -1,5 +1,15 @@
 # Projet-Python : Gestion des notes
 
+## Modules et bibliothèques utilisées:
+--------------
+## *1- Colorama*
+> Module qui nous a permis de mettre la couleur dans le script.
+> Documentation [Colorama]()
+
+## *2- Tabulate* 
+> Module permettant l'affichage des donnée dans des tableaux.
+> Documentation sur la bibliothèque [Tabulate](https://pypi.org/project/tabulate/)
+
 ## Les acteurs et leurs fonctionnalités
 
 - **Un étudiant**

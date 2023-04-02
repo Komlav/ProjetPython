@@ -4,6 +4,7 @@ import os
 from time import sleep, time 
 from datetime import datetime
 
+# from tabulate import tabulate ## python -m pip install tabulate
 
 from pyfiglet import figlet_format
 import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
