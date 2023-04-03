@@ -436,7 +436,7 @@ class DefaultUseCases:
         self.showMsg(title,clear=False)
     
     def menuUse(self,titre, fonctionnalités:list, Fermer=True):
-        # self.clear()
+        self.clear()
         self.opération(titre)
         options = []
         choices = []
