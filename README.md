@@ -9,7 +9,13 @@
 ## *2- Tabulate* 
 > Module permettant l'affichage des donnée dans des tableaux.
 > Documentation sur la bibliothèque [Tabulate](https://pypi.org/project/tabulate/)
+## *2- PyFliglet* 
+> Module permettant une autre affichage
+> Documentation sur la bibliothèque [PyFliglet](http://www.figlet.org/examples.html)
 
+
+### Tableau des caractères ascii utilisé
+documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-etendue-EOM.html)
 ## Les acteurs et leurs fonctionnalités
 
 - **Un étudiant**

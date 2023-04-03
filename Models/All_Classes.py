@@ -28,6 +28,8 @@ BASE_FILE = "./DataBase/Database.sqlite3"
 EGALE = "="
 
 POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
+
+
 l = ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"]
 
 ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
@@ -438,30 +440,28 @@ class DefaultUseCases:
         self.opération(titre)
         options = []
         choices = []
-        numChoix, position, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
-        m = position*len(fonctionnalités)
+        numChoix, tailleCollonne, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
+        m = tailleCollonne*nbreFonction
         l = TAILLE_SCREEN-m
-        t = (TAILLE_SCREEN//nbreFonction)
-        if l > 0:position += (l // nbreFonction)
-        else:position = TAILLE_SCREEN // nbreFonction-5
+        # t = (TAILLE_SCREEN//nbreFonction)
+        if l > 0:tailleCollonne += (l // nbreFonction)
+        else:tailleCollonne = TAILLE_SCREEN // nbreFonction-5
         for useCase in  fonctionnalités:
-            options.append([useCase,position, 'center'])
-            choices.append([numChoix, position, 'center'])
+            options.append([useCase,tailleCollonne, 'center'])
+            choices.append([numChoix, tailleCollonne, 'center'])
             numChoix += 1
-        self.ligneMenu(numChoix,position,'haut')
+        self.ligneMenu(numChoix,tailleCollonne,'haut')
         self.showMenu(options)
         self.showMenu(choices)
-        if Fermer:self.ligneMenu(numChoix,position,'bas')
+        if Fermer:self.ligneMenu(numChoix,tailleCollonne,'bas')
         
-    def ligneMenu(self,nombre:int,longueur:int,niveau:str=""):
+    def ligneMenu(self,nombreFonctionnalités:int,longueurCellule:int,niveau:str):
         match niveau:
-            case 'haut':  cotéG, cotéD, separateur = '╔','╗','╦'
-            case 'bas': cotéG, cotéD, separateur = '╚','╝','╩'
             case 'milieu': cotéG, cotéD, separateur = '╠','╣','╩'
-                
-        début = list('{}{}'.format('-'*(longueur-1), separateur))*(nombre-1)#type:ignore
-        début.pop(-1)
-        début[0], début[-1]= f'{cotéG}-',f'{cotéD}'#type:ignore
+            case 'haut':  cotéG, cotéD, separateur = '╔','╗','╦'
+            case 'bas': cotéG, cotéD, separateur = '╚','╝','╩' 
+        début = list('{}{}'.format('-'*(longueurCellule-1), separateur))*(nombreFonctionnalités-1)#type:ignore
+        début[0], début[-1] = f'{cotéG}-',f'{cotéD}'#type:ignore
         print("".join(début))
         
     def showMenu(self, listeOptions:list,tracer = True, endE = "|", screen:int = TAILLE_SCREEN):
@@ -479,6 +479,7 @@ class DefaultUseCases:
         """        
         Som = 0
         iCmpt = 1
+        l = [['useCase',50, 'center']]
         for j in listeOptions: Som+=j[1]
         if Som <= screen:
             for i in listeOptions:
@@ -497,7 +498,7 @@ class DefaultUseCases:
    
     def showMsg(self,msg:str, clear:bool = True,color=SUCCESS, motif:str='═', screen:int = TAILLE_SCREEN) -> None:
         if clear: self.clear()
-        print(f"""╔{motif*(screen-2)}╗\n║{' '*(screen-2)}║\n║{color}{msg:^{screen}}{WHITE}\b\b║\n║{' '*(screen-2)}║\n╚{motif*(screen-2)}╝""")
+        print(f"""╔{motif*(screen-2)}╗\n║{' '*(screen-2)}║\n║{color}{msg:^{screen-2}}{WHITE}║\n║{' '*(screen-2)}║\n╚{motif*(screen-2)}╝""")
         if clear:sleep(2)
         
     def pause(self):
@@ -515,13 +516,15 @@ class DefaultUseCases:
         print(SUCCESS + self.showWord(f"{space*41}de"))
         print(SUCCESS + self.showWord(f"{space*33}notes"))
         print("="*(TAILLE_SCREEN-30))
-        j, l = 0, 4
+        
+        #Barre de chargements
+        nbrePoints, nbreEspace = 0, 4
         for i in range(1,51):
-            l -= 1
-            print(f"Loading{'.'*j}{' '*l}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*((TAILLE_SCREEN-50)-20-(2*i))}  " + f"{2*i}%", end='\r')
-            j += 1
-            if j > 3:j, l = 0, 4
-            sleep(randint(1, 50)/1000)
+            nbreEspace -= 1
+            print(f"Loading{'.'*nbrePoints}{' '*nbreEspace}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*((TAILLE_SCREEN-50)-20-(2*i))}  " + f"{2*i}%", end='\r')
+            nbrePoints += 1
+            if nbrePoints > 3:nbrePoints, nbreEspace = 0, 4
+            sleep(randint(1, 50)/100)
         sleep(3)
         
     def accueil(self):
@@ -670,8 +673,8 @@ class DefaultUseCases:
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        # self.user_connect = self.useCases.accueil()
-        # self.user_active=self.useCases.createUser(self.user_connect)
+        self.user_connect = self.useCases.accueil()
+        self.user_active=self.useCases.createUser(self.user_connect)
         self.useCases.menuUse("menu",l)
         
 
@@ -1064,4 +1067,3 @@ class ResponsableAdmin(User):
                 
 if __name__ == "__main__":
     Application()
-    
