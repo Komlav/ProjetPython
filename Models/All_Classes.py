@@ -1,6 +1,7 @@
 from random import randint
 import sqlite3
 import os
+from string import ascii_uppercase
 from time import sleep, time 
 from datetime import datetime
 
@@ -23,6 +24,7 @@ MAGENTA  = color.Fore.MAGENTA
 WHITE  = color.Fore.WHITE
 
 DEFAULT_PASSWORD = "passer@123"
+DEFAULT_EFFECTIF = 40
 TAILLE_SCREEN = 150
 BASE_FILE = "./DataBase/Database.sqlite3"
 EGALE = "="
@@ -30,9 +32,13 @@ EGALE = "="
 POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
 
 
-l = ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"]
+ADMIN_USECASES = {
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"],
+    "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable", "Retourner au menu général"],
+    "liste" : ['Lister les étudiants', 'Lister les chargé(e)s', 'Lister les responsables', "Retourner au menu général"],
+    "edit": ["Profil"]
+}
 
-ADMIN_USECASES = ['Ajouter un étudiant', 'Lister les étudiants', 'Ajouter un(e) chargé', 'Lister les chargé(e)s', 'Ajouter un responsable', 'Lister les responsables']
 
 class MySql:
     
@@ -45,7 +51,7 @@ class MySql:
         self.TABLES_USER = {
             "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP", "Etudiants", "Chargés", "responsableAdmin", "classes"],
             "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
-            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Téléphone", "Login", "Password", "TypeP","IdClasse", "Notes"],
+            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes"],
             "partenaires": ["Matricule", "libelle", "Mail", "Telephone", "Login", "Password", "TypeP", "etudiants"],
             "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP", "Classes", "Chargés"]
         }
@@ -54,7 +60,8 @@ class MySql:
             "filiere": ["idF","libelle","classes"], 
             "Modules": ["idM", "libelle", "classes", "professeurs", "notes"],
             "Niveau": ["idN","libelle","classes"],
-            "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "Classes", "modules"]
+            "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "Classes", "modules"], 
+            "Classe": ["idC", 'libelle', 'filière', 'niveau', 'effectif', 'chargé', 'professeurs', 'modules', 'etudiants']
         }
         
         self.TABLES = {
@@ -73,14 +80,17 @@ class MySql:
         self.initTables(self.TABLES)
         
         self.datas = self.getUserData(self.TABLES_USER)
+        self.component = self.getUserData(self.TABLES_OTHERS)
+        
         
         #Mise à jour des changemements effectuer
         self.base.commit()
         #Fermeture de la base de donnée
+    def closeDB(self):
         self.base.close()
 
     def updateBase(self,attribut:str,newValue,key:str,value,table:str):
-        requete=f" UPDATE {table} SET {attribut}={newValue} WHERE {key}={value}"
+        requete=f" UPDATE {table} SET {attribut}={newValue} WHERE {key}={value}" #L2 GRLS
         self.curseur.execute(requete)
         self.base.commit()
         
@@ -98,10 +108,10 @@ class MySql:
             return self.curseur.fetchall()
 
     
-    def insert(self,table:str, value:tuple):
+    def insert(self,table:str, value:tuple, colonne:list):
         with self.base:
-            requette = f"INSERT INTO {table} VALUES {value}"
-            self.curseur.execute(requette)
+            val = ','.join(['?']*len(colonne))
+            self.curseur.execute(f"INSERT INTO {table} VALUES ({val})",value)
             self.base.commit()
         
         
@@ -208,106 +218,127 @@ class User:
 ############### Class de l'administrateur #################
 ###########################################################
 class Admin(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = [], partenaires:list = []) -> None:
-        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-        self.etudiants = etudiants
-        self.chargés = chargés
-        self.responsableAdmins = responsableAdmin
-        self.partenaires = partenaires
-        self.usecase=DefaultUseCases()
-        self.usecase.ligne()
-        self.usecase.ligne()
-        self.traitement(self.usecase.menuUse("Menu principal",l))
-        self.usecase.Saisie('Faites un choix',1,4)
-   
-    # def MenuAdmin(self) -> int|None:
-    #     retour=1
-    #     while(retour==1):
-    #         print("1-Ajouter un etudiant") 
-    #         print("2-Lister les etudiant") 
-    #         print("3-Ajouter un chargé") 
-    #         print("4-Lister les chargés") 
-    #         print("5-Ajouter un responsable Administratif") 
-    #         print("6-Lister les responsables Administratifs") 
-    #         print("7-Quitter") 
-    #         choix=self.usecase.Saisie("Faites un choix",1,7)
-    #         if not str(choix).isdigit():
-    #             self.usecase.clear()
-    #         else:
-    #             return choix
+    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = [], partenaires:list = []) -> None:
+    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+    #     self.etudiants = etudiants
+    #     self.chargés = chargés
+    #     self.responsableAdmins = responsableAdmin
+    #     self.partenaires = partenaires
+    #     self.usecase = DefaultUseCases()
+    #     self.traitement()
         
+    def __init__(self) -> None:
+        self.usecase = DefaultUseCases()
+        self.traitement()
         
-    def traitement(self,choix):
-        # while True:
-        #     match(choix):
-        #         case 1:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 2:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 3:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 4:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 5:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 6:
-        #             # ajouterEtudiant()
-        #             pass
-        #         case 7:
-        #             break
-        pass
-            
+    def MenuAdmin(self) -> int|None:
+        retour=1
+        while(retour==1):
+            print("1-Ajouter un etudiant") 
+            print("2-Lister les etudiant") 
+            print("3-Ajouter un chargé") 
+            print("4-Lister les chargés") 
+            print("5-Ajouter un responsable Administratif") 
+            print("6-Lister les responsables Administratifs") 
+            print("7-Quitter") 
+            choix=self.usecase.Saisie("Faites un choix",1,7)
+            if not str(choix).isdigit():
+                self.usecase.clear()
+            else:
+                return choix
         
-    #Setters
-    def setEtudiant(self, newEtudiant:dict) -> None:
-        self.etudiants.append(newEtudiant)
-        
-    def setChargé(self, newChargé) -> None:
-        self.chargés.append(newChargé)
-        
-    def setResponsableAdmin(self, newResponsableAdmin) -> None:
-        self.responsableAdmins.append(newResponsableAdmin)
-        
-    def setPartenaire(self, newPartenaire) -> None:
-        self.partenaires.append(newPartenaire)
-        
-    # Getters
-    def getEtudiant(self) -> list:
-        return self.etudiants
-        
-    def getChargé(self) -> list:
-        return self.chargés
-        
-    def getResponsableAdmin(self) -> list:
-        return self.responsableAdmins
-        
-    def getPartenaire(self) -> list:
-        return self.partenaires
     
+    def traitement(self):
+        while True:
+            match self.usecase.controlMenu("Menu général", ADMIN_USECASES["main"]):
+                case 1:
+                    while True:
+                        match  self.usecase.controlMenu("Ajout d'un nouvel utilisateur", ADMIN_USECASES["add"]):
+                            case 1:
+                                self.ajoutEtudiant()
+                            case 2:
+                                # self.ajoutChargé()
+                                pass
+                            case 3:
+                                # self.ajoutRP()
+                                pass
+                            case 4:
+                                break
+                case 2:
+                    while True:
+                        match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["list"]):
+                            case 1:
+                                # self.ajoutEtudiant()
+                                pass
+                            case 2:
+                                # self.ajoutChargé()
+                                pass
+                            case 3:
+                                # self.ajoutRP()
+                                pass
+                            case 4:
+                                break
+                    # self.ajoutEtudiant()
+                    pass
+                case 3:
+                    while True:
+                        match  self.usecase.controlMenu("Modifier une info", ADMIN_USECASES["edit"]):
+                            case 1:
+                                # self.ajoutEtudiant()
+                                pass
+                            case 2:
+                                # self.ajoutChargé()
+                                pass
+                            case 3:
+                                # self.ajoutRP()
+                                pass
+                            case 4:
+                                break
+                    pass
+                case 4:
+                    break
+        pass
     
     def setUserMail(self, user:dict, domaine:str = "ism.edu",):
-        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').lower()}@{domaine}.sn" # type: ignore
-        
+        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').split(' ')[-1].lower()}@{domaine}.sn" # type: ignore
+    
     def ajoutEtudiant(self):
         time = datetime.now()
-        a,m,j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
+        a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
         etudiant = dict()
-        matricule= f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])}-{m}{j}"
-        # nom=input("Saisir l
-        etudiant={"Matricule":matricule,"Nom":self.usecase.test("Saisir le Nom: "),"Prenom":self.usecase.test("Saisir le Prenom: "),"Date de Naissance":self.usecase.ver_date(),"Nationnalité":self.usecase.test("Saisir la nationnalité: "),"Telephone":self.usecase.agree_number("Etudiant"),"Type":"Etudiant"}
+        matricule = f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])}-{m}{j}"
+        
+        classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
+        if type(classe) == tuple:
+            etudiant["IdClass"] = classe[0]
+            self.usecase.sql.updateBase("effectif", classe[1]["effectif"] + 1, "idC", classe[0], "Classe")
+            classe[1]["etudiants"].append(matricule)
+            self.usecase.sql.updateBase("etudiants", f"{classe[1]}", "idC", classe[0], "Classe")
+            
+        elif type(classe) == dict: 
+            etudiant["IdClasse"] = classe["idC"]
+            classe["etudiants"] = f"{[matricule]}"
+            self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
 
+
+        etudiant = {
+            "Matricule":matricule,
+            "Nom":self.usecase.test("Saisir le Nom: "),
+            "Prenom":self.usecase.test("Saisir le Prenom: "),
+            "DateNaissance":self.usecase.ver_date("Informations sur la date de naissance"),
+            "Nationnalité":self.usecase.test("Saisir la nationnalité: "),
+            "Telephone":self.usecase.agree_number("Etudiant")
+        }
+        self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
+        self.usecase.sql = MySql()
+        self.usecase.sql.closeDB()
+        
     def user(self, newEtu:dict):
-        self.setEtudiant(newEtu)
         self.mail = self.setUserMail(newEtu)
         return (
             newEtu.get("Matricule"),
             newEtu.get("Nom"),
-            newEtu.get("Prénom"),
+            newEtu.get("Prenom"),
             newEtu.get("DateNaissance"),
             newEtu.get("Nationnalité"),
             self.mail, #Mail etudiant
@@ -315,12 +346,11 @@ class Admin(User):
             self.mail, #Login etudiant
             DEFAULT_PASSWORD,
             "Etudiant",
-            newEtu.get("Classes"),
-            newEtu.get("Notes")
+            newEtu.get("IdClasse"),
+            '[]'
         )
         
     def addNewChargé(self, newChargé:dict):
-        self.setChargé(newChargé)
         self.mail = self.setUserMail(newChargé, "groupeism")
         return (
             newChargé.get("Matricule"),
@@ -335,7 +365,6 @@ class Admin(User):
             )
         
     def addNewResponsableAdmin(self, newResponsableAdmin:dict):
-        self.setResponsableAdmin(newResponsableAdmin)
         self.mail = self.setUserMail(newResponsableAdmin, "groupeism")
         return (
             newResponsableAdmin.get("Matricule"),
@@ -351,7 +380,6 @@ class Admin(User):
         )
         
     def addNewPartenaire(self, newPartenaire:dict):
-        self.setPartenaire(newPartenaire)
         return (
             newPartenaire.get("Matricule"),
             newPartenaire.get("Libelle"),
@@ -425,7 +453,7 @@ class DefaultUseCases:
     def __init__(self) -> None:
         self.sql = MySql()
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
-        self.all_Other_Data = {} #Données des filières et autres infos
+        self.all_Other_Data = self.sql.component #Données des filières et autres infos
     
     def header(self,titre:str):
         self.ligne()
@@ -485,9 +513,9 @@ class DefaultUseCases:
             for i in listeOptions:
                 if type(i) == type([]) and type(i[1]) == type(1):
                     if iCmpt == len(listeOptions):
-                        if i[2] == "left": print(f"{endE}{i[0]:<{i[1]-2}}{endE}", end="")
-                        elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-2}}{endE}", end="")
-                        elif i[2]  == "center": print(f"{endE}{i[0]:^{i[1]-2}}{endE}", end="")
+                        if i[2] == "left": print(f"{endE}{i[0]:<{i[1]-1}}{endE}", end="")
+                        elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-1}}{endE}", end="")
+                        elif i[2]  == "center": print(f"{endE}{i[0]:^{i[1]-1}}{endE}", end="")
                     else:
                         if i[2] == "left": print(f"{endE}{i[0]:<{i[1]-1}}", end="")
                         elif i[2] == "right": print(f"{endE}{i[0]:>{i[1]-1}}", end="")
@@ -602,7 +630,7 @@ class DefaultUseCases:
     
     def DoWhile(self,key:str,data:list):
         while True :
-            value=input(f"saisir le {key}: ")
+            value = input(f"saisir le {key}: ")
             if(self.control(key,value,data)): #type:ignore
                 return value
     
@@ -637,8 +665,6 @@ class DefaultUseCases:
         ver = nbre.replace("-","")
         if ver.isdigit() and (int(nbre) >= min and int(nbre) <= max):
             return int(nbre)
-        else:
-            print("Le nombre saisi ne correspond à aucune foncionnalité")
             
     def createUser(self,user:dict): 
         Profil=user.get("TypeP")
@@ -652,7 +678,8 @@ class DefaultUseCases:
             if(element!=""):
                 return element
                 
-    def ver_date(self):
+    def ver_date(self, message:str=""):
+        print(message)
         annee = "{:04d}".format(self.Saisie("Entrez l'annee :",1900,9999))
         mois = "{:02d}".format(self.Saisie("Entrez le mois :",1,12))
         jour = "{:02d}".format(self.Saisie("Entrez le jour :",1,31))
@@ -666,16 +693,140 @@ class DefaultUseCases:
                 return number
         
     def getIdClasse(self):
-        niveau=["L1","L2","L3","Master1","Master2"]
-        filiere=input("Saisir la filiere: ")
-        niveau = self.Saisie("1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\nChoisissez le niveau de l'étudiant : \n",1,5)
+        niveau = ["L1","L2","L3","M1","M2"]
+        all_filières = self.all_Other_Data["filiere"]
+        
+        while True:
+            self.ligne('=', nombre= 50)
+            print(f"{'Position':<10}{'Id':<10}{'Libelle'}")
+            self.ligne('=', nombre= 50)
+            i = 1
+            for filiere in all_filières:
+                print(f"{i:<10} {filiere['idF']:<10}{filiere['libelle']}")
+                self.ligne(nombre=50)
+                i += 1
+            posFiliere = self.Saisie("Entrez la position de la filière : ",1,len(all_filières))
+            if posFiliere != None:
+                break
+            else :self.clear()
+            
+        while True:
+            
+            pos = self.Saisie("1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\nEntrez l'id du niveau de l'étudiant : \n",1,5)
+            if niveau != None:
+                break
+            else: self.clear()
+        
+        filiere = all_filières[posFiliere-1]
+        niv = niveau[pos-1] #type:ignore
+        classe_libelle = f"{niv}-{filiere['libelle']}"
+        
+        return classe_libelle
+        
+    def createOrSearchClasse(self, libelle:str) -> tuple | dict:
+        all_classes = self.all_Other_Data["Classe"]
+        fin, alphabet, cpt = len(libelle), '', 0
+        
+        for classe in all_classes:
+            if classe.get("libelle")[0:fin] == libelle:
+                cpt += 1
+                if classe.get("effectif") <= DEFAULT_EFFECTIF:
+                    return (classe["idC"], classe) 
+                
+        if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
+        if cpt == 1:
+            self.sql.updateBase("libelle", f'{libelle} A', 'libelle', libelle, "Classe")
+            self.sql.closeDB()
+        
+        return {
+            "idC": len(all_classes) + 1,
+            "libelle": f"{libelle}{alphabet}",
+            "filière": libelle[3:], 
+            "niveau": libelle[:2], 
+            "effectif": 1,
+            "chargé": "",
+            "professeurs":'[]',
+            "modules":'[]'
+        }
+            
+    def controlMenu(self,opération:str, fonctionnalités:list):
+        while True:
+            self.ligne()
+            self.ligne()
+            self.menuUse(opération,fonctionnalités)
+            choix = self.Saisie('Faites un choix',1,len(fonctionnalités))
+            if choix != None:
+                return choix
+            else: self.clear()
+        
+class Classe:
+    def __init__(self, idC:int, libelle:str, filière:str, niveau:str, effectif:int, chargéClasse:str, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
+        self.idC = idC
+        self.libelle = libelle
+        self.filière = filière
+        self.niveau = niveau
+        self.effectif = effectif
+        self.étudiants = étudiants
+        self.modules = modules
+        self.professeurs = professeurs
+        self.chargé = chargéClasse
+
+    #Setters
+    def setId(self, newId) -> None:
+        self.idC = newId
+
+    def setLibelle(self, newlibelle) -> None:
+        self.libelle = newlibelle
+
+    def setNiveau(self, newNiveau) -> None:
+        self.niveau = newNiveau
+
+    def setEffectif(self, newEffectif) -> None:
+        self.effectif = newEffectif
+
+    def setModule(self, newModule: str) -> None:
+        self.modules.append(newModule)
+
+    def setProfesseur(self, newProfesseur: str) -> None:
+        self.professeurs.append(newProfesseur)
+
+    def setChargé(self, newChargé: str) -> None:
+        self.chargé = newChargé
+
+    def setEtudiant(self, newEtudiant: str) -> None:
+        self.étudiants.append(newEtudiant)
+
+    #Getters
+    def getId(self) -> int:
+        return self.idC
+
+    def getLibelle(self) -> str:
+        return self.libelle
+
+    def getNiveau(self) -> str:
+        return self.niveau
+
+    def getEffectif(self) -> int:
+        return self.effectif
+
+    def getModule(self) -> list:
+        return self.modules
+
+    def getProfesseur(self) -> list:
+        return self.professeurs
+
+    def getChargé(self) -> str:
+        return self.chargé 
+
+    def getEtudiant(self) -> list:
+        return self.étudiants
     
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
         self.user_connect = self.useCases.accueil()
         self.user_active=self.useCases.createUser(self.user_connect)
-        self.useCases.menuUse("menu",l)
+        
         
 
 ###########################################################
@@ -1066,4 +1217,5 @@ class ResponsableAdmin(User):
                 
                 
 if __name__ == "__main__":
-    Application()
+    # Application()
+    Admin()
