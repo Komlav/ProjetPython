@@ -306,39 +306,45 @@ class Admin(User):
         time = datetime.now()
         a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
         etudiant = dict()
-        matricule = f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])}-{m}{j}"
-        
+        matricule = f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{m}{j}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
-        if type(classe) == tuple:
-            etudiant["IdClass"] = classe[0]
-            self.usecase.sql.updateBase("effectif", classe[1]["effectif"] + 1, "idC", classe[0], "Classe")
-            classe[1]["etudiants"].append(matricule)
-            self.usecase.sql.updateBase("etudiants", f"{classe[1]}", "idC", classe[0], "Classe")
-            
-        elif type(classe) == dict: 
-            etudiant["IdClasse"] = classe["idC"]
-            classe["etudiants"] = f"{[matricule]}"
-            self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
-
-
         etudiant = {
             "Matricule":matricule,
-            "Nom":self.usecase.test("Saisir le Nom: "),
-            "Prenom":self.usecase.test("Saisir le Prenom: "),
-            "DateNaissance":self.usecase.ver_date("Informations sur la date de naissance"),
-            "Nationnalité":self.usecase.test("Saisir la nationnalité: "),
+            "Nom":self.usecase.test("Nom: "),
+            "Prénom":self.usecase.test("Prenom: "),
+            "DateNaissance":self.usecase.ver_date("\nInformations sur la date de naissance"),
+            "Nationnalité":self.usecase.test("Nationnalité: "),
             "Telephone":self.usecase.agree_number("Etudiant")
         }
-        self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
-        self.usecase.sql = MySql()
-        self.usecase.sql.closeDB()
+        
+        print(etudiant)
+        
+        while True:
+            choix=self.usecase.question("Confirmer l'enregistrement")
+            if choix =="oui":
+                if type(classe) == tuple:
+                    etudiant["IdClass"] = classe[0]
+                    self.usecase.sql.updateBase("effectif", classe[1]["effectif"] + 1, "idC", classe[0], "Classe")
+                    listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
+                    listeMatricules.append(matricule)
+                    self.usecase.sql.updateBase("etudiants",str(listeMatricules), "idC", classe[0], "Classe")
+                elif type(classe) == dict: 
+                    etudiant["IdClasse"] = classe["idC"]
+                    classe["etudiants"] = f"{[matricule]}"
+                    self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
+                    
+                self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
+                self.usecase.sql = MySql()
+                self.usecase.sql.closeDB()
+                self.usecase.showMsg("Etudiant ajouté avec succes")
+                break
         
     def user(self, newEtu:dict):
         self.mail = self.setUserMail(newEtu)
         return (
             newEtu.get("Matricule"),
             newEtu.get("Nom"),
-            newEtu.get("Prenom"),
+            newEtu.get("Prénom"),
             newEtu.get("DateNaissance"),
             newEtu.get("Nationnalité"),
             self.mail, #Mail etudiant
@@ -579,17 +585,24 @@ class DefaultUseCases:
                     self.clear()
                     self.ligne("=",100)
                     print(f"\n\t\t{BLUE} {'Vous avez essayer de vous connecter trois(3) fois de suites sans succes'.upper()} !\n")
-                    print(f"╔{'-'*((TAILLE_SCREEN-50)-2)}╗")
-                    self.showMenu([["        Quitter ?", (TAILLE_SCREEN-50), "center"]])
-                    print(f"╠{'-'*52}╦{'-'*45}╣")
-                    self.showMenu([[f"{RED}Oui", 58, "center"],[f"{SUCCESS}Non{WHITE}", 57, "center"]], screen=((TAILLE_SCREEN-50)+20))
-                    print(f"╚{'-'*52}╩{'-'*45}╝")
-                    choix = input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()
-                    if choix == "oui": self.quitter()
+                    
+                    if self.question("Quitter") == "oui": self.quitter()
                     cpt = 0
                 else: self.showMsg("VOTRE LOGIN ET/OI MOT DE PASSE ET/SONT INVALIDES ! ",color=ERROR,screen=100)   
                 cpt += 1
                               
+    def question(self,message:str):
+        print(f"╔{'-'*((TAILLE_SCREEN)-2)}╗")
+        self.showMenu([[f"        {message} ?", (TAILLE_SCREEN-50), "center"]])
+        print(f"╠{'-'*52}╦{'-'*45}╣")
+        self.showMenu([[f"{SUCCESS}Oui", 58, "center"],[f"{RED}Non{WHITE}", 57, "center"]], screen=((TAILLE_SCREEN-50)+20))
+        print(f"╚{'-'*52}╩{'-'*45}╝")
+        return input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()  
+              
+                      
+    def listTrans(self,liste: str) -> list:
+        return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-2].replace("'",'').split(',')]
+                    
     def quitter(self):
         self.clear()
         print(SUCCESS + self.showWord("a bientot :)"))
