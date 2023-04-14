@@ -23,6 +23,9 @@ CYAN  = color.Fore.CYAN
 MAGENTA  = color.Fore.MAGENTA
 WHITE  = color.Fore.WHITE
 
+
+tab = '\t'
+push = '\t'*4
 DEFAULT_PASSWORD = "passer@123"
 DEFAULT_EFFECTIF = 40
 TAILLE_SCREEN = 150
@@ -89,8 +92,8 @@ class MySql:
     def closeDB(self):
         self.base.close()
 
-    def updateBase(self,attribut:str,newValue,key:str,value,table:str):
-        requete=f" UPDATE {table} SET {attribut}={newValue} WHERE {key}={value}" #L2 GRLS
+    def updateBase(self,changements:str,key:str,value,table:str):
+        requete=f" UPDATE {table} SET {changements} WHERE {key}={value}" #L2 GRLS
         self.curseur.execute(requete)
         self.base.commit()
         
@@ -114,7 +117,11 @@ class MySql:
             self.curseur.execute(f"INSERT INTO {table} VALUES ({val})",value)
             self.base.commit()
         
-        
+    def delete(self,key:str,value,table:str):
+        requete=f"DELETE FROM {table} WHERE {key}={value}"
+        self.curseur.execute(requete)
+        self.base.commit()
+            
     def getUserData(self, tables:dict) -> dict:
         #Initialisation du dictionnaire qui va contenir les users
         data = dict()
@@ -241,11 +248,11 @@ class Admin(User):
             print("5-Ajouter un responsable Administratif") 
             print("6-Lister les responsables Administratifs") 
             print("7-Quitter") 
-            choix=self.usecase.Saisie("Faites un choix",1,7)
+            choix=self.usecase.testSaisie("Faites un choix","int",1,7)
             if not str(choix).isdigit():
                 self.usecase.clear()
             else:
-                return choix
+                return choix  # type: ignore
         
     
     def traitement(self):
@@ -303,31 +310,28 @@ class Admin(User):
         return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').split(' ')[-1].lower()}@{domaine}.sn" # type: ignore
     
     def ajoutEtudiant(self):
-        time = datetime.now()
-        a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
+        date=self.usecase.CurrentDate()
         etudiant = dict()
-        matricule = f"ISM{a}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{m}{j}"
+        matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
+        print("\nDONNEES DE L'ETUDIANT")
         etudiant = {
             "Matricule":matricule,
-            "Nom":self.usecase.test("Nom: "),
-            "Prénom":self.usecase.test("Prenom: "),
-            "DateNaissance":self.usecase.ver_date("\nInformations sur la date de naissance"),
-            "Nationnalité":self.usecase.test("Nationnalité: "),
+            "Nom":self.usecase.testSaisie("Nom de l'Etudiant : ").upper(), # type: ignore
+            "Prénom":self.usecase.testSaisie("Prenom de l'Etudiant : ").title(), # type: ignore
+            "DateNaissance":self.usecase.ver_date("\nINFORMATIONS SUR LA DATE DE NAISSANCE"),
+            "Nationnalité":self.usecase.testSaisie(f"\nDONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
             "Telephone":self.usecase.agree_number("Etudiant")
         }
-        
-        print(etudiant)
-        
         while True:
             choix=self.usecase.question("Confirmer l'enregistrement")
             if choix =="oui":
                 if type(classe) == tuple:
-                    etudiant["IdClass"] = classe[0]
-                    self.usecase.sql.updateBase("effectif", classe[1]["effectif"] + 1, "idC", classe[0], "Classe")
+                    etudiant["IdClasse"] = classe[0]
                     listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
                     listeMatricules.append(matricule)
-                    self.usecase.sql.updateBase("etudiants",str(listeMatricules), "idC", classe[0], "Classe")
+                    changement=f"effectif={classe[1]['effectif'] + 1},etudiants=\"{str(listeMatricules)}\""
+                    self.usecase.sql.updateBase(changement,"idC",classe[0], "Classe")
                 elif type(classe) == dict: 
                     etudiant["IdClasse"] = classe["idC"]
                     classe["etudiants"] = f"{[matricule]}"
@@ -338,6 +342,7 @@ class Admin(User):
                 self.usecase.sql.closeDB()
                 self.usecase.showMsg("Etudiant ajouté avec succes")
                 break
+            break
         
     def user(self, newEtu:dict):
         self.mail = self.setUserMail(newEtu)
@@ -437,11 +442,12 @@ class Chargé(User):
             print("6-Voir les commentaires") 
             print("7-Faire un commentaire") 
             print("8-Quitter") 
-            choix=self.usecase.Saisie("Faites un choix",1,8)
+            choix=self.usecase.testSaisie("Faites un choix","int",1,8)
             if not str(choix).isdigit():
                 self.usecase.clear()
             else:
-                return choix
+                return choix  # type: ignore
+
     
     #Setters
     def setClasse(self, newClasse:str) -> None:
@@ -560,12 +566,12 @@ class DefaultUseCases:
             if nbrePoints > 3:nbrePoints, nbreEspace = 0, 4
             sleep(randint(1, 50)/100)
         sleep(3)
-        
+    
     def accueil(self):
         cpt = 1
         self.start()
         while True:
-            tab = '\t'
+            
             self.clear()
             print("="*(TAILLE_SCREEN-50))
             print(SUCCESS + self.showWord('Connexion'))
@@ -674,10 +680,34 @@ class DefaultUseCases:
             print(f"{etu.get('Matricule'):<10}{etu.get('Nom'):<10}{etu.get('Prenom'):<30}{etu.get('Date-Naissance'):<10}{etu.get('Nationnalité'):<10}{etu.get('Mail'):<20}{etu.get('Telephone'):<10}{etu.get('Classe'):<10}")
     
     def Saisie(self,message,min,max):
-        nbre = input(f"{message}\n")
+        nbre = input(f"{message} : ")
         ver = nbre.replace("-","")
         if ver.isdigit() and (int(nbre) >= min and int(nbre) <= max):
             return int(nbre)
+         
+    def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3):
+        
+        while True:
+            element = input(f"{push}{message}{SUCCESS}")
+            print(f"{push}{BLUE}{'='*len(message + element)}")
+            match catégorie:
+                case 'int':
+                    ver = element.replace("-","")
+                    if ver.isdigit() and (int(element) >= min and int(element) <= max):
+                        return int(element)
+                    else:
+                        self.showMsg("Vous devez saisir un entier !", color = RED)
+                        self.clear()
+                case 'str':
+                    if(len(element) >= nbreChar):
+                        return element
+                    else:
+                        self.showMsg(f"Vous devez entrer une chaîne d'au moins {nbreChar}(s) charactères !", color = RED)
+                        self.clear()
+                        
+        
+        
+        
             
     def createUser(self,user:dict): 
         Profil=user.get("TypeP")
@@ -685,7 +715,9 @@ class DefaultUseCases:
             case "Admin":
                 return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             
-    def test(self,message):
+    def test(self,message,text=""):
+        if(text!=""):
+            print(text)
         while True:
             element=input(message)
             if(element!=""):
@@ -693,15 +725,16 @@ class DefaultUseCases:
                 
     def ver_date(self, message:str=""):
         print(message)
-        annee = "{:04d}".format(self.Saisie("Entrez l'annee :",1900,9999))
-        mois = "{:02d}".format(self.Saisie("Entrez le mois :",1,12))
-        jour = "{:02d}".format(self.Saisie("Entrez le jour :",1,31))
+        max=self.CurrentDate()[0]
+        annee = "{:04d}".format(self.testSaisie("Entrer l'annee","int",1900,int(max)))
+        mois = "{:02d}".format(self.testSaisie("Enter le mois","int",1,12))
+        jour = "{:02d}".format(self.testSaisie("Enter le jour","int",1,31))
         return f"{jour}-{mois}-{annee}"
             
     def agree_number(self,msg=''):
         phone = [70,75,76,77,78]
         while True:
-            number = self.Saisie(f"Entrez le numéro de téléphone {msg}:",700000000,790000000)
+            number = self.testSaisie(f"{msg}","int",700000000,790000000)
             if (number // 10000000) in phone:   #type:ignore
                 return number
         
@@ -718,19 +751,19 @@ class DefaultUseCases:
                 print(f"{i:<10} {filiere['idF']:<10}{filiere['libelle']}")
                 self.ligne(nombre=50)
                 i += 1
-            posFiliere = self.Saisie("Entrez la position de la filière : ",1,len(all_filières))
+            posFiliere = self.testSaisie("Entrez la position de la filière: ","int",1,len(all_filières))
             if posFiliere != None:
                 break
             else :self.clear()
             
         while True:
-            
-            pos = self.Saisie("1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\nEntrez l'id du niveau de l'étudiant : \n",1,5)
+            print("\n1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\n")
+            pos = self.testSaisie("Entrez l'id du niveau de l'étudiant: ","int",1,5)
             if niveau != None:
                 break
             else: self.clear()
         
-        filiere = all_filières[posFiliere-1]
+        filiere = all_filières[posFiliere-1] # type: ignore
         niv = niveau[pos-1] #type:ignore
         classe_libelle = f"{niv}-{filiere['libelle']}"
         
@@ -748,7 +781,8 @@ class DefaultUseCases:
                 
         if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
         if cpt == 1:
-            self.sql.updateBase("libelle", f'{libelle} A', 'libelle', libelle, "Classe")
+            changement=f"libelle={libelle} A"
+            self.sql.updateBase(changement,'libelle', libelle, "Classe")
             self.sql.closeDB()
         
         return {
@@ -767,10 +801,15 @@ class DefaultUseCases:
             self.ligne()
             self.ligne()
             self.menuUse(opération,fonctionnalités)
-            choix = self.Saisie('Faites un choix',1,len(fonctionnalités))
+            choix = self.testSaisie(f"\n{tab*3}"'Faites un choix: ',"int",1,len(fonctionnalités))
             if choix != None:
                 return choix
             else: self.clear()
+            
+    def CurrentDate(self)->tuple:
+        time = datetime.now()
+        a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
+        return (a,m,j)
         
 class Classe:
     def __init__(self, idC:int, libelle:str, filière:str, niveau:str, effectif:int, chargéClasse:str, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
@@ -867,11 +906,11 @@ class Etudiant(User):
             print("2-Voir mes commentaires") 
             print("3-Faire un commentaire") 
             print("4-Quitter") 
-            choix=self.usecase.Saisie("Faites un choix",1,4)
+            choix=self.usecase.testSaisie("Faites un choix","int",1,4)
             if not str(choix).isdigit():
                 self.usecase.clear()
             else:
-                return choix    
+                return choix     # type: ignore
     #Fonctionnalités de l'étudiant
     def setCommentaire(self, newCommentaire):
         self.commentaires.append(newCommentaire)
@@ -1040,11 +1079,11 @@ class Partenaire(User):
             print("1-Lister les etudiants") 
             print("2-Consuletr le dossier d'un etudiant") 
             print("3-Quitter") 
-            choix=self.usecase.Saisie("Faites un choix",1,3)
+            choix=self.usecase.testSaisie("Faites un choix","int",1,3)
             if not str(choix).isdigit():
                 self.usecase.clear()
             else:
-                return choix     
+                return choix      # type: ignore
     # Setters
     def setEtudiant(self, newfichierEtudiant:str) -> None:
         self.etudiants = newfichierEtudiant
@@ -1139,11 +1178,11 @@ class ResponsableAdmin(User):
             print("7-Voir les statistiques") 
             print("8-Voir la moyenne des etudiants d'une classe") 
             print("9-Quitter") 
-            choix=self.default.Saisie("Faites un choix",1,9)
+            choix=self.default.testSaisie("Faites un choix","int",1,9)
             if not str(choix).isdigit():
                 self.default.clear()
             else:
-                return choix     
+                return choix      # type: ignore
         
     #Fonctionnalité de la responsable
     def ajouterComponent(self, libelle:str, componentData:list):
@@ -1210,8 +1249,10 @@ class ResponsableAdmin(User):
             else:print("La classe y est deja")
             
         newValue=str(ClassesChargé.append(idClasse))   #type:ignore 
-        self.sql.updateBase("Classes",newValue,"Matricule",matricule,"Chargés")
-        self.sql.updateBase("Chargé",matricule,"idC",idClasse,"Classes")
+        changement=f"Classes={newValue}"
+        changeCharge=f"Chargé={matricule}"
+        self.sql.updateBase(changement,"Matricule",matricule,"Chargés")
+        self.sql.updateBase(changeCharge,"idC",idClasse,"Classes")
         
     # Setters
     def setClasse(self, newClasse:str) -> None:
