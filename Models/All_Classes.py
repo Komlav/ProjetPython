@@ -110,12 +110,16 @@ class MySql:
             self.curseur.execute(requete)
             return self.curseur.fetchall()
 
-    
     def insert(self,table:str, value:tuple, colonne:list):
         with self.base:
             val = ','.join(['?']*len(colonne))
             self.curseur.execute(f"INSERT INTO {table} VALUES ({val})",value)
             self.base.commit()
+    
+    def select(self, table:str):
+        with self.base:
+            self.curseur.execute(f"SELECT * FROM {table}")
+            return self.curseur.fetchall()
         
     def delete(self,key:str,value,table:str):
         requete=f"DELETE FROM {table} WHERE {key}={value}"
@@ -263,19 +267,20 @@ class Admin(User):
                         match  self.usecase.controlMenu("Ajout d'un nouvel utilisateur", ADMIN_USECASES["add"]):
                             case 1:
                                 self.ajoutEtudiant()
+                                break
                             case 2:
-                                # self.ajoutChargé()
-                                pass
+                                self.ajoutChargé()
+                                break
                             case 3:
-                                # self.ajoutRP()
-                                pass
+                                self.ajoutRP()
+                                break
                             case 4:
                                 break
                 case 2:
                     while True:
                         match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["list"]):
                             case 1:
-                                # self.ajoutEtudiant()
+                                # self.listerEtudiant()
                                 pass
                             case 2:
                                 # self.ajoutChargé()
@@ -306,6 +311,60 @@ class Admin(User):
                     break
         pass
     
+    def listerEtudiant(self, attributs:list, data:list):
+        self.usecase.ligneMenu(len(attributs),10, 'haut')
+        self.usecase.showMenu([['Position', (TAILLE_SCREEN//2)-2,'center'],['Libelle', (TAILLE_SCREEN//2)-2,'center']])
+        self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
+        i = 1
+        for filiere in all_filières:
+            # print(f"{i:<10}{filiere['libelle']}")
+            # self.usecase.ligne(nombre=50)
+            # self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'haut')
+            self.usecase.showMenu([[i, (TAILLE_SCREEN//2)-2,'center'],[filiere['libelle'], (TAILLE_SCREEN//2)-2,'center']])
+            if i == len(all_filières):
+                self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'bas')
+                break
+            self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
+            i += 1
+        
+        pass
+    def ajoutRP(self):
+        date=self.usecase.CurrentDate()
+        rp = dict()
+        rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}-{date[1]}{date[2]}"
+        rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP")
+        rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP")
+        rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP")
+        while True:
+            choix = self.usecase.question("Confirmer l'enregistrement")
+            if choix == "oui":
+                self.usecase.sql.insert("responsableAdmin",self.user(rp), self.usecase.sql.TABLES_USER["responsableAdmin"])
+                self.usecase.sql = MySql()
+                self.usecase.sql.closeDB()
+                self.usecase.showMsg("Reponsable ajouté avec success")  
+                break
+            break
+    
+    def ajoutChargé(self):
+        date=self.usecase.CurrentDate()
+        charge = dict()
+        charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}-{date[1]}{date[2]}"
+        charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé")
+        charge["Prénom"] = self.usecase.testSaisie("Entrez le prenom du chargé")
+        charge["Telephone"] = self.usecase.agree_number("Entrez le téléphone du chargé")
+        while True:
+            choix = self.usecase.question("Confirmer l'enregistrement")
+            if choix == "oui":
+                self.usecase.sql.insert("Chargé",self.user(charge), self.usecase.sql.TABLES_USER["Chargés"])
+                self.usecase.sql = MySql()
+                self.usecase.sql.closeDB()
+                self.usecase.showMsg("Chargés ajouté avec succes")  
+                break
+            break
+        
+        
+        
+        
     def setUserMail(self, user:dict, domaine:str = "ism.edu",):
         return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').split(' ')[-1].lower()}@{domaine}.sn" # type: ignore
     
@@ -372,7 +431,7 @@ class Admin(User):
             self.mail, #Login chargé
             DEFAULT_PASSWORD,
             "Chargé",
-            newChargé.get("Classe")
+            "[]"
             )
         
     def addNewResponsableAdmin(self, newResponsableAdmin:dict):
@@ -386,8 +445,8 @@ class Admin(User):
             self.mail, #Login ResponsableAdmin
             DEFAULT_PASSWORD,
             "ResponsableAdmin",
-            newResponsableAdmin.get("Classes"),
-            newResponsableAdmin.get("Chargés")
+            "[]",
+            "[]"
         )
         
     def addNewPartenaire(self, newPartenaire:dict):
