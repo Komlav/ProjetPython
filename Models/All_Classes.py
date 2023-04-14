@@ -308,6 +308,7 @@ class Admin(User):
                                 break
                     pass
                 case 4:
+                    self.usecase.sql.closeDB()
                     break
         pass
     
@@ -332,15 +333,14 @@ class Admin(User):
         date=self.usecase.CurrentDate()
         rp = dict()
         rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}-{date[1]}{date[2]}"
-        rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP")
-        rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP")
-        rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP")
+        rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP : ")
+        rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP : ")
+        rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP : ")
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
-                self.usecase.sql.insert("responsableAdmin",self.user(rp), self.usecase.sql.TABLES_USER["responsableAdmin"])
+                self.usecase.sql.insert("responsableAdmin",self.addNewResponsableAdmin(rp), self.usecase.sql.TABLES_USER["responsableAdmin"])
                 self.usecase.sql = MySql()
-                self.usecase.sql.closeDB()
                 self.usecase.showMsg("Reponsable ajouté avec success")  
                 break
             break
@@ -355,9 +355,8 @@ class Admin(User):
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
-                self.usecase.sql.insert("Chargé",self.user(charge), self.usecase.sql.TABLES_USER["Chargés"])
+                self.usecase.sql.insert("Chargé",self.addNewChargé(charge), self.usecase.sql.TABLES_USER["Chargé"])
                 self.usecase.sql = MySql()
-                self.usecase.sql.closeDB()
                 self.usecase.showMsg("Chargés ajouté avec succes")  
                 break
             break
@@ -398,7 +397,6 @@ class Admin(User):
                     
                 self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
                 self.usecase.sql = MySql()
-                self.usecase.sql.closeDB()
                 self.usecase.showMsg("Etudiant ajouté avec succes")
                 break
             break
