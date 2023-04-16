@@ -1,2 +1,2 @@
 -- SQLite
-alter TABLE responsableAdmin drop classes;
+ALTER TABLE responsableAdmin DROP COLUMN classes;

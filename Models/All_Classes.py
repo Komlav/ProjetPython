@@ -5,7 +5,7 @@ from string import ascii_uppercase
 from time import sleep, time 
 from datetime import datetime
 
-# from tabulate import tabulate ## python -m pip install tabulate
+from tabulate import tabulate ## python -m pip install tabulate
 
 from pyfiglet import figlet_format
 import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
@@ -42,6 +42,11 @@ ADMIN_USECASES = {
     "edit": ["Profil"]
 }
 
+# s = sqlite3.connect(BASE_FILE)
+# c = s.cursor()
+# p = c.execute("DELETE FROM Etudiants WHERE Nom = 'ZERTY';")
+# s.commit()
+
 
 class MySql:
     
@@ -52,11 +57,11 @@ class MySql:
         self.curseur = self.base.cursor()
         
         self.TABLES_USER = {
-            "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP", "Etudiants", "Chargés", "responsableAdmin", "classes"],
+            "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP"],
             "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
             "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes"],
-            "partenaires": ["Matricule", "libelle", "Mail", "Telephone", "Login", "Password", "TypeP", "etudiants"],
-            "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP", "Classes", "Chargés"]
+            "partenaires": ["Matricule", "libelle", "Mail", "Telephone", "Login", "Password", "TypeP"],
+            "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP"]
         }
         
         self.TABLES_OTHERS = {
@@ -70,13 +75,13 @@ class MySql:
         self.TABLES = {
             "Etudiants":"Matricule text, Nom text, Prenom text, DateNaissance text, Nationnalité text, Mail text, Telephone number, Login text, PassWord text, TypeP text, IdClasse number, Notes text", 
             "Chargé":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text,  Classes text", 
-            "Admin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, Etudiants text, Chargés text, responsableAdmin text, classes text", 
+            "Admin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text", 
             "Filiere":"idF number, libelle text, classes text", 
             "Modules":"idM number, libelle text, classes text, professeurs text, notes text", 
             "Niveau":"idN number, libelle text, classes text", 
-            "partenaires":"Matricule text, libelle text, mail text, Telephone number, Login text, Password text, TypeP text, etudiants text", 
+            "partenaires":"Matricule text, libelle text, mail text, Telephone number, Login text, Password text, TypeP text", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
-            "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text, classes text, Chargés text",
+            "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text",
             "Classe":"idC number, Libelle text, Filiere text, niveau number, effectif number, chargé text, professeurs text, modules text, etudiants text"
         }
         
@@ -120,6 +125,7 @@ class MySql:
         with self.base:
             self.curseur.execute(f"SELECT * FROM {table}")
             return self.curseur.fetchall()
+
         
     def delete(self,key:str,value,table:str):
         requete=f"DELETE FROM {table} WHERE {key}={value}"
@@ -278,9 +284,10 @@ class Admin(User):
                                 break
                 case 2:
                     while True:
-                        match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["list"]):
+                        match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["liste"]):
                             case 1:
-                                # self.listerEtudiant()
+                                self.listerEtudiant("Etudiants")
+                                self.usecase.pause()
                                 pass
                             case 2:
                                 # self.ajoutChargé()
@@ -312,29 +319,31 @@ class Admin(User):
                     break
         pass
     
-    def listerEtudiant(self, attributs:list, data:list):
-        self.usecase.ligneMenu(len(attributs),10, 'haut')
-        self.usecase.showMenu([['Position', (TAILLE_SCREEN//2)-2,'center'],['Libelle', (TAILLE_SCREEN//2)-2,'center']])
-        self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
-        i = 1
-        for filiere in all_filières:
-            # print(f"{i:<10}{filiere['libelle']}")
-            # self.usecase.ligne(nombre=50)
-            # self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'haut')
-            self.usecase.showMenu([[i, (TAILLE_SCREEN//2)-2,'center'],[filiere['libelle'], (TAILLE_SCREEN//2)-2,'center']])
-            if i == len(all_filières):
-                self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'bas')
-                break
-            self.usecase.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
-            i += 1
+    def listerEtudiant(self,table:str):
+        match table:
+            case 'Etudiants':
+                attributs = self.usecase.sql.TABLES_USER["Etudiants"][:7]
+                attributs.append("Classe")
+                data = self.usecase.sql.select("Etudiants")
+                donnée = list()
+                for etu in data:
+                    i = 0
+                    user = list()
+                    for i in range(7):
+                        user.append(etu[i])
+                        i += 1 #[("L2-GLRS-A",)]
+                    user.append(self.usecase.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC = {etu[10]}")[0][0])
+                    
+                    donnée.append(user) #type:ignore
+
+        print(tabulate(headers=attributs,tabular_data= donnée, tablefmt="double_outline"))#type:ignore
         
-        pass
     def ajoutRP(self):
         date=self.usecase.CurrentDate()
         rp = dict()
         rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}-{date[1]}{date[2]}"
-        rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP : ")
-        rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP : ")
+        rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP : ").upper() # type: ignore
+        rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP : ").title() # type: ignore
         rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP : ")
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
@@ -349,9 +358,9 @@ class Admin(User):
         date=self.usecase.CurrentDate()
         charge = dict()
         charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}-{date[1]}{date[2]}"
-        charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé")
-        charge["Prénom"] = self.usecase.testSaisie("Entrez le prenom du chargé")
-        charge["Telephone"] = self.usecase.agree_number("Entrez le téléphone du chargé")
+        charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé : ")
+        charge["Prénom"] = self.usecase.testSaisie("Entrez le prenom du chargé : ")
+        charge["Telephone"] = self.usecase.agree_number("Entrez le téléphone du chargé : ")
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
@@ -933,8 +942,10 @@ class Classe:
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        self.user_connect = self.useCases.accueil()
-        self.user_active=self.useCases.createUser(self.user_connect)
+
+        print(self.useCases.sql.getTables("ALTER TABLE responsableAdmin DROP COLUMN c;"))
+        # self.user_connect = self.useCases.accueil()
+        # self.user_active=self.useCases.createUser(self.user_connect)
         
         
 
@@ -1330,3 +1341,4 @@ class ResponsableAdmin(User):
 if __name__ == "__main__":
     # Application()
     Admin()
+    pass
