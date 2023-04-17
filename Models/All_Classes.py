@@ -23,7 +23,6 @@ CYAN  = color.Fore.CYAN
 MAGENTA  = color.Fore.MAGENTA
 WHITE  = color.Fore.WHITE
 
-
 tab = '\t'
 push = '\t'*4
 DEFAULT_PASSWORD = "passer@123"
@@ -48,8 +47,7 @@ ADMIN_USECASES = {
 # s.commit()
 
 
-class MySql:
-    
+class MySql: 
     def __init__(self) -> None:
         #Connexion à la base de donnée
         self.base = sqlite3.connect(BASE_FILE)
@@ -89,11 +87,10 @@ class MySql:
         
         self.datas = self.getUserData(self.TABLES_USER)
         self.component = self.getUserData(self.TABLES_OTHERS)
-        
-        
+           
         #Mise à jour des changemements effectuer
         self.base.commit()
-        #Fermeture de la base de donnée
+        
     def closeDB(self):
         self.base.close()
 
@@ -101,8 +98,7 @@ class MySql:
         requete=f"UPDATE {table} SET {changements} WHERE {key}={value}" #L2 GRLS
         self.curseur.execute(requete)
         self.base.commit()
-        
-        
+               
     def initTables(self,tables:dict):
         with self.base:
             for key, value in tables.items(): 
@@ -264,7 +260,6 @@ class Admin(User):
             else:
                 return choix  # type: ignore
         
-    
     def traitement(self):
         while True:
             match self.usecase.controlMenu("Menu général", ADMIN_USECASES["main"]):
@@ -287,8 +282,7 @@ class Admin(User):
                                 self.usecase.showMsg("Liste des partenaires")
                                 self.ajoutPartenaire()
                                 break
-                            case 5:
-                                break
+                            case 5:  break
                 case 2:
                     while True:
                         match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["liste"]):
@@ -526,8 +520,7 @@ class Chargé(User):
         return False        
         
     #Fonctionnalités du chargé
-    def setCommentaires(self, newCommentaire:dict):
-        self.commentaires.append(newCommentaire)
+    def setCommentaires(self, newCommentaire:dict): self.commentaires.append(newCommentaire)
         
     def listeCommentaire(self):
         print("="*TAILLE_SCREEN)
@@ -549,19 +542,14 @@ class Chargé(User):
             print("7-Faire un commentaire") 
             print("8-Quitter") 
             choix=self.usecase.testSaisie("Faites un choix","int",1,8)
-            if not str(choix).isdigit():
-                self.usecase.clear()
-            else:
-                return choix  # type: ignore
+            if not str(choix).isdigit(): self.usecase.clear()
+            else: return choix  # type: ignore
 
-    
     #Setters
-    def setClasse(self, newClasse:str) -> None:
-        self.classes.append(newClasse)
+    def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
         
     # Getters
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list: return self.classes
     
 ###########################################################
 ################### Quelsques classes #####################
@@ -578,8 +566,7 @@ class DefaultUseCases:
         self.ligne()
         self.opération(titre)
     
-    def opération(self,title:str):
-        self.showMsg(title,clear=False)
+    def opération(self,title:str): self.showMsg(title,clear=False)
     
     def menuUse(self,titre, fonctionnalités:list, Fermer=True):
         self.clear()
@@ -623,8 +610,7 @@ class DefaultUseCases:
             - endE (str, optional): Ce sont les bords de l'option. Defaults to "|".
             - screen (int, optional): C'est la taille de l'écran. Defaults to TAILLE_SCREEN.
         """        
-        Som = 0
-        iCmpt = 1
+        Som, iCmpt = 0, 1
         l = [['useCase',50, 'center']]
         for j in listeOptions: Som+=j[1]
         if Som <= screen:
@@ -647,11 +633,9 @@ class DefaultUseCases:
         print(f"""╔{motif*(screen-2)}╗\n║{' '*(screen-2)}║\n║{color}{msg:^{screen-2}}{WHITE}║\n║{' '*(screen-2)}║\n╚{motif*(screen-2)}╝""")
         if clear:sleep(2)
         
-    def pause(self):
-        os.system("pause")
+    def pause(self): os.system("pause")
     
-    def showWord(self,mot:str, police:str = "standard")-> str:
-        return figlet_format(mot, font=police)
+    def showWord(self,mot:str, police:str = "standard")-> str: return figlet_format(mot, font=police)
     
     def start(self):
         space = ' '
@@ -710,16 +694,12 @@ class DefaultUseCases:
         self.showMenu([[f"{SUCCESS}Oui", 58, "center"],[f"{RED}Non{WHITE}", 57, "center"]], screen=((TAILLE_SCREEN-50)+20))
         print(f"╚{'-'*52}╩{'-'*45}╝")
         return input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()  
-              
-                      
+                              
     def listTrans(self,liste: str, typeValue:str= 'entier') -> list: #type:ignore
         match typeValue:
-            case 'entier':
-                return [int(i) for i in liste[1:-1].replace("'",'').split(',') if i.isdigit()]
-            case 'note':
-                return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-1].replace("'",'').split(',')]
-                
-                    
+            case 'entier':  return [int(i) for i in liste[1:-1].replace("'",'').split(',') if i.isdigit()]
+            case 'note': return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-1].replace("'",'').split(',')]
+                                 
     def quitter(self):
         self.clear()
         print(SUCCESS + self.showWord("a bientot :)"))
@@ -728,20 +708,16 @@ class DefaultUseCases:
         exit(0)
     
     def clear(self):
-        if os.name == 'nt':
-            os.system("cls") 
-        else:
-            os.system("clear")
+        if os.name == 'nt':  os.system("cls") 
+        else:  os.system("clear")
 
     def connect(self, login:str, password:str)-> dict:
         for liste_user in self.all_User_Data.values():
             for user in liste_user:
-                if (login == user.get("Login") and password == user.get("Password")):
-                    return user
+                if (login == user.get("Login") and password == user.get("Password")): return user
         return {}
     
-    def ligne(self, motif:str = "-", nombre:int = TAILLE_SCREEN):
-        print(motif*nombre)
+    def ligne(self, motif:str = "-", nombre:int = TAILLE_SCREEN): print(motif*nombre)
      
     def showComponents(self, attributs:list, data:list):
         self.ligne("=")
@@ -754,8 +730,7 @@ class DefaultUseCases:
     
     def control(self,key:str,value,data:list):
         for element in data:
-            if(element.get(key)==value):
-                return True
+            if(element.get(key)==value): return True
         return False
     
     def DoWhile(self,key:str,data:list):
@@ -766,25 +741,16 @@ class DefaultUseCases:
     
     def getComponentByKey(self,key,value,data) ->dict:
         for element in data:
-            if(element.get(key)==value):
-                return element
+            if(element.get(key)==value): return element
         return {}
 
     def listerLesEtudiants(self,data:dict,valeur,filtre="Tous"):
-        All_Etudiants=data.get("Etudiants")     
-        if(filtre == "Tous"):
-            donnees=All_Etudiants
-        elif(filtre == "Niveau"):
-            donnees = [etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau") == valeur)]  #type:ignore
-            # for etu in All_Etudiants: #type:ignore
-            #     if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau") == valeur):
-            #         donnees.append(etu)
-        elif(filtre == "Filiere"):
-            donnees=[etu for etu in All_Etudiants if(self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Filiere") == valeur)]  #type:ignore
-        elif(filtre == "Classe"):
-            donnees=[etu for etu in All_Etudiants if(etu.get("Classe") == valeur)]  #type:ignore
-        else:
-            donnees=[etu for etu in All_Etudiants if(etu.get("Nationnalité") == valeur)]  #type:ignore    
+        All_Etudiants = data.get("Etudiants")     
+        if (filtre == "Tous"): donnees = All_Etudiants
+        elif (filtre == "Niveau"): donnees = [etu for etu in All_Etudiants if (self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Niveau") == valeur)]  #type:ignore
+        elif (filtre == "Filiere"): donnees = [etu for etu in All_Etudiants if (self.getComponentByKey("idC",etu.get("Classe"),data.get("Classes")).get("Filiere") == valeur)]  #type:ignore
+        elif (filtre == "Classe"): donnees = [etu for etu in All_Etudiants if (etu.get("Classe") == valeur)]  #type:ignore
+        else: donnees = [etu for etu in All_Etudiants if (etu.get("Nationnalité") == valeur)]  #type:ignore    
         
         print(f"{'Matricule':<10}{'Nom':<10}{'Prenom':<30}{'Date-Naissance':<10}{'Nationnalité':<10}{'Mail':<20}{'Telephone':<10}{'Classe':<10}")
         for etu in donnees: #type:ignore
@@ -793,46 +759,35 @@ class DefaultUseCases:
     def Saisie(self,message,min,max):
         nbre = input(f"{message} : ")
         ver = nbre.replace("-","")
-        if ver.isdigit() and (int(nbre) >= min and int(nbre) <= max):
-            return int(nbre)
+        if  ver.isdigit() and (int(nbre) >= min and int(nbre) <= max): return int(nbre)
          
     def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3):
-        
         while True:
             element = input(f"{push}{message}{SUCCESS}")
             print(f"{push}{BLUE}{'='*len(message + element)}")
             match catégorie:
                 case 'int':
                     ver = element.replace("-","")
-                    if ver.isdigit() and (int(element) >= min and int(element) <= max):
-                        return int(element)
+                    if ver.isdigit() and (int(element) >= min and int(element) <= max): return int(element)
                     else:
                         self.showMsg("Vous devez saisir un entier !", color = RED)
                         self.clear()
                 case 'str':
-                    if(len(element) >= nbreChar):
-                        return element
+                    if(len(element) >= nbreChar): return element
                     else:
                         self.showMsg(f"Vous devez entrer une chaîne d'au moins {nbreChar}(s) charactères !", color = RED)
                         self.clear()
-                        
-        
-        
-        
             
     def createUser(self,user:dict): 
         Profil=user.get("TypeP")
         match(Profil):
-            case "Admin":
-                return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             
     def test(self,message,text=""):
-        if(text!=""):
-            print(text)
+        if(text!=""): print(text)
         while True:
             element=input(message)
-            if(element!=""):
-                return element
+            if(element!=""): return element
                 
     def ver_date(self, message:str=""):
         print(message)
@@ -863,21 +818,19 @@ class DefaultUseCases:
                 self.ligne(nombre=50)
                 i += 1
             posFiliere = self.testSaisie("Entrez la position de la filière: ","int",1,len(all_filières))
-            if posFiliere != None:
-                break
+            if posFiliere != None:  break
             else :self.clear()
             
         while True:
             print("\n1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\n")
             pos = self.testSaisie("Entrez l'id du niveau de l'étudiant: ","int",1,5)
-            if niveau != None:
-                break
+            if niveau != None:  break
             else: self.clear()
         
         filiere = all_filières[posFiliere-1] # type: ignore
         niv = niveau[pos-1] #type:ignore
         classe_libelle = f"{niv}-{filiere['libelle']}"
-        
+    
         return classe_libelle
         
     def createOrSearchClasse(self, libelle:str) -> tuple | dict:
@@ -887,8 +840,7 @@ class DefaultUseCases:
         for classe in all_classes:
             if classe.get("libelle")[0:fin] == libelle:
                 cpt += 1
-                if classe.get("effectif") <= DEFAULT_EFFECTIF:
-                    return (classe["idC"], classe) 
+                if classe.get("effectif") <= DEFAULT_EFFECTIF: return (classe["idC"], classe) 
                 
         if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
         if cpt == 1:
@@ -913,8 +865,7 @@ class DefaultUseCases:
             self.ligne()
             self.menuUse(opération,fonctionnalités)
             choix = self.testSaisie(f"\n{push}"'Faites un choix: ',"int",1,len(fonctionnalités))
-            if choix != None:
-                return choix
+            if choix != None: return choix
             else: self.clear()
             
     def CurrentDate(self)->tuple:
@@ -935,69 +886,39 @@ class Classe:
         self.chargé = chargéClasse
 
     #Setters
-    def setId(self, newId) -> None:
-        self.idC = newId
+    def setId(self, newId) -> None: self.idC = newId
 
-    def setLibelle(self, newlibelle) -> None:
-        self.libelle = newlibelle
+    def setLibelle(self, newlibelle) -> None:  self.libelle = newlibelle
 
-    def setNiveau(self, newNiveau) -> None:
-        self.niveau = newNiveau
+    def setNiveau(self, newNiveau) -> None: self.niveau = newNiveau
 
-    def setEffectif(self, newEffectif) -> None:
-        self.effectif = newEffectif
+    def setEffectif(self, newEffectif) -> None: self.effectif = newEffectif
 
-    def setModule(self, newModule: str) -> None:
-        self.modules.append(newModule)
+    def setModule(self, newModule: str) -> None: self.modules.append(newModule)
 
-    def setProfesseur(self, newProfesseur: str) -> None:
-        self.professeurs.append(newProfesseur)
+    def setProfesseur(self, newProfesseur: str) -> None: self.professeurs.append(newProfesseur)
 
-    def setChargé(self, newChargé: str) -> None:
-        self.chargé = newChargé
+    def setChargé(self, newChargé: str) -> None: self.chargé = newChargé
 
-    def setEtudiant(self, newEtudiant: str) -> None:
-        self.étudiants.append(newEtudiant)
+    def setEtudiant(self, newEtudiant: str) -> None: self.étudiants.append(newEtudiant)
 
     #Getters
-    def getId(self) -> int:
-        return self.idC
+    def getId(self) -> int: return self.idC
 
-    def getLibelle(self) -> str:
-        return self.libelle
+    def getLibelle(self) -> str: return self.libelle
 
-    def getNiveau(self) -> str:
-        return self.niveau
+    def getNiveau(self) -> str: return self.niveau
 
-    def getEffectif(self) -> int:
-        return self.effectif
+    def getEffectif(self) -> int: return self.effectif
 
-    def getModule(self) -> list:
-        return self.modules
+    def getModule(self) -> list: return self.modules
 
-    def getProfesseur(self) -> list:
-        return self.professeurs
+    def getProfesseur(self) -> list: return self.professeurs
 
-    def getChargé(self) -> str:
-        return self.chargé 
+    def getChargé(self) -> str: return self.chargé 
 
-    def getEtudiant(self) -> list:
-        return self.étudiants
+    def getEtudiant(self) -> list: return self.étudiants
     
-class Application:
-    def __init__(self) -> None:
-        self.useCases = DefaultUseCases()
-
-        print(self.useCases.sql.getTables("ALTER TABLE responsableAdmin DROP COLUMN c;"))
-        # self.user_connect = self.useCases.accueil()
-        # self.user_active=self.useCases.createUser(self.user_connect)
-        
-        
-
-###########################################################
-################### Quelsques classes #####################
-###########################################################
-         
 ###########################################################
 ################## Class de l'etudiant ####################
 ###########################################################
@@ -1020,10 +941,8 @@ class Etudiant(User):
             print("3-Faire un commentaire") 
             print("4-Quitter") 
             choix=self.usecase.testSaisie("Faites un choix","int",1,4)
-            if not str(choix).isdigit():
-                self.usecase.clear()
-            else:
-                return choix     # type: ignore
+            if not str(choix).isdigit(): self.usecase.clear()
+            else: return choix     # type: ignore
     #Fonctionnalités de l'étudiant
     def setCommentaire(self, newCommentaire):
         self.commentaires.append(newCommentaire)
@@ -1038,30 +957,22 @@ class Etudiant(User):
             print('-'*TAILLE_SCREEN)
      
     #Setters
-    def setDateNaissance(self, newDateNaissance: str) -> None:
-        self.dateNaissance = newDateNaissance
+    def setDateNaissance(self, newDateNaissance: str) -> None: self.dateNaissance = newDateNaissance
         
-    def setNationnalité(self, newNationnalité: str) -> None:
-        self.nationnalité = newNationnalité
+    def setNationnalité(self, newNationnalité: str) -> None: self.nationnalité = newNationnalité
         
-    def setNote(self, newNote) -> None:
-        self.notes.append(newNote)
+    def setNote(self, newNote) -> None: self.notes.append(newNote)
         
-    def setClasse(self, newClasse) -> None:
-        self.classe = newClasse
+    def setClasse(self, newClasse) -> None: self.classe = newClasse
         
     #Getters
-    def getDateNaissance(self) -> str:
-        return self.dateNaissance
+    def getDateNaissance(self) -> str: return self.dateNaissance
         
-    def getNationnalité(self) -> str:
-        return self.nationnalité
+    def getNationnalité(self) -> str: return self.nationnalité
         
-    def getNote(self) -> list:
-        return self.notes
+    def getNote(self) -> list: return self.notes
 
-    def getClasse(self):
-        return self.classe
+    def getClasse(self): return self.classe
 ###########################################################
 ############### Class de l'administrateur #################
 class Filiere:
@@ -1071,24 +982,18 @@ class Filiere:
         self.classes = classes
     
     #Setters
-    def setId(self, newId:int) -> None:
-        self.id = newId
+    def setId(self, newId:int) -> None: self.id = newId
     
-    def setLibelle(self, newLibelle:str) -> None:
-        self.libelle = newLibelle
+    def setLibelle(self, newLibelle:str) -> None: self.libelle = newLibelle
     
-    def setClasse(self, newClasse:str) -> None:
-        self.classes.append(newClasse)
+    def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
         
     #Getters
-    def getId(self) -> int:
-        return self.id
+    def getId(self) -> int: return self.id
     
-    def getLibelle(self) -> str:
-        return self.libelle
+    def getLibelle(self) -> str: return self.libelle
     
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list: return self.classes
        
 ###########################################################
 #################### Class du module ######################
@@ -1102,30 +1007,22 @@ class Module:
         self.professeurs = professeurs
     
     #Setters
-    def setId(self, newId:int) -> None:
-        self.id = newId
+    def setId(self, newId:int) -> None: self.id = newId
     
-    def setLibelle(self, newLibelle:str) -> None:
-        self.libelle = newLibelle
+    def setLibelle(self, newLibelle:str) -> None: self.libelle = newLibelle
         
-    def setClasse(self, newClasse) -> None:
-        self.classes.append(newClasse)
+    def setClasse(self, newClasse) -> None: self.classes.append(newClasse)
     
-    def setProfesseur(self, newProfesseur) -> None:
-        self.professeurs.append(newProfesseur)
+    def setProfesseur(self, newProfesseur) -> None: self.professeurs.append(newProfesseur)
         
     #Getters
-    def getId(self) -> int:
-        return self.id
+    def getId(self) -> int: return self.id
     
-    def getLibelle(self) -> str:
-        return self.libelle
+    def getLibelle(self) -> str: return self.libelle
     
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list: return self.classes
 
-    def getProfesseurs(self) -> list:
-        return self.professeurs
+    def getProfesseurs(self) -> list: return self.professeurs
 ###########################################################
 #################### Class du niveau ######################
 ###########################################################
@@ -1136,24 +1033,18 @@ class Niveau:
         self.classes = classes
     
     #Setters
-    def setId(self, newId:int) -> None:
-        self.id = newId
+    def setId(self, newId:int) -> None: self.id = newId
     
-    def setLibelle(self, newLibelle:str) -> None:
-        self.libelle = newLibelle
+    def setLibelle(self, newLibelle:str) -> None: self.libelle = newLibelle
         
-    def setNiveau(self, newClasse:str) -> None:
-        self.classes.append(newClasse)
+    def setNiveau(self, newClasse:str) -> None: self.classes.append(newClasse)
         
     #Getters
-    def getId(self) -> int:
-        return self.id
+    def getId(self) -> int: return self.id
     
-    def getLibelle(self) -> str:
-        return self.libelle
+    def getLibelle(self) -> str: return self.libelle
     
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list: return self.classes
         
 ###########################################################
 ############### Class de l'administrateur #################
@@ -1164,18 +1055,14 @@ class Note:
         self.etudiant = etudiant
     
     #Setters
-    def setLibelle(self, newLibelle:str) -> None:
-        self.libelle = newLibelle
+    def setLibelle(self, newLibelle:str) -> None: self.libelle = newLibelle
         
-    def setEtudiant(self, newEtudiant:Etudiant) -> None:
-        self.etudiant = newEtudiant
+    def setEtudiant(self, newEtudiant:Etudiant) -> None: self.etudiant = newEtudiant
     
     #Getters
-    def getLibelle(self) -> str:
-        return self.libelle
+    def getLibelle(self) -> str: return self.libelle
         
-    def getEtudiant(self) -> Etudiant:
-        return self.etudiant   
+    def getEtudiant(self) -> Etudiant: return self.etudiant   
 
 ###########################################################
 ############### Class de l'administrateur #################
@@ -1193,17 +1080,13 @@ class Partenaire(User):
             print("2-Consuletr le dossier d'un etudiant") 
             print("3-Quitter") 
             choix=self.usecase.testSaisie("Faites un choix","int",1,3)
-            if not str(choix).isdigit():
-                self.usecase.clear()
-            else:
-                return choix      # type: ignore
+            if not str(choix).isdigit(): self.usecase.clear()
+            else: return choix      # type: ignore
     # Setters
-    def setEtudiant(self, newfichierEtudiant:str) -> None:
-        self.etudiants = newfichierEtudiant
-        
+    def setEtudiant(self, newfichierEtudiant:str) -> None:self.etudiants = newfichierEtudiant
+    
     # Getters
-    def getEtudiants(self) -> str:
-        return self.etudiants
+    def getEtudiants(self) -> str: return self.etudiants
         
 ###########################################################
 ################## Class du professeur ####################
@@ -1219,54 +1102,38 @@ class Professeur:
         self.classes = classes
     
     #Setters
-    def setId(self, newId:str) -> None:
-        self.matricule = newId
+    def setId(self, newId:str) -> None: self.matricule = newId
     
-    def setNom(self, newNom:str) -> None:
-        self.nom = newNom
+    def setNom(self, newNom:str) -> None: self.nom = newNom
         
-    def setPrénom(self, newPrénom:str) -> None:
-        self.prénom = newPrénom
+    def setPrénom(self, newPrénom:str) -> None: self.prénom = newPrénom
         
-    def setMail(self, newMail:str) -> None:
-        self.mail = newMail
+    def setMail(self, newMail:str) -> None: self.mail = newMail
         
-    def setTéléphone(self, newTéléphone:int) -> None:
-        self.téléphone = newTéléphone
+    def setTéléphone(self, newTéléphone:int) -> None: self.téléphone = newTéléphone
         
-    def setLogin(self, newLogin:str) -> None:
-        self.login = newLogin
+    def setLogin(self, newLogin:str) -> None: self.login = newLogin
         
-    def setPassword(self, newPassword:str) -> None:
-        self.password = newPassword
+    def setPassword(self, newPassword:str) -> None: self.password = newPassword
         
-    def setClasse(self, newClasse:str) -> None:
-        self.classes.append(newClasse)
+    def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
 
-    def setModule(self, newModule: Module) -> None:
-        self.modules.append(newModule)
+    def setModule(self, newModule: Module) -> None: self.modules.append(newModule)
         
     #Getters
-    def getId(self) -> str:
-        return self.matricule 
+    def getId(self) -> str:return self.matricule 
     
-    def getNom(self) -> str:
-        return self.nom    
+    def getNom(self) -> str:return self.nom    
     
-    def getPrénom(self) -> str:
-        return self.prénom 
+    def getPrénom(self) -> str:return self.prénom 
           
-    def getMail(self) -> str:
-        return self.mail    
+    def getMail(self) -> str:return self.mail    
      
-    def getTéléphone(self) -> int:
-        return self.téléphone 
+    def getTéléphone(self) -> int:return self.téléphone 
 
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list:return self.classes
 
-    def getModule(self) -> list:
-        return self.modules 
+    def getModule(self) -> list:return self.modules 
 
 ###########################################################
 ############### Class de la responsable admin##############
@@ -1368,22 +1235,21 @@ class ResponsableAdmin(User):
         self.sql.updateBase(changeCharge,"idC",idClasse,"Classes")
         
     # Setters
-    def setClasse(self, newClasse:str) -> None:
-        self.classes.append(newClasse)
+    def setClasse(self, newClasse:str) -> None:self.classes.append(newClasse)
         
-    def setclasse(self, newChargé: Chargé) -> None:
-        self.chargés.append(newChargé)
+    def setclasse(self, newChargé: Chargé) -> None:self.chargés.append(newChargé)
         
     # Getters     
-    def getClasse(self) -> list:
-        return self.classes
+    def getClasse(self) -> list: return self.classes
         
-    def getChargé(self) -> list:
-        return self.chargés
+    def getChargé(self) -> list: return self.chargés
                 
-                
+class Application:
+    def __init__(self) -> None:
+        self.useCases = DefaultUseCases()
+        self.user_connect = self.useCases.accueil()
+        self.user_active=self.useCases.createUser(self.user_connect)
                 
 if __name__ == "__main__":
     # Application()
     Admin()
-    pass
