@@ -37,14 +37,14 @@ POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isomet
 
 ADMIN_USECASES = {
     "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"],
-    "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable", "Retourner au menu général"],
-    "liste" : ['Lister les étudiants', 'Lister les chargé(e)s', 'Lister les responsables', "Retourner au menu général"],
+    "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable","Ajouter un partenaire", "Retourner au menu général"],
+    "liste" : ["Lister les étudiants", "Lister les chargé(e)s", "Lister les responsables","Lister les partenaires", "Retourner au menu général"],
     "edit": ["Profil"]
 }
 
 # s = sqlite3.connect(BASE_FILE)
 # c = s.cursor()
-# p = c.execute("DELETE FROM Etudiants WHERE Nom = 'ZERTY';")
+# p = c.execute("ALTER TABLE partenaires DROP id ")
 # s.commit()
 
 
@@ -60,7 +60,7 @@ class MySql:
             "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP"],
             "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
             "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes"],
-            "partenaires": ["Matricule", "libelle", "Mail", "Telephone", "Login", "Password", "TypeP"],
+            "partenaires": ["Id", "Libelle", "Mail", "Telephone", "Login", "Password", "TypeP"],
             "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP"]
         }
         
@@ -79,7 +79,7 @@ class MySql:
             "Filiere":"idF number, libelle text, classes text", 
             "Modules":"idM number, libelle text, classes text, professeurs text, notes text", 
             "Niveau":"idN number, libelle text, classes text", 
-            "partenaires":"Matricule text, libelle text, mail text, Telephone number, Login text, Password text, TypeP text", 
+            "partenaires":"id integer primary key autoincrement, libelle varchar(150), mail varchar(255), Telephone integer, Login varchar(255), Password varchar(150), TypeP varchar(150)", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
             "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text",
             "Classe":"idC number, Libelle text, Filiere text, niveau number, effectif number, chargé text, professeurs text, modules text, etudiants text"
@@ -98,7 +98,7 @@ class MySql:
         self.base.close()
 
     def updateBase(self,changements:str,key:str,value,table:str):
-        requete=f" UPDATE {table} SET {changements} WHERE {key}={value}" #L2 GRLS
+        requete=f"UPDATE {table} SET {changements} WHERE {key}={value}" #L2 GRLS
         self.curseur.execute(requete)
         self.base.commit()
         
@@ -272,32 +272,44 @@ class Admin(User):
                     while True:
                         match  self.usecase.controlMenu("Ajout d'un nouvel utilisateur", ADMIN_USECASES["add"]):
                             case 1:
+                                self.usecase.showMsg("Liste des étudiants", clear=False)
                                 self.ajoutEtudiant()
                                 break
                             case 2:
+                                self.usecase.showMsg("Liste des chargés")
                                 self.ajoutChargé()
                                 break
                             case 3:
+                                self.usecase.showMsg("Liste des responsables administratifs")
                                 self.ajoutRP()
                                 break
                             case 4:
+                                self.usecase.showMsg("Liste des partenaires")
+                                self.ajoutPartenaire()
+                                break
+                            case 5:
                                 break
                 case 2:
                     while True:
                         match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["liste"]):
                             case 1:
-                                self.listerEtudiant("Etudiants")
+                                self.lister("Etudiants")
                                 self.usecase.pause()
                                 pass
                             case 2:
-                                # self.ajoutChargé()
+                                self.lister("Chargés")
+                                self.usecase.pause()
                                 pass
                             case 3:
-                                # self.ajoutRP()
+                                self.lister("ResponsablesAdmin")
+                                self.usecase.pause()
                                 pass
                             case 4:
+                                self.lister("Partenaires")
+                                self.usecase.pause()
+                                pass
+                            case 5:
                                 break
-                    # self.ajoutEtudiant()
                     pass
                 case 3:
                     while True:
@@ -319,24 +331,58 @@ class Admin(User):
                     break
         pass
     
-    def listerEtudiant(self,table:str):
+    def lister(self, table:str):
         match table:
             case 'Etudiants':
                 attributs = self.usecase.sql.TABLES_USER["Etudiants"][:7]
                 attributs.append("Classe")
-                data = self.usecase.sql.select("Etudiants")
-                donnée = list()
-                for etu in data:
-                    i = 0
-                    user = list()
-                    for i in range(7):
-                        user.append(etu[i])
-                        i += 1 #[("L2-GLRS-A",)]
-                    user.append(self.usecase.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC = {etu[10]}")[0][0])
+                data = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC")
+            
+            case 'Chargés':
+                attributs = self.usecase.sql.TABLES_USER["Chargé"][:5]
+                attributs.append("Classes")
+                data = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, mail, Telephone FROM Chargé")
+                # chargéClasses =  # 
+                i = 0
+                for classe in self.usecase.sql.getTables("SELECT classes FROM Chargé"): #[('[1,2,3]',), ('[1,2,3]',), ('[1,2,3],')]]
+                    chargeClasses = "-"
+                    listeClasses =  self.usecase.listTrans(classe[0])
+                    if listeClasses != []:
+                        chargeClasses = ""
+                        for idC in listeClasses:
+                            print(f"SELECT libelle FROM Classe WHERE idC = {idC}")
+                            classe = self.usecase.sql.getTables(f"SELECT libelle FROM Classe WHERE idC = {idC}")
+                            chargeClasses += f"{classe[0][0]} "
+                    data[i] = list(data[i])
+                    data[i].append(chargeClasses)
+                    i += 1         
                     
-                    donnée.append(user) #type:ignore
-
-        print(tabulate(headers=attributs,tabular_data= donnée, tablefmt="double_outline"))#type:ignore
+            case 'Partenaires':
+                attributs = self.usecase.sql.TABLES_USER["partenaires"][:4]
+                data = self.usecase.sql.getTables(f"SELECT Id, Libelle, Mail, Telephone FROM partenaires")
+                
+            case 'ResponsablesAdmin':
+                attributs = self.usecase.sql.TABLES_USER["responsableAdmin"][:5]
+                data = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, mail, Telephone FROM responsableAdmin")
+            
+        print(tabulate(headers=attributs,tabular_data= data, tablefmt="double_outline"))#type:ignore
+        
+    def ajoutPartenaire(self):
+        date=self.usecase.CurrentDate()
+        part = dict()
+        part["Id"] = self.usecase.sql.getTables("SELECT count(Id) FROM partenaires;")[0][0] + 1
+        part["Libelle"] = self.usecase.testSaisie("Entrez libelle de l'établissement : ").title() # type: ignore
+        part["Mail"] = self.usecase.testSaisie("Entrez le mail de l'établissement : ") # type: ignore
+        part["Telephone"] = self.usecase.agree_number("Entrez le téléphone de l'établissement : ")
+        while True:
+            choix = self.usecase.question("Confirmer l'enregistrement")
+            if choix == "oui":
+                # self.usecase.sql.getTables(f"INSERT INTO partenaires(Libelle,Mail, Telephone, Login,PassWord,TypeP) VALUES({p[0]}, {p[1]}, {p[2]},{p[3]}, {p[4]}, {p[5]});")
+                self.usecase.sql.insert("partenaires",self.addNewPartenaire(part), self.usecase.sql.TABLES_USER["partenaires"])
+                self.usecase.sql = MySql()
+                self.usecase.showMsg("Partenaire ajouté avec success")  
+                break
+            break
         
     def ajoutRP(self):
         date=self.usecase.CurrentDate()
@@ -369,13 +415,7 @@ class Admin(User):
                 self.usecase.showMsg("Chargés ajouté avec succes")  
                 break
             break
-        
-        
-        
-        
-    def setUserMail(self, user:dict, domaine:str = "ism.edu",):
-        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').split(' ')[-1].lower()}@{domaine}.sn" # type: ignore
-    
+             
     def ajoutEtudiant(self):
         date=self.usecase.CurrentDate()
         etudiant = dict()
@@ -410,6 +450,9 @@ class Admin(User):
                 break
             break
         
+    def setUserMail(self, user:dict, domaine:str = "ism.edu",):
+        return  f"{user.get('Prénom').replace(' ', '-').lower()}.{user.get('Nom').split(' ')[-1].lower()}@{domaine}.sn" # type: ignore
+    
     def user(self, newEtu:dict):
         self.mail = self.setUserMail(newEtu)
         return (
@@ -451,21 +494,18 @@ class Admin(User):
             newResponsableAdmin.get("Telephone"),
             self.mail, #Login ResponsableAdmin
             DEFAULT_PASSWORD,
-            "ResponsableAdmin",
-            "[]",
-            "[]"
+            "ResponsableAdmin"
         )
         
     def addNewPartenaire(self, newPartenaire:dict):
         return (
-            newPartenaire.get("Matricule"),
+            newPartenaire.get("Id"),
             newPartenaire.get("Libelle"),
             newPartenaire.get("Mail"), #Mail Partenaire
             newPartenaire.get("Telephone"),
             newPartenaire.get("Mail"), #Login Partenaire
             DEFAULT_PASSWORD,
-            "Partenaire",
-            newPartenaire.get("Etudiants")
+            "Partenaire"
         )
     
 ###########################################################
@@ -672,8 +712,13 @@ class DefaultUseCases:
         return input(f"\n\t\t\t\tFaites votre choix : {SUCCESS}").lower()  
               
                       
-    def listTrans(self,liste: str) -> list:
-        return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-2].replace("'",'').split(',')]
+    def listTrans(self,liste: str, typeValue:str= 'entier') -> list: #type:ignore
+        match typeValue:
+            case 'entier':
+                return [int(i) for i in liste[1:-1].replace("'",'').split(',') if i.isdigit()]
+            case 'note':
+                return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-1].replace("'",'').split(',')]
+                
                     
     def quitter(self):
         self.clear()
@@ -867,7 +912,7 @@ class DefaultUseCases:
             self.ligne()
             self.ligne()
             self.menuUse(opération,fonctionnalités)
-            choix = self.testSaisie(f"\n{tab*3}"'Faites un choix: ',"int",1,len(fonctionnalités))
+            choix = self.testSaisie(f"\n{push}"'Faites un choix: ',"int",1,len(fonctionnalités))
             if choix != None:
                 return choix
             else: self.clear()

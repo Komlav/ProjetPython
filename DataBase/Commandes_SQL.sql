@@ -1,8 +1,12 @@
 -- Commande runner
-CREATE TABLE Felrock(
+CREATE TABLE partenaires(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom VARCHAR(50),
-    phone INTEGER
+    libelle VARCHAR(150),
+    mail VARCHAR(255),
+    telephone INTEGER,
+    login varchar(255),
+    password  varchar(150),
+    typeP varchar(150)
 );
 /*Ajout d'une nouvelle colonne dans la tablea*/
 ALTER TABLE Felrock

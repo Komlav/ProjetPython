@@ -16,8 +16,18 @@
 
 ### Tableau des caractères ascii utilisé
 documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-etendue-EOM.html)
-## Les acteurs et leurs fonctionnalités
 
+## Tableau des fichiers utiliser dans le projet et leur contenus...
+---
+| Fichier           | Commentaire                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `Database.sqlite` | Base de donnée de l'application qui regroupe l'ensemble des données                      |
+| `All_Classes.py`  | Fichier qui contients l'ensemble des classes et fonctionnalités              |
+| `App.py`          | Fichier principal de l'application                                           |
+
+
+## Les acteurs et leurs fonctionnalités
+---
 - **Un étudiant**
   - Se connecter
     - Voir ses notes
@@ -39,23 +49,26 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
   - Lister les étudiants
   - Consulter le dossier d'un étudiant
 
-- **Le responsable administratif**é00
+- **Le responsable administratif**
   - Se connecter
-  - Voir la moyenne des etudiants d'une classe/ de la classe
   - Lister tous les étudiants -> Filière, classe, niveau,nationnalité
   - Lister les classes
   - Lister les chargés
-  - Ajouter un prof
   - Lister les professeurs
+  - Ajouter et lister un prof
+  - Ajouter et lister un modules
+  - Ajouter et lister une filières
+  - Ajouter et lister un niveau
   - Attribuer des classes aux chargés
-  - Voir les statistiques des classes et de la filiere
+  - Voir la moyenne des etudiants d'une classe/ de la classe 
+  - Voir les statistiques des classes et de la filiere 
 
 - **Admin**
   - Se connecter
   - Lister et Ajouter un étudiant / les étudiants
   - Lister et Ajouter une chargé / les chargés
   - Lister et Ajouter un responsable administratif / responsable administratif
-
+  - Lister et Ajouter un partenaire
 ## Les entités
 
 - **User**
