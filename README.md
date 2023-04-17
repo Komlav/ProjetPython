@@ -24,6 +24,7 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
 | `Database.sqlite` | Base de donnée de l'application qui regroupe l'ensemble des données                      |
 | `All_Classes.py`  | Fichier qui contients l'ensemble des classes et fonctionnalités              |
 | `App.py`          | Fichier principal de l'application                                           |
+| `Conception du projet.mdj`| Fichier de conception de l'application                               |
 
 
 ## Les acteurs et leurs fonctionnalités
