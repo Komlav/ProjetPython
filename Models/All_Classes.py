@@ -1,15 +1,15 @@
-from random import randint
-import sqlite3
 import os
-from string import ascii_uppercase
-from time import sleep, time 
+import sqlite3
 from datetime import datetime
+from random import randint
+from string import ascii_uppercase
+from time import sleep, time
 
-from tabulate import tabulate ## python -m pip install tabulate
-
-from pyfiglet import figlet_format
-import colorama as color #pip install colorama : C'est un module qui permet de mettre la couleur 
+import colorama as color  # pip install colorama : C'est un module qui permet de mettre la couleur
 from colorama import init
+from pyfiglet import figlet_format
+from tabulate import tabulate  # # python -m pip install tabulate
+
 init(autoreset=True)
 
 #Couleur utilisées dans le code !
