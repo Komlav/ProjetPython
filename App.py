@@ -46,4 +46,4 @@ def listTrans(liste: str, typeValue:str= 'entier') -> list: #type:ignore
                 return [int(i) for i in liste[1:-1].replace("'",'').split(',') if i.isdigit()]
             case 'note':
                 return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-2].replace("'",'').split(',')]
-print(listTrans("[1,2,3]"))
+print(str(listTrans("[1,2,3]")).count('['))
