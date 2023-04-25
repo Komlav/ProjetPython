@@ -1,7 +1,9 @@
 -- Commande runner
-CREATE TABLE partenaires(
+DROP TABLE Felrock;
+CREATE TABLE Felrock(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     libelle VARCHAR(150),
+    prénom VARCHAR(250) UNIQUE NOT NULL ,
     mail VARCHAR(255),
     telephone INTEGER,
     login varchar(255),
@@ -9,8 +11,8 @@ CREATE TABLE partenaires(
     typeP varchar(150)
 );
 /*Ajout d'une nouvelle colonne dans la tablea*/
-ALTER TABLE Felrock
-ADD prénom VARCHAR(250);
+-- ALTER TABLE Felrock
+-- ADD prénom VARCHAR(250) UNIQUE NOT NULL  ;
 
 /*Renommez la colonne phone en telephone*/
 ALTER TABLE user

@@ -65,7 +65,7 @@ class MySql:
         
         self.TABLES_OTHERS = {
             "filiere": ["idF","libelle","classes"], 
-            "Modules": ["idM", "libelle", "classes", "professeurs", "notes"],
+            "Modules": ["idM", "libelle", "classes", "professeurs"],
             "Niveau": ["idN","libelle","classes"],
             "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
             "Classe": ["idC", 'libelle', 'effectif', 'chargé','filière', 'niveau', 'professeurs', 'modules', 'etudiants']
@@ -95,8 +95,8 @@ class MySql:
     def closeDB(self):
         self.base.close()
 
-    def updateBase(self,changements:str,key:str,value,table:str):
-        requete=f"UPDATE {table} SET {changements} WHERE {key}={value}" #L2 GRLS
+    def updateBase(self, table: str, changements: str, key: str, value):
+        requete=f'UPDATE {table} SET {changements} WHERE {key}="{value}"' #L2 GRLS
         self.curseur.execute(requete)
         self.base.commit()
                
@@ -114,8 +114,9 @@ class MySql:
 
     def insert(self,table:str, value:tuple, colonne:list):
         with self.base:
-            val = ','.join(['?']*len(colonne))
-            self.curseur.execute(f"INSERT INTO {table} VALUES ({val})",value)
+            val = ', '.join(['?']*len(colonne))
+            at = ", ".join(colonne)
+            self.curseur.execute(f"INSERT INTO {table}({at}) VALUES ({val})",value)
             self.base.commit()
     
     def select(self, table:str):
@@ -381,7 +382,7 @@ class Admin(User):
                     listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
                     listeMatricules.append(matricule)
                     changement=f"effectif={classe[1]['effectif'] + 1},etudiants=\"{str(listeMatricules)}\""
-                    self.usecase.sql.updateBase(changement,"idC",classe[0], "Classe")
+                    self.usecase.sql.updateBase("Classe", changement,"idC",classe[0])
                 elif type(classe) == dict: 
                     etudiant["IdClasse"] = classe["idC"]
                     classe["etudiants"] = f"{[matricule]}"
@@ -541,19 +542,19 @@ class DefaultUseCases:
                 data = self.sql.getTables(f"SELECT idC, Libelle, effectif, chargé FROM Classe")
                 
             case 'Modules':
-                attributs = self.sql.TABLES_OTHERS["Classe"][:1]
+                attributs = self.sql.TABLES_OTHERS["Classe"][:2]
                 data = self.sql.getTables(f"SELECT idM, libelle FROM Modules")
                 
             case 'Niveau':
-                attributs = self.sql.TABLES_OTHERS["Classe"][:1]
-                data = self.sql.getTables(f"SELECT idN, libelle FROM Modules")
+                attributs = ["Libelle"]
+                data = [[n] for n in NIVEAUX.values()]
                 
             case 'Filiere':
-                attributs = self.sql.TABLES_OTHERS["filiere"][:1]
+                attributs = self.sql.TABLES_OTHERS["filiere"][:2]
                 data = self.sql.getTables(f"SELECT idF, libelle FROM filiere")
                 
             case 'Professeurs':
-                attributs = self.sql.TABLES_OTHERS["professeurs"][:5]
+                attributs = self.sql.TABLES_OTHERS["professeurs"][:6]
                 data = self.sql.getTables(f"SELECT idP, Nom, Prenom, mail, Telephone, modules FROM professeurs")
                     
             case 'Partenaires':
@@ -565,7 +566,7 @@ class DefaultUseCases:
                 data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, mail, Telephone FROM responsableAdmin")
             
         if data != []:#type:ignore
-            print(f"{tabulate(headers=attributs,tabular_data= data, tablefmt='double_outline'):^{TAILLE_SCREEN}}")#type:ignore
+            print(tabulate(headers=attributs,tabular_data= data, tablefmt='double_outline'))#type:ignore
         else:
             self.showMsg("Vous n'avez pas de données !", clear=False)
            
@@ -860,7 +861,7 @@ class DefaultUseCases:
         if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
         if cpt == 1:
             changement=f"libelle={libelle} A"
-            self.sql.updateBase(changement,'libelle', libelle, "Classe")
+            self.sql.updateBase("Classe", changement,'libelle', libelle)
             self.sql.closeDB()
         
         return {
@@ -1156,10 +1157,18 @@ class Professeur:
 
 RP_USECASES = {
     "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"],
-    "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière", "Ajouter un niveau"],
+    "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière"],
     "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants"],
     "edit": ["Attribuer des classes aux chargés"],
     "more": ["Voir les statistiques", "Voir la moyenne des etudiants d'une classe"]
+}
+
+NIVEAUX = {
+    "L1": "Licence 1",
+    "L2": "Licence 2",
+    "L3": "Licence 3",
+    "M1": "Master 1",
+    "M2": "Master 2"
 }
 class ResponsableAdmin(User):
     # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
@@ -1182,27 +1191,73 @@ class ResponsableAdmin(User):
                         case 1:
                             self.usecase.showMsg("Ajout d'un professeur")
                             self.ajoutProf()
+                        case 2:
+                            self.usecase.showMsg("Ajout d'un modules")
+                            self.ajoutModule()
+                        case 3:
+                            self.usecase.showMsg("Ajout d'une filière")
+                            self.ajoutFiliere()
                 case 2:
+                    match self.usecase.controlMenu("Menu général", RP_USECASES["liste"]):
+                        case 1:
+                            self.usecase.showMsg("Liste des professeurs")
+                            self.usecase.lister("Professeurs")
+                            self.usecase.pause()
+                        case 2:
+                            self.usecase.showMsg("Liste des modules")
+                            self.usecase.lister("Modules")
+                            self.usecase.pause()
+                        
+                        case 3:
+                            self.usecase.showMsg("Liste des filière")
+                            self.usecase.lister("Filiere")
+                            self.usecase.pause()
+                        case 4:
+                            self.usecase.showMsg("Liste des Chargés")
+                            self.usecase.lister("Chargés")
+                            self.usecase.pause()
+                        case 5:
+                            self.usecase.showMsg("Liste des niveaux")
+                            self.usecase.lister("Niveau")
+                            self.usecase.pause()
+                        case 6:
+                            self.usecase.showMsg("Liste des etudiants")
+                            self.usecase.lister("Etudiants")
+                            self.usecase.pause()
                     pass
                 
                 
     #Fonctionnalité de la responsable
+    def ajoutFiliere(self):
+        filiere = dict()
+        filiere["IdF"] = self.usecase.sql.getTables("SELECT count(idF) FROM filiere")[0][0] + 1
+        filiere["Libelle"] = self.usecase.testSaisie("Entrez le libelle de la filiere : ").upper() # type: ignore
+        while True:
+            choix = self.usecase.question("Confirmer l'enregistrement")
+            if choix == "oui":
+                if self.checkFiliere(filiere["Libelle"]) == []: 
+                    self.usecase.sql.insert("filiere",self.addNewFiliere(filiere), self.usecase.sql.TABLES_OTHERS["filiere"])
+                    self.usecase.sql = MySql()
+                    self.usecase.showMsg("Filiere ajouté avec success")  
+                    break
+                else:
+                    self.usecase.showMsg("La filiere existe déjà dans la base")    
+            break
+        
     def ajoutModule(self):
         mod = dict()
         mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
         mod["Libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
-        mod["Classes"] = []
-        mod["Profs"] = [self.usecase]
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
-                if self.checkmod(mod["Telephone"]) == []: 
-                    self.usecase.sql.insert("modesseurs",self.addNewmod(mod), self.usecase.sql.TABLES_OTHERS["professeurs"])
+                if self.checkMod(mod["Libelle"]) == []: 
+                    self.usecase.sql.insert("Modules",self.addNewMod(mod), self.usecase.sql.TABLES_OTHERS["Modules"])
                     self.usecase.sql = MySql()
-                    self.usecase.showMsg("Professeur ajouté avec success")  
+                    self.usecase.showMsg("Modules ajouté avec success")  
                     break
                 else:
-                    self.usecase.showMsg("Le prof existe déjà dans la base")    
+                    self.usecase.showMsg("Le modules existe déjà dans la base")    
             break
     
     def ajoutProf(self):
@@ -1219,7 +1274,7 @@ class ResponsableAdmin(User):
             self.usecase.lister("Classes")
             resul = self.usecase.sql.getTables("SELECT count(idC) FROM Classe")[0][0]
             if resul != 0:
-                idC = self.usecase.testSaisie("Entrez l'id de la classe à attrivuber au prof : ", 'int', 1, resul) 
+                idC = self.usecase.testSaisie("Entrez l'id de la classe à attribuer au prof : ", 'int', 1, resul) 
                 prof["Classes"].append(idC)
                 if self.usecase.question("Voulez vous ajouter une autre classe ?") != "oui":
                     break
@@ -1239,6 +1294,12 @@ class ResponsableAdmin(User):
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
+                for idM in prof['Modules']:
+                    listeProfs = self.usecase.listTrans(self.usecase.sql.getTables(f"SELECT professeurs FROM Modules WHERE idM = {idM}")[0][0])
+                    listeProfs.append(prof['IdP'])
+                    print(f"professeurs = {str(listeProfs)}", "idM", idM)
+                    self.usecase.sql.updateBase("Modules", f"professeurs = '{str(listeProfs)}'", "idM", idM)
+                    
                 if self.checkProf(prof["Telephone"]) == []: 
                     self.usecase.sql.insert("professeurs",self.addNewProf(prof), self.usecase.sql.TABLES_OTHERS["professeurs"])
                     self.usecase.sql = MySql()
@@ -1258,6 +1319,21 @@ class ResponsableAdmin(User):
             str(newProf.get("Classes")),
             str(newProf.get("Modules"))
         )
+        
+    def addNewMod(self, newMod: dict):
+        return (
+            newMod.get("IdM"),
+            newMod.get("Libelle"),
+            "[]",
+            "[]"
+        )
+    
+    def addNewFiliere(self, newFiliere: dict):
+        return (
+            newFiliere.get("IdF"),
+            newFiliere.get("Libelle"),
+            "[]"
+        )
     
     def ajouterComponent(self, libelle:str, componentData:list):
         for component in componentData:
@@ -1267,6 +1343,12 @@ class ResponsableAdmin(User):
 
     def checkProf(self, téléphone: int) -> list:
         return self.usecase.sql.getTables(f"SELECT * FROM professeurs WHERE Telephone = {téléphone}")
+    
+    def checkMod(self, libelle: str) -> list:
+        return self.usecase.sql.getTables(f'SELECT * FROM Modules WHERE libelle = "{libelle}"')
+    
+    def checkFiliere(self, libelle: str) -> list:
+        return self.usecase.sql.getTables(f'SELECT * FROM filiere WHERE libelle = "{libelle}"')
     
     def listerComponent(self, data:list):
         print("="*TAILLE_SCREEN)
@@ -1322,15 +1404,17 @@ class ResponsableAdmin(User):
         newValue=str(ClassesChargé.append(idClasse))   #type:ignore 
         changement=f"Classes={newValue}"
         changeCharge=f"Chargé={matricule}"
-        self.sql.updateBase(changement,"Matricule",matricule,"Chargés")
-        self.sql.updateBase(changeCharge,"idC",idClasse,"Classes")                
+        self.sql.updateBase("Chargés",changement,"Matricule",matricule)
+        self.sql.updateBase("Classes",changeCharge,"idC",idClasse)                
+
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
+        attributs = self.useCases.sql.TABLES_USER["partenaires"]
         # self.user_connect = self.useCases.accueil()
         # self.user_active=self.useCases.createUser(self.user_connect)
         # print(self.useCases.sql.getTables("SELECT count(Matricule) FROM Chargé WHERE Nom = 'sarr' "))
-        self.useCases.question("quest ce que tu veux boufoons")     
+        
 if __name__ == "__main__":
     # Application()
     # Admin()

@@ -59,7 +59,6 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
   - Ajouter et lister un prof
   - Ajouter et lister un modules
   - Ajouter et lister une filières
-  - Ajouter et lister un niveau
   - Attribuer des classes aux chargés
   - Voir la moyenne des etudiants d'une classe/ de la classe 
   - Voir les statistiques des classes et de la filiere 
