@@ -1,3 +1,4 @@
+from email.policy import default
 import os
 import sqlite3
 from datetime import datetime
@@ -511,18 +512,20 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
     
-    def lister(self, table:str):
+    def lister(self, table:str, filtre: str = "Tous", value: str = ""):
         match table:
             case 'Etudiants':
                 attributs = self.sql.TABLES_USER["Etudiants"][:7]
                 attributs.append("Classe")
-                data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC")
+                    
+                if filtre == "Tous":  data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC")
+                elif filtre == "Nationnalité": data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC WHERE Etudiants.Nationnalité = '{value}'")
+                else: data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC WHERE Classe.{filtre} = '{value}'") 
             
             case 'Chargés':
                 attributs = self.sql.TABLES_USER["Chargé"][:5]
                 attributs.append("Classes")
                 data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, mail, Telephone FROM Chargé")
-                # chargéClasses =  # 
                 i = 0
                 for classe in self.sql.getTables("SELECT classes FROM Chargé"): #[('[1,2,3]',), ('[1,2,3]',), ('[1,2,3],')]]
                     chargeClasses = "-"
@@ -530,7 +533,6 @@ class DefaultUseCases:
                     if listeClasses != []:
                         chargeClasses = ""
                         for idC in listeClasses:
-                            print(f"SELECT libelle FROM Classe WHERE idC = {idC}")
                             classe = self.sql.getTables(f"SELECT libelle FROM Classe WHERE idC = {idC}")
                             chargeClasses += f"{classe[0][0]} "
                     data[i] = list(data[i])
@@ -576,7 +578,7 @@ class DefaultUseCases:
         self.ligne()
         self.opération(titre)
     
-    def opération(self,title:str): self.showMsg(title,clear=False)
+    def opération(self,title:str): self.showMsg(title,clear=False, wait=False)
     
     def menuUse(self,titre, fonctionnalités:list, Fermer=True):
         self.clear()
@@ -713,7 +715,8 @@ class DefaultUseCases:
                               
     def listTrans(self,liste: str, typeValue:str= 'entier') -> list: #type:ignore
         match typeValue:
-            case 'entier':  return [int(i) for i in liste[1:-1].replace("'",'').split(',') if i.isdigit()]
+            case 'entier': return [int(i) for i in liste[1:-1].replace("'","").split(',') if i.replace(" ","").isdigit()]
+            case 'chaine':  return [i for i in liste[1:-1].replace("'",'').split(',')]
             case 'note': return [float(i) if i.isdigit() or i.count('.') == 1 else i for i in liste[1:-1].replace("'",'').split(',')]
                                  
     def quitter(self):
@@ -1156,11 +1159,11 @@ class Professeur:
 ###########################################################
 
 RP_USECASES = {
-    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"],
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information","Plus", "Se déconnecter"],
     "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière"],
-    "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants"],
-    "edit": ["Attribuer des classes aux chargés"],
-    "more": ["Voir les statistiques", "Voir la moyenne des etudiants d'une classe"]
+    "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants", "Menu général"],
+    "more": ["Attribuer des classes aux chargés","Voir les statistiques", "Voir la moyenne des etudiants d'une classe", "Menu general"],
+    "filtre": ["Tous","Filiere", "Classe", "Niveau", "Nationnalité"]
 }
 
 NIVEAUX = {
@@ -1189,45 +1192,142 @@ class ResponsableAdmin(User):
                     # print(tabulate(headers=RP_USECASES["liste"], tabular_data=[[1,2,3,4,5,6]], tablefmt='double_outline', colalign="center", stralign="center", numalign='center'))
                     match self.usecase.controlMenu("Menu général", RP_USECASES["add"]):
                         case 1:
-                            self.usecase.showMsg("Ajout d'un professeur")
+                            self.usecase.showMsg("Ajout d'un professeur",wait=False)
                             self.ajoutProf()
                         case 2:
-                            self.usecase.showMsg("Ajout d'un modules")
+                            self.usecase.showMsg("Ajout d'un modules",wait=False)
                             self.ajoutModule()
                         case 3:
-                            self.usecase.showMsg("Ajout d'une filière")
+                            self.usecase.showMsg("Ajout d'une filière",wait=False)
                             self.ajoutFiliere()
                 case 2:
                     match self.usecase.controlMenu("Menu général", RP_USECASES["liste"]):
                         case 1:
-                            self.usecase.showMsg("Liste des professeurs")
+                            self.usecase.showMsg("Liste des professeurs",wait=False)
                             self.usecase.lister("Professeurs")
                             self.usecase.pause()
                         case 2:
-                            self.usecase.showMsg("Liste des modules")
+                            self.usecase.showMsg("Liste des modules",wait=False)
                             self.usecase.lister("Modules")
                             self.usecase.pause()
                         
                         case 3:
-                            self.usecase.showMsg("Liste des filière")
+                            self.usecase.showMsg("Liste des filière",wait=False)
                             self.usecase.lister("Filiere")
                             self.usecase.pause()
                         case 4:
-                            self.usecase.showMsg("Liste des Chargés")
+                            self.usecase.showMsg("Liste des Chargés",wait=False)
                             self.usecase.lister("Chargés")
                             self.usecase.pause()
                         case 5:
-                            self.usecase.showMsg("Liste des niveaux")
+                            self.usecase.showMsg("Liste des niveaux",wait=False)
                             self.usecase.lister("Niveau")
                             self.usecase.pause()
                         case 6:
-                            self.usecase.showMsg("Liste des etudiants")
-                            self.usecase.lister("Etudiants")
-                            self.usecase.pause()
-                    pass
+                            self.filtrer()
+                            pass
+                        case 7: pass
+                case 4:
+                    match self.usecase.controlMenu("Menu général", RP_USECASES["more"]):
+                        case 1:
+                            self.setChargeClasse()
+                        case 4:
+                            pass
                 
                 
     #Fonctionnalité de la responsable
+    def filtrer(self) :
+        match self.usecase.controlMenu("Menu général", RP_USECASES["filtre"]):#type:ignore
+            case 1:
+                filtre, valeur = "Tous", ""
+                pass
+            case 2:
+                filtre = "Filiere"
+                while True:
+                    self.usecase.showMsg("Liste des filière",wait=False)
+                    self.usecase.lister("Filiere")
+                    filiere = (self.usecase.testSaisie("Entrez le libelle de la filiere : ")).upper() # type: ignore
+                    if (filiere,) in self.usecase.sql.getTables("SELECT libelle FROM filiere"):#[(""),("")]
+                        valeur = filiere
+                        break
+            case 3:
+                filtre = "Libelle"
+                while True:
+                    self.usecase.showMsg("Liste des Classes",wait=False)
+                    self.usecase.lister("Classes")
+                    classe = self.usecase.testSaisie("Entrez le libelle de la classe : ")
+                    if (classe,) in self.usecase.sql.getTables("SELECT Libelle FROM Classe"):#[("",),("")]
+                        valeur = classe
+                        break
+            case 4:
+                filtre = "Niveau"
+                while True:
+                    self.usecase.showMsg("Liste des niveaux",wait=False)
+                    self.usecase.lister("Niveau")
+                    niveau = self.usecase.testSaisie("Entrez le libelle du niveau : ")
+                    if niveau in NIVEAUX.values():
+                        valeur = str(niveau)[0]+ str(niveau)[-1]
+                        break
+            case 5:
+                filtre = "Nationnalité"
+                allNat = set(self.usecase.sql.getTables("SELECT Nationnalité FROM Etudiants"))
+                while True:
+                    nat = [[i[0]] for i in allNat ]
+                    self.usecase.showMsg("Liste des nationnalités",wait=False)#[("Togolaise")]
+                    print(tabulate(headers=["Nationnalité"], tabular_data=nat))
+                    niveau = self.usecase.testSaisie("Entrez le libelle du niveau : ")
+                    if [niveau] in nat:
+                        valeur = niveau
+                        break
+        
+        self.usecase.showMsg("Liste des etudiants",wait=False)
+        self.usecase.lister("Etudiants",filtre, valeur)#type:ignore
+        self.usecase.pause()
+        
+    def setChargeClasse(self):
+        listeClasse = list()
+        while True:
+            self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+            self.usecase.lister("Chargés")
+            matChargé = self.usecase.testSaisie("Entrez le matricule du chargé : ")
+            chargé = self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = '{matChargé}' ") #[(Matricule, nom, prenom),]chargé[0][0]
+            if chargé != []:
+                break
+            else:
+                self.usecase.showMsg("Le matricule du chargé le correspond pas !", clear=True)
+        
+        while True:
+            self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+            self.usecase.lister("Classes")
+            idClasse = self.usecase.testSaisie("Entrez l'id de la classe : ", 'int',min=1, max=1000)
+            classe = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE idC = {idClasse} ") #[(informations_chargé),]
+            if classe != []:
+                listeClasse.append(idClasse)
+                if self.usecase.question("Voulez vous ajouter une autre classe") == 'oui':
+                    continue
+                else: break
+            else:
+                self.usecase.showMsg("L'id de la classe ne correspond pas !", clear=True)
+        self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+        if self.usecase.question("Voulez vous enregistrer les modifications") == 'oui':
+            chargéClasses = self.usecase.listTrans(chargé[0][8])
+            classeAyChargé = list()            
+            for idC in listeClasse:
+                classe = self.usecase.sql.getTables(f"SELECT libelle, chargé FROM Classe WHERE idC = {idC}")
+                if classe[0][1]  == "":
+                    if idC not in chargéClasses:
+                        chargéClasses.append(idC)
+                        self.usecase.sql.updateBase("Classe", f"chargé = '{matChargé}'", "idC", idC)
+                else:
+                    classeAyChargé.append(classe[0][0])
+                    
+            if len(listeClasse) != len(chargéClasses):
+                classes = ", ".join(classeAyChargé)
+                self.usecase.showMsg(f"Les classes : {classes} ont déjà un chargé(e) !", clear=False, wait=False)
+                self.usecase.pause()
+            self.usecase.sql.updateBase("Chargé", f"classes = '{str(chargéClasses)}' ", "Matricule", matChargé)
+            self.usecase.showMsg(f"La liste des classes a bien été attribuer à {chargé[0][1]}")
+        
     def ajoutFiliere(self):
         filiere = dict()
         filiere["IdF"] = self.usecase.sql.getTables("SELECT count(idF) FROM filiere")[0][0] + 1
