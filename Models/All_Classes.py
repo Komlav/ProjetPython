@@ -43,6 +43,14 @@ ADMIN_USECASES = {
     "edit": ["Profil"]
 }
 
+CHARGE_USECASE={
+    "main":["Lister un profil","Voir les notes","Modifier une note","Commentaire"],
+    "Liste":["Lister les etudiants par Classe","Lister les professeurs"],
+    "notes":["Notes d'une Classe","Notes d'un etudiant"],
+    "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant"],
+    "commentaire":["Faire un commentaire","Voir les commentaires"]
+}
+
 # s = sqlite3.connect(BASE_FILE)
 # c = s.cursor()
 # p = c.execute("ALTER TABLE Modules DROP notes ")
@@ -457,11 +465,20 @@ class Admin(User):
 #################### Class du chargé ######################
 ###########################################################
 class Chargé(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, classes:list = [], commentaires:list = []) -> None:
-        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-        self.classes = classes #les ids des classes
-        self.commentaires = commentaires
+    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, classes:list = [], commentaires:list = []) -> None:
+    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+    #     self.classes = classes #les ids des classes
+    #     self.commentaires = commentaires
+    #     self.usecase=DefaultUseCases()
+    #     self.classeChargé=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
+    def __init__(self) -> None:
+        self.classes = [1,3,5,8] #les ids des classes
+        self.matricule = "ISM2023/staff2-0416"
         self.usecase=DefaultUseCases()
+        self.classeChargé=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
+        self.traitement()
+    
+    
         
     def makeCommentaire(self,matriculeEtu:int, newCommentaire:str, data:list):
         for etudiant in data:
@@ -481,26 +498,49 @@ class Chargé(User):
             print(f"{com.get('idClasse'):<20}{com.get('idEtu'):<20}{com.get('Commentaire')}")
             print('-'*TAILLE_SCREEN)
     
-    def MenuCharge(self) -> int|None:
-        retour=1
-        while(retour==1):
-            print("1-Lister les Etudiants d'une classe") 
-            print("2-Voir les notes des etudiants d'une classe") 
-            print("3-Voir les notes d'un etudiant") 
-            print("4-Modifier la note d'un etudiant") 
-            print("5-Modifier les notes d'une classe") 
-            print("6-Voir les commentaires") 
-            print("7-Faire un commentaire") 
-            print("8-Quitter") 
-            choix=self.usecase.testSaisie("Faites un choix","int",1,8)
-            if not str(choix).isdigit(): self.usecase.clear()
-            else: return choix  # type: ignore
+    
 
     #Setters
     def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
         
     # Getters
     def getClasse(self) -> list: return self.classes
+    
+    def traitement(self):
+        while True:
+            match self.usecase.controlMenu("Menu General",CHARGE_USECASE["main"]):
+                case 1:
+                    self.usecase.showMsg("Liste des Classes")
+                    self.listeEtudiant()
+                case 2:
+                    self.usecase.showMsg("Liste des professeurs")
+                    self.usecase.lister("Professeurs")
+            
+            
+    def listeEtudiant(self)->None:
+        while True:
+            # print(tabulate(headers=attributs,tabular_data= classeChargé, tablefmt='double_outline'))
+            libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ")
+            for classe in self.classeChargé:
+                if(classe[1]==libelle):
+                    classeEtu=list()
+                    if(self.usecase.listTrans(classe[8],"chaine")!=[]):
+                        for matricule in self.usecase.listTrans(classe[8],"chaine"):
+                            etudiant=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone FROM Etudiants Where Matricule='{matricule}' ")
+                            classeEtu.append(etudiant[0])
+                    break
+                
+            if(classeEtu!=[]):#type:ignore
+                break
+            
+        attributs=self.usecase.sql.TABLES_USER["Etudiants"][:7]
+        print(tabulate(headers=attributs,tabular_data=classeEtu, tablefmt='double_outline')) #type:ignore
+        self.usecase.pause()
+    
+                        
+
+        
+        
     
 ###########################################################
 ################### Quelsques classes #####################
@@ -1518,4 +1558,5 @@ class Application:
 if __name__ == "__main__":
     # Application()
     # Admin()
-    ResponsableAdmin()
+    # ResponsableAdmin()
+    Chargé()

@@ -1,10 +1,6 @@
 
-print("Moyenne de etudiant de la classe")
-Mariam = 17.50
-Rock = 17
-print("Moyenne de MAriam", Mariam)
-print("Moyenne de Rock", Rock)
-
-print("Moyenne de la classe")
-moy = (17.50 + 17)/2
-print(moy)
+from tabulate import tabulate
+l=list()
+for i in range(10):
+    l.append((i,i))
+print(tabulate(headers=["1","2"],tabular_data=l))
