@@ -44,10 +44,11 @@ ADMIN_USECASES = {
 }
 
 CHARGE_USECASE={
-    "main":["Lister un profil","Voir les notes","Modifier une note","Commentaire"],
+    "main":["Lister un profil","Voir les notes","Modifier une note","Initier Les notes d'un module","Commentaire"],
     "Liste":["Lister les etudiants par Classe","Lister les professeurs"],
     "notes":["Notes d'une Classe","Notes d'un etudiant"],
     "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant"],
+    "insert":["Pour une classe","Pour un etudiant"],
     "commentaire":["Faire un commentaire","Voir les commentaires"]
 }
 
@@ -510,16 +511,55 @@ class Chargé(User):
         while True:
             match self.usecase.controlMenu("Menu General",CHARGE_USECASE["main"]):
                 case 1:
-                    self.usecase.showMsg("Liste des Classes")
-                    self.listeEtudiant()
+                    match self.usecase.controlMenu("Menu Liste",CHARGE_USECASE["Liste"]):
+                        case 1:
+                            self.usecase.showMsg("Liste des etudiants de la Classe",wait=False)
+                            self.listeEtudiant()
+                        case 2:
+                            self.usecase.showMsg("Liste des professeurs",wait=False)
+                            self.usecase.lister("Professeurs")
+                            self.usecase.pause()
                 case 2:
-                    self.usecase.showMsg("Liste des professeurs")
-                    self.usecase.lister("Professeurs")
-            
-            
+                    match self.usecase.controlMenu("Menu Notes",CHARGE_USECASE["notes"]):
+                        case 1:
+                            self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
+                            self.showNotes()
+                            pass
+                        case 2:
+                            self.usecase.showMsg("Notes de l'etudiant",wait=False)
+                            self.showNotesEtu()
+                case 3:
+                    match self.usecase.controlMenu("Menu Modification Notes",CHARGE_USECASE["edit"]):
+                        case 1:
+                            self.usecase.showMsg("Modifier la note d'une classe",wait=False)
+                            self.modifNotes()
+                        case 2:
+                            self.usecase.showMsg("Modifier la note d'un etudiant",wait=False)
+                            self.modifNoteEtu()
+                case 4:
+                    match self.usecase.controlMenu("Menu initialisation Notes",CHARGE_USECASE["insert"]):
+                        case 1:
+                            self.usecase.showMsg("initialisation de notes pour une classe",wait=False)
+                            self.InitNotesClasse()
+                        case 2:
+                            self.usecase.showMsg("initialisation de notes pour un etudiant",wait=False)
+                            self.InitNotesMod()
+                case 5:
+                    match self.usecase.controlMenu("Menu Commentaire",CHARGE_USECASE["commentaire"]):
+                        case 1:
+                            self.usecase.showMsg("Faire un Commentaire",wait=False)
+                            self.DoCommentaire()
+                            
+                            pass
+                        case 2:
+                            self.usecase.showMsg("Voir les Commentaires")
+                            pass
+                    
     def listeEtudiant(self)->None:
         while True:
-            # print(tabulate(headers=attributs,tabular_data= classeChargé, tablefmt='double_outline'))
+            att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
+            data = self.usecase.sql.getTables(f"SELECT idC, libelle FROM Classe where chargé='{self.matricule}' ")
+            print(tabulate(headers=att,tabular_data= data, tablefmt='double_outline'))
             libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ")
             for classe in self.classeChargé:
                 if(classe[1]==libelle):
@@ -527,7 +567,9 @@ class Chargé(User):
                     if(self.usecase.listTrans(classe[8],"chaine")!=[]):
                         for matricule in self.usecase.listTrans(classe[8],"chaine"):
                             etudiant=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone FROM Etudiants Where Matricule='{matricule}' ")
-                            classeEtu.append(etudiant[0])
+                            if(etudiant!=[]):
+                                classeEtu.append(etudiant[0])
+                            
                     break
                 
             if(classeEtu!=[]):#type:ignore
@@ -537,6 +579,168 @@ class Chargé(User):
         print(tabulate(headers=attributs,tabular_data=classeEtu, tablefmt='double_outline')) #type:ignore
         self.usecase.pause()
     
+    def showNotes(self)->None:
+        while True:
+            att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
+            data = self.usecase.sql.getTables(f"SELECT idC, libelle FROM Classe where chargé='{self.matricule}' ")
+            print(tabulate(headers=att,tabular_data= data, tablefmt='double_outline'))
+            libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ")
+            for classe in self.classeChargé:
+                listEtu=list()
+                if(classe[1]==libelle):
+                    if(self.usecase.listTrans(classe[8],"chaine")!=[]):
+                        listEtu=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes FROM Etudiants WHERE IdClasse='{classe[0]}' ")
+                    break
+            break
+        
+        attributs=self.usecase.sql.TABLES_USER["Etudiants"][:3]
+        note=self.usecase.sql.TABLES_USER["Etudiants"][11]
+        attributs.append(note)
+        print(tabulate(headers=attributs,tabular_data= listEtu, tablefmt='double_outline'))  #type:ignore
+        self.usecase.pause()
+        
+    def InitNotesMod(self)->None:
+        while True: 
+            module = self.usecase.testSaisie("Entrez le libelle du module : ")
+            noteEvaluation = self.usecase.testSaisie("Entrez la note d'evaluation : ","int",0,20)
+            noteExam = self.usecase.testSaisie("Entrez la note d'examen : ","int",0,20)
+            matricule = self.usecase.testSaisie("Entrez le matricule de l'etudiant' : ")
+            notes=self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{matricule}' ")
+            noteList=self.usecase.listTrans(notes[0][0])
+            dicoList=self.usecase.convertion(noteList)
+            dicoList[f"{module}"]=list()
+            dicoList[f"{module}"].append(noteEvaluation)
+            dicoList[f"{module}"].append(noteExam)
+            print(self.usecase.dicoTrans(dicoList))
+            changement=f'Notes="{self.usecase.dicoTrans(dicoList)}" '
+            self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            if self.usecase.question("Voulez vous ajouter les notes d'un autre module") == 'oui':
+                continue
+            else: break
+            
+    def InitNotesClasse(self)->None:
+        while True:
+            libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ")
+            module = self.usecase.testSaisie("Entrez le libelle du module : ")
+            classe=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE Libelle='{libelle}' ")
+            etudiants=self.usecase.listTrans(classe[0][8],"chaine")
+            for etu in etudiants:
+                noteEvaluation = self.usecase.testSaisie("Entrez la note d'evaluation : ","int",0,20)
+                noteExam = self.usecase.testSaisie("Entrez la note d'examen : ","int",0,20)
+                notes=self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{etu}' ")
+                print(notes[0][0])
+                noteList=self.usecase.listTrans(notes[0][0])
+                dicoList=self.usecase.convertion(noteList)
+                dicoList[f"{module}"]=list()
+                dicoList[f"{module}"].append(noteEvaluation)
+                dicoList[f"{module}"].append(noteExam)
+                print(self.usecase.dicoTrans(dicoList))
+                changement=f'Notes="{self.usecase.dicoTrans(dicoList)}" '
+                self.usecase.sql.updateBase("Etudiants",changement,"Matricule",etu[0])
+            if self.usecase.question("Voulez vous ajouter les notes d'un autre module") == 'oui':
+                continue
+            else: break
+        
+    def showNotesEtu(self)->None:
+        while True:
+            matEtu=self.usecase.testSaisie("Entrez le matricule de l'etudiant : ")
+            listEtu=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes FROM Etudiants ")
+            for etu in listEtu:
+                if(matEtu==etu[0]):
+                    attributs=["Module","Note Evalution","Note Examen"]
+                    modules=self.usecase.getListe(etu[3])
+                    print(f"Etudiant: {etu[1]} {etu[2]}")
+                    print(tabulate(headers=attributs,tabular_data=modules, tablefmt='double_outline'))  #type:ignore
+                    self.usecase.pause()
+                    break
+            break
+                    
+    def modifNoteEtu(self)->None:
+        while True:
+            matricule=self.usecase.testSaisie("Entrez le matricule de l'etudiant : ")
+            module=self.usecase.testSaisie("Entrer le libelle du module: ")
+            typeNote=self.usecase.testSaisie("Enter le type de note à modifier [Evaluation|Examen]: ")
+            newNote=self.usecase.testSaisie("Entrez la nouvelle note: ","int",0,20)    
+            notes=self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{matricule}' ")
+            listNotes=self.usecase.getListe(notes[0][0])
+            for liste in listNotes:
+                if(liste[0]==module.title()): # type: ignore
+                    if(typeNote.lower()=="evaluation"):liste[1]=newNote #type:ignore
+                    else:liste[2]=newNote
+            dico=dict()
+            for i in listNotes:
+                dico[f"{i[0]}"]=list()
+                dico[f"{i[0]}"].append(i[1])
+                dico[f"{i[0]}"].append(i[2])
+            changement=f'Notes="{self.usecase.dicoTrans(dico)}" '
+            print(changement)
+            self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            self.usecase.pause()  
+            if self.usecase.question("Voulez vous modifier une autre note") == 'oui':
+                continue
+            else: break  
+            
+    def modifNotes(self)->None:
+        att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
+        data = self.usecase.sql.getTables(f"SELECT idC, libelle FROM Classe where chargé='{self.matricule}' ")
+        print(tabulate(headers=att,tabular_data= data, tablefmt='double_outline'))
+        
+        libelle=self.usecase.testSaisie("Entrer le libelle de la classe: ")
+        module=self.usecase.testSaisie("Entrer le libelle du module: ")
+        typeNote=self.usecase.testSaisie("Enter le type de note à modifier [Evaluation|Examen]: ").lower()  #type:ignore
+        IdClasse=self.usecase.sql.getTables(f"SELECT idC from Classe where Libelle='{libelle}' ")
+        etudiants=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes from Etudiants WHERE IdClasse={IdClasse[0][0]}")
+        for etu in etudiants:
+            newNote=self.usecase.testSaisie("Entrez la nouvelle note: ","int",0,20) 
+            listNotes=self.usecase.getListe(etu[3])
+            for liste in listNotes:
+                if(liste[0]==module.title()): # type: ignore
+                    if(typeNote.lower()=="evaluation"):liste[1]=newNote #type:ignore
+                    else:liste[2]=newNote
+                    dico=dict()
+                    dico[f"{liste[0]}"]=list()
+                    dico[f"{liste[0]}"].append(liste[1])
+                    dico[f"{liste[0]}"].append(liste[2])
+                    changement=f'Notes="{self.usecase.dicoTrans(dico)}" '
+                    print(changement)
+                    self.usecase.sql.updateBase("Etudiants",changement,"Matricule",etu[0])   
+        self.usecase.pause()
+             
+    def DoCommentaire(self)->None:
+        entite=self.usecase.testSaisie("Enter le destinataire du commentaire[Classe|Etudiant]: ").capitalize() #type:ignore
+        date=self.usecase.CurrentDate()
+        if(entite=="Classe"):
+            libelle=self.usecase.testSaisie("Entrer le libelle de la classe: ")
+            classe=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE Libelle='{libelle}' ")
+            print(classe[0][8])
+            self.usecase.pause()
+            commentaire=self.usecase.testSaisie("Saisir votre commentaire: ")
+            listCom=list()
+            for matricule in self.usecase.listTrans(classe[0][8],"chaine"):
+                etudiant=self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
+                
+                com=f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
+                listCom=self.usecase.listTrans(etudiant[0][0],"chaine")
+                listCom.append(com) #02-05-2023  ('02',)
+                changement=f'Commentaires="{listCom}" '
+                self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            self.usecase.pause()
+                
+        elif(entite=="Etudiant"):
+            matricule=self.usecase.testSaisie("Saisir le matricule de l'etudiant: ")
+            commentaire=self.usecase.testSaisie("Saisir votre commentaire: ")
+            etudiant=self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
+            com=f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
+            listCom=self.usecase.listTrans(etudiant[0][0],"chaine")
+            listCom.append(com) #02-05-2023  ('02',)
+            changement=f'Commentaires="{listCom}" '
+            self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            
+    def ShowCommentaires(self)->None:
+        commentaires=self.usecase.sql.getTables(f"SELECT Commentaires from Chargé where Matricule='{self.matricule}'")
+        
+        
+            
                         
 
         
@@ -612,6 +816,29 @@ class DefaultUseCases:
         else:
             self.showMsg("Vous n'avez pas de données !", clear=False)
            
+    def convertion(self,liste)->dict:
+        it=iter(liste)
+        dico=dict(zip(it, it))
+        return dico
+    
+    def dicoTrans(self,dico)->list:
+        liste=dico.items()
+        return list(liste)
+    
+    def getListe(self,dicoChaine)->list:
+        module=list()
+        modules=list()
+        i=0
+        for note in self.listTrans(dicoChaine,"chaine"):
+            i=i+1
+            if(i==1 or i==2):
+                module.append(note[1:])
+            elif(i==3):
+                module.append(note[1:-2])
+                modules.append(module)
+                i=0
+                module=[]
+        return modules
     
     def header(self,titre:str):
         self.ligne()
