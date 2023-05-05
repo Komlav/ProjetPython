@@ -31,9 +31,8 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
 
 - **Un étudiant**
   - Se connecter
-    - Voir ses notes
-    - Voir ses commentaires
-    - Faire une réclammation ou un commentaire sur ses notes
+  - Voir ses notes
+  - Voir et faire des commentaires
 
 - **La chargé de classe**
   - Se connecter
@@ -47,7 +46,6 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
 
 - **Les écoles partenaires**
   - Se connecter
-  - Lister les étudiants
   - Consulter le dossier d'un étudiant
 
 - **Le responsable administratif**

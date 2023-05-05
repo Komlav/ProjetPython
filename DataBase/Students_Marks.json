@@ -1,0 +1,128 @@
+{
+  "ISM2023/DK5-0425": [
+    {
+      "Année-Scolaire": "2020-2021",
+      "niveau": "Licence 1",
+      "Domaine": "Science et Technologie",
+      "Mention": "Informatique Appliquée",
+      "filière": "Génie Logiciel-Réseaux et Systèmes",
+      "Classe": "L1-GLRS A",
+      "Période": {
+        "Session 3": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [10, 10],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        },
+        "Session 4": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [10, 10],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        }
+      }
+    },
+    {
+      "Année-Scolaire": "2021-2022",
+      "niveau": "Licence 2",
+      "Domaine": "Science et Technologie",
+      "Mention": "Informatique Appliquée",
+      "filière": "Génie Logiciel-Réseaux et Systèmes",
+      "Classe": "L2-GLRS A",
+      "Période": {
+        "Session 3": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [
+            10, 10
+          ],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        },
+        "Session 4": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [
+            10, 10
+          ],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        }
+      }
+    },
+    {
+      "Année-Scolaire": "2022-2023",
+      "niveau": "Licence 3",
+      "Domaine": "Science et Technologie",
+      "Mention": "Informatique Appliquée",
+      "filière": "Génie Logiciel-Réseaux et Systèmes",
+      "Classe": "L3-GLRS A",
+      "Période": {
+        "Session 3": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [
+            10, 10
+          ],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        },
+        "Session 4": {
+          "Administration Système Windows": [15, 15],
+          "Algo Avancée & Structures de Données": [10, 10],
+          "Analyse Combinatoire et Lois de Probabilité": [10, 10],
+          "Analyse et Conception 1 (UML)": [10, 10],
+          "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [
+            10, 10
+          ],
+          "Business English": [10, 10],
+          "Electronique Digitale": [10, 10],
+          "Entrepreneurship: Atelier Build Your Business (BYB)": [10, 10],
+          "Programmation C": [10, 10],
+          "Programmation Objet 2: Python": [10, 10],
+          "Programmation Web 1:, PhP": [10, 10],
+          "Systèmes de Gestion de Bases de Données": [10, 10]
+        }
+      }
+    }
+  ],
+
+  "ISM2023/DK02-0502": {}
+}
