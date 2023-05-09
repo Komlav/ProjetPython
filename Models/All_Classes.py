@@ -1,4 +1,3 @@
-from email.policy import default
 import os
 import json
 import sqlite3
@@ -7,8 +6,8 @@ from random import randint
 from string import ascii_uppercase
 from time import sleep, time
 
-
-import colorama as color  # pip install colorama : C'est un module qui permet de mettre la couleur
+import colorama as color
+# pip install colorama : C'est un module qui permet de mettre la couleur
 from colorama import init
 from pyfiglet import figlet_format
 from tabulate import tabulate  # # python -m pip install tabulate
@@ -16,6 +15,7 @@ from tabulate import tabulate  # # python -m pip install tabulate
 init(autoreset=True)
 
 #Couleur utilisées dans le code !
+
 ERROR = color.Fore.RED
 SUCCESS  = color.Fore.GREEN
 WHITE  = color.Fore.WHITE
@@ -68,6 +68,16 @@ CHARGE_USECASE={
     "insert":["Pour une classe","Pour un etudiant","Menu général"],
     "commentaire":["Faire un commentaire","Voir les commentaires","Menu général"]
 }
+PARTENAIRE_USECASES = {
+    "main":["Consulter le dossier d'un etudiant", "Se deconnecter"],
+    "dossier":["Menu général"]
+}
+
+ETUDIANT_USECASE={
+    "main":["Voir mes notes","Commentaire","Se deconnecter"],
+    "commentaire":["Faire un commentaire","Voir mes commentaires"]
+}
+
 
 # s = sqlite3.connect(BASE_FILE)
 # c = s.cursor()
@@ -85,7 +95,7 @@ class MySql:
         self.TABLES_USER = {
             "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP"],
             "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
-            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes"],
+            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes","Commentaires"],
             "partenaires": ["Id", "Libelle", "Mail", "Telephone", "Login", "Password", "TypeP"],
             "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP"]
         }
@@ -260,18 +270,18 @@ class User:
 ############### Class de l'administrateur #################
 ###########################################################
 class Admin(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = [], partenaires:list = []) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-    #     self.etudiants = etudiants
-    #     self.chargés = chargés
-    #     self.responsableAdmins = responsableAdmin
-    #     self.partenaires = partenaires
-    #     self.usecase = DefaultUseCases()
-    #     self.traitement()
-        
-    def __init__(self) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = [], partenaires:list = []) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+        self.etudiants = etudiants
+        self.chargés = chargés
+        self.responsableAdmins = responsableAdmin
+        self.partenaires = partenaires
         self.usecase = DefaultUseCases()
         self.traitement()
+        
+    # def __init__(self) -> None:
+    #     self.usecase = DefaultUseCases()
+    #     self.traitement()
         
     def traitement(self):
         while True:
@@ -484,19 +494,20 @@ class Admin(User):
 ###########################################################
 
 class Chargé(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, classes:list = [], commentaires:list = []) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-    #     self.classes = classes #les ids des classes
-    #     self.commentaires = commentaires
-    #     self.usecase=DefaultUseCases()
-    #     self.classeChargé=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
-    
-    def __init__(self) -> None:
-        self.classes = [1,3,5,8] #les ids des classes
-        self.matricule = "ISM2023/staff2-0416"
-        self.usecase = DefaultUseCases()
-        self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, classes:list = [], commentaires:list = []) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+        self.classes = classes #les ids des classes
+        self.commentaires = commentaires
+        self.usecase=DefaultUseCases()
+        self.classeChargé=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
         self.traitement()
+    
+    # def __init__(self) -> None:
+    #     self.classes = [1,3,5,8] #les ids des classes
+    #     self.matricule = "ISM2023/staff2-0416"
+    #     self.usecase = DefaultUseCases()
+    #     self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
+    #     self.traitement()
     
     
         
@@ -583,7 +594,8 @@ class Chargé(User):
                                 self.usecase.showMsg("Voir les Commentaires")
                                 pass
                             case 3: break
-                    
+                case 6:
+                    break
     def listeEtudiant(self)->None:
         while True:
             att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
@@ -854,7 +866,7 @@ class DefaultUseCases:
         for note in self.listTrans(dicoChaine, "chaine"):
             i += 1
             if(i == 1 or i == 2):
-                module.append(note[1:])
+                module.append(note[2:])
             elif(i == 3):
                 module.append(note[1:-2])
                 modules.append(module)
@@ -1089,6 +1101,10 @@ class DefaultUseCases:
         Profil=user.get("TypeP")
         match(Profil):
             case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            case "ResponsableAdmin": return ResponsableAdmin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
+            case "Chargé": return Chargé(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            case "Etudiant": return Etudiant(user["Matricule"],user["Nom"],user["Prenom"],user["DateNaissance"],user["Nationnalité"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"],user["IdClasse"],user["Notes"],user["Commentaires"])
+            case "Partenaire": return Partenaire(user["Id"],user["Libelle"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             
     def test(self,message,text=""):
         if(text!=""): print(text)
@@ -1231,38 +1247,75 @@ class Classe:
 ###########################################################
 
 class Etudiant(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes:list = []) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.dateNaissance = dateNaissance
         self.nationnalité = nationnalité
-        self.notes = notes 
-        self.classe = classe #id de la classe
-        self.commentaires = []
         self.usecase=DefaultUseCases()
+        self.notes = self.usecase.listTrans(notes,"chaine")
+        self.classe = classe #id de la classe
+        self.commentaires = self.usecase.listTrans(commentaires,"chaine")
+        self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")# type: ignore
+        self.traitement()
+    
+    # def __init__(self) -> None:
+    #     self.matricule="ISM2023/DK5-0425"
+    #     self.idClasse=8
+    #     self.usecase=DefaultUseCases()
+    #     self.notes="[ ('Algorithme', ['17', 18]), ('Python', ['0', '0'])]"
+    #     # self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.idClasse}' ") # type: ignore
+    #     self.charge="ISM2023/staff2-0416"
+    #     self.nom="THAPKANA"
+    #     self.prénom="Kokou Godwin"
+    #     self.commentaires=['', '02-05-2023---Bonjour votre bulletion du semestre 1 est disponible.Merci de passer le recupere']
+    #     self.traitement()
         
-    def MenuEtudiant(self) -> int|None:
-        retour=1
-        while(retour==1):
-            print("1-Voir mes notes") 
-            print("2-Voir mes commentaires") 
-            print("3-Faire un commentaire") 
-            print("4-Quitter") 
-            choix=self.usecase.testSaisie("Faites un choix","int",1,4)
-            if not str(choix).isdigit(): self.usecase.clear()
-            else: return choix     # type: ignore
-    #Fonctionnalités de l'étudiant
-    def setCommentaire(self, newCommentaire):
-        self.commentaires.append(newCommentaire)
-        self.classe.getChargé().setCommentaires({"idClasse": self.classe, "idEtu":self.getMatricule(), "Commentaire":newCommentaire})
         
-    def listeCommentaire(self):
-        print("="*TAILLE_SCREEN)
-        print("Commentaire")
-        print("="*TAILLE_SCREEN)
-        for commentaire in self.commentaires:
-            print(commentaire)
-            print('-'*TAILLE_SCREEN)
+    
+    def traitement(self)->None:
+        while True:
+            match self.usecase.controlMenu("Menu General",ETUDIANT_USECASE["main"]):
+                case 1:
+                    self.usecase.showMsg("Mes notes",wait=False)
+                    self.showNotes()
+                case 2:
+                    match self.usecase.controlMenu("Menu Commentaire",ETUDIANT_USECASE["commentaire"]):
+                        case 1:
+                            self.usecase.showMsg("Faire un commentaire/Reclamation",wait=False)
+                            self.makeCommentaireCharge()
+                        case 2:
+                            self.usecase.showMsg("Mes Commentaires",wait=False)
+                            self.showCommentaires()
+                case 3:
+                    break
      
+    def showNotes(self)->None:
+        attributs = ["Module","Note Evalution","Note Examen"]
+        notes=self.usecase.getListe(self.notes)
+        print(f"Etudiant: {self.nom} {self.prénom}")
+        print(tabulate(headers=attributs,tabular_data=notes, tablefmt='double_outline'))  #type:ignore
+        self.usecase.pause()
+        
+    def makeCommentaireCharge(self)->None:
+        date = self.usecase.CurrentDate()
+        listCom = list()
+        commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
+        chargeCom=self.usecase.sql.getTables(f"SELECT Commentaires FROM Chargé WHERE Matricule='{self.charge}' ")
+        com = f"{self.nom} {self.prénom}_________{date[2]}-{date[1]}-{date[0]}---{commentaire}"
+        
+        
+        listCom = self.usecase.listTrans(chargeCom[0][0],"chaine")
+        listCom.append(com)
+        changement = f'Commentaires="{listCom}" '
+        self.usecase.sql.updateBase("Chargé",changement,"Matricule",self.charge)
+        
+    def showCommentaires(self)->None:
+        print(tabulate(headers=["Commentaires"],tabular_data=[self.commentaires], tablefmt='double_outline'))  #type:ignore
+        self.usecase.pause()
+        
+        
+    
+        
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None: self.dateNaissance = newDateNaissance
         
@@ -1375,19 +1428,17 @@ class Note:
 ############### Class de l'administrateur #################
 ###########################################################
 
-PARTENAIRE_USECASES = {
-    "main":["Consulter le dossier d'un etudiant", "Se deconnecter"],
-    "dossier":["Menu général"]
-}
-class Partenaire(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-    #     self.all_Etudiants = self.usecase.loadStudentsFolder()
-    #     self.usecase = DefaultUseCases()
-    def __init__(self) -> None:
+
+class Partenaire:
+    def __init__(self,id:int,libelle:str, mail: str, téléphone: int, login: str, password: str, typeP: str) -> None:
         self.usecase = DefaultUseCases()
         self.all_Etudiants = self.usecase.loadStudentsFolder()
         self.traitement()
+        
+    # def __init__(self) -> None:
+    #     self.usecase = DefaultUseCases()
+    #     self.all_Etudiants = self.usecase.loadStudentsFolder()
+    #     self.traitement()
     
     def traitement(self):
         while True:
@@ -1431,18 +1482,16 @@ class Partenaire(User):
         session_2 = sessions[1]
         data_session_1 = [[module, notes[0], notes[1]] for module, notes in session_1[1].items()]
         data_session_2 = [[module, notes[0], notes[1]] for module, notes in session_2[1].items()]
-        print(f"Notes du {session_1[0]}")
+        print(f"Notes de {session_1[0]}")
         print("-"*50)
         print(tabulate(headers=attributs, tabular_data=data_session_1, tablefmt='double_outline'))
         
-        print(f"\nNotes du {session_2[0]}")
+        print(f"\nNotes de {session_2[0]}")
         print("-"*50)
         print(tabulate(headers=attributs, tabular_data=data_session_2, tablefmt='double_outline'))
         print('\n')
         
         
-        
-            
     # Setters
     def setEtudiant(self, newfichierEtudiant:str) -> None:self.etudiants = newfichierEtudiant
     
@@ -1502,16 +1551,16 @@ class Professeur:
 
 
 class ResponsableAdmin(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
-    #     self.usecase = DefaultUseCases()
-    #     self.sql = MySql()
-    #     self.traitement()
-    
-    def __init__(self) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
         self.usecase = DefaultUseCases()
         self.sql = MySql()
         self.traitement()
+    
+    # def __init__(self) -> None:
+    #     self.usecase = DefaultUseCases()
+    #     self.sql = MySql()
+    #     self.traitement()
          
     def traitement(self):
         while True:
@@ -1559,8 +1608,14 @@ class ResponsableAdmin(User):
                     match self.usecase.controlMenu("Menu général", RP_USECASES["more"]):
                         case 1:
                             self.setChargeClasse()
-                        case 4:
+                        case 2:
                             pass
+                        case 3:
+                            pass
+                        case 4:
+                            break
+                case 5:
+                    break
                 
                 
     #Fonctionnalité de la responsable
@@ -1838,14 +1893,13 @@ class ResponsableAdmin(User):
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
-        attributs = self.useCases.sql.TABLES_USER["partenaires"]
-        # self.user_connect = self.useCases.accueil()
-        # self.user_active=self.useCases.createUser(self.user_connect)
-        # print(self.useCases.sql.getTables("SELECT count(Matricule) FROM Chargé WHERE Nom = 'sarr' "))
+        self.user_connect = self.useCases.accueil()
+        self.user_active=self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    # Application()
+    Application()
     # Admin()
     # ResponsableAdmin()
     # Chargé()
-    Partenaire()
+    # Partenaire()
+    # Etudiant()
