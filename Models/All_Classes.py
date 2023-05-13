@@ -41,7 +41,8 @@ RP_USECASES = {
     "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information","Plus", "Se déconnecter"],
     "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière"],
     "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants", "Menu général"],
-    "more": ["Attribuer des classes aux chargés","Voir les statistiques", "Voir la moyenne des etudiants d'une classe", "Menu general"],
+    "more": ["Attribuer des classes aux chargés", "Voir la moyenne des etudiants d'une classe","Voir les statistiques", "Menu general"],
+    "stat":["Les Statistiques d'une classe","Les Statistiques d'une Filiere"],
     "filtre": ["Tous","Filiere", "Classe", "Niveau", "Nationnalité"]
 }
 
@@ -102,7 +103,7 @@ class MySql:
         
         self.TABLES_OTHERS = {
             "filiere": ["idF","libelle","classes"], 
-            "Modules": ["idM", "libelle", "classes", "professeurs"],
+            "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit"],
             "Niveau": ["idN","libelle","classes"],
             "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
             "Classe": ["idC", 'libelle', 'effectif', 'chargé','filière', 'niveau', 'professeurs', 'modules', 'etudiants']
@@ -1179,7 +1180,8 @@ class DefaultUseCases:
             "effectif": 1,
             "chargé": "",
             "professeurs":'[]',
-            "modules":'[]'
+            "modules":'[]',
+            "Annee_Scolaire":self.CurrentSchoolYear()
         }
             
     def controlMenu(self,opération:str, fonctionnalités:list):
@@ -1195,6 +1197,14 @@ class DefaultUseCases:
         time = datetime.now()
         a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
         return (a,m,j)
+    
+    def CurrentSchoolYear(self)->str:
+        currentDate=self.CurrentDate()
+        if(currentDate[1]>=9):
+            return f"{currentDate[0]}-{int(currentDate[0])+1}"
+        else:return f"{int(currentDate[0])-1}-{currentDate[0]}"
+        
+        
         
 class Classe:
     def __init__(self, idC:int, libelle:str, filière:str, niveau:str, effectif:int, chargéClasse:str, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
@@ -1252,7 +1262,7 @@ class Etudiant(User):
         self.dateNaissance = dateNaissance
         self.nationnalité = nationnalité
         self.usecase=DefaultUseCases()
-        self.notes = self.usecase.listTrans(notes,"chaine")
+        self.notes =self.usecase.getListe(notes)
         self.classe = classe #id de la classe
         self.commentaires = self.usecase.listTrans(commentaires,"chaine")
         self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")# type: ignore
@@ -1291,9 +1301,8 @@ class Etudiant(User):
      
     def showNotes(self)->None:
         attributs = ["Module","Note Evalution","Note Examen"]
-        notes=self.usecase.getListe(self.notes)
         print(f"Etudiant: {self.nom} {self.prénom}")
-        print(tabulate(headers=attributs,tabular_data=notes, tablefmt='double_outline'))  #type:ignore
+        print(tabulate(headers=attributs,tabular_data=self.notes, tablefmt='double_outline'))  #type:ignore
         self.usecase.pause()
         
     def makeCommentaireCharge(self)->None:
@@ -1551,16 +1560,16 @@ class Professeur:
 
 
 class ResponsableAdmin(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
-        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
-        self.usecase = DefaultUseCases()
-        self.sql = MySql()
-        self.traitement()
-    
-    # def __init__(self) -> None:
+    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
+    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
     #     self.usecase = DefaultUseCases()
     #     self.sql = MySql()
     #     self.traitement()
+    
+    def __init__(self) -> None:
+        self.usecase = DefaultUseCases()
+        self.sql = MySql()
+        self.traitement()
          
     def traitement(self):
         while True:
@@ -1609,9 +1618,15 @@ class ResponsableAdmin(User):
                         case 1:
                             self.setChargeClasse()
                         case 2:
-                            pass
+                            self.usecase.showMsg("Moyenne des Etudiant et de la Classe",wait=False)
+                            self.showMoyenne()
                         case 3:
-                            pass
+                            match(self.usecase.controlMenu("Menu Statistique",RP_USECASES["stat"])):
+                                case 1:
+                                    self.usecase.showMsg("Statique",wait=False)
+                                    pass
+                                case 2:
+                                    pass
                         case 4:
                             break
                 case 5:
@@ -1731,6 +1746,8 @@ class ResponsableAdmin(User):
         mod = dict()
         mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
         mod["Libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
+        mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module:","int",min=1)
+        mod["credit"]=self.usecase.testSaisie("Entrer le credit du module:","int",min=1)
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
@@ -1808,7 +1825,9 @@ class ResponsableAdmin(User):
             newMod.get("IdM"),
             newMod.get("Libelle"),
             "[]",
-            "[]"
+            "[]",
+            newMod.get("coefficient"),
+            newMod.get("credit")
         )
     
     def addNewFiliere(self, newFiliere: dict):
@@ -1890,6 +1909,39 @@ class ResponsableAdmin(User):
         self.sql.updateBase("Chargés",changement,"Matricule",matricule)
         self.sql.updateBase("Classes",changeCharge,"idC",idClasse)                
 
+    def showMoyenne(self)->None:
+        libelle=self.usecase.testSaisie("Entrer le libelle de la classe ")
+        etudiants=self.usecase.sql.getTables(f"SELECT etudiants From Classe where Libelle='{libelle}' ")
+        listMoyenne=list()
+        moyenneClasse=0.0
+        for matEtu in self.usecase.listTrans(etudiants[0][0],"chaine"):
+            etu=self.usecase.sql.getTables(f"SELECT Nom,Prenom,Notes From Etudiants where Matricule='{matEtu}'")
+            Notes=self.usecase.getListe(etu[0][2])
+            moyenne=0.0
+            dico=list()
+            coef=0
+            for note in Notes:
+                module=self.usecase.sql.getTables(f"SELECT coefficient,credit from Modules where libelle='{note[0]}' ")
+                totalEval=int(note[1])*0.4
+                totalExam=int(note[2])*0.6
+                moyenneMod=(totalEval+totalExam)*module[0][0]
+                coef+=module[0][0]
+                moyenne+=moyenneMod
+            dico.append(f"{etu[0][0]} {etu[0][1]}")
+            dico.append(moyenne/coef)
+            listMoyenne.append(dico)
+            moyenneClasse+=(moyenne/coef)
+        
+        attributs=["Etudiant","Moyenne"]
+        print(tabulate(headers=attributs,tabular_data=listMoyenne,tablefmt='double_outline'))
+        print("-"*100)
+        moy=moyenneClasse/len(self.usecase.listTrans(etudiants[0][0],'chaine'))
+        text=f"Moyenne de {libelle}{' '*80}{moy}"
+        print(tabulate(tabular_data=[[text]],tablefmt='double_outline'))
+        self.usecase.pause()
+        
+
+
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
@@ -1897,9 +1949,9 @@ class Application:
         self.user_active=self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    Application()
+    # Application()
     # Admin()
-    # ResponsableAdmin()
+    ResponsableAdmin()
     # Chargé()
     # Partenaire()
     # Etudiant()
