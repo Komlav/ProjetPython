@@ -1,5 +1,7 @@
+from http.client import SWITCHING_PROTOCOLS
 import os
 import json
+from re import M
 import sqlite3
 from datetime import datetime
 from random import randint
@@ -10,7 +12,7 @@ import colorama as color
 # pip install colorama : C'est un module qui permet de mettre la couleur
 from colorama import init
 from pyfiglet import figlet_format
-from tabulate import tabulate  # # python -m pip install tabulate
+from tabulate import tabulate, tabulate_formats  # # python -m pip install tabulate
 
 init(autoreset=True)
 
@@ -1623,7 +1625,7 @@ class ResponsableAdmin(User):
                         case 3:
                             match(self.usecase.controlMenu("Menu Statistique",RP_USECASES["stat"])):
                                 case 1:
-                                    self.usecase.showMsg("Statique",wait=False)
+                                    self.viewClassesStats()
                                     pass
                                 case 2:
                                     pass
@@ -1902,7 +1904,6 @@ class ResponsableAdmin(User):
 
             if(idClasse not in ClassesChargé):break #type:ignore 
             else:print("La classe y est deja")
-            
         newValue = str(ClassesChargé.append(idClasse))   #type:ignore 
         changement = f"Classes={newValue}"
         changeCharge = f"Chargé={matricule}"
@@ -1910,10 +1911,10 @@ class ResponsableAdmin(User):
         self.sql.updateBase("Classes",changeCharge,"idC",idClasse)                
 
     def showMoyenne(self)->None:
-        libelle=self.usecase.testSaisie("Entrer le libelle de la classe ")
-        etudiants=self.usecase.sql.getTables(f"SELECT etudiants From Classe where Libelle='{libelle}' ")
-        listMoyenne=list()
-        moyenneClasse=0.0
+        libelle = self.usecase.testSaisie("Entrer le libelle de la classe ")
+        etudiants = self.usecase.sql.getTables(f"SELECT etudiants From Classe where Libelle='{libelle}' ")
+        listMoyenne = list()
+        moyenneClasse = 0.0
         for matEtu in self.usecase.listTrans(etudiants[0][0],"chaine"):
             etu=self.usecase.sql.getTables(f"SELECT Nom,Prenom,Notes From Etudiants where Matricule='{matEtu}'")
             Notes=self.usecase.getListe(etu[0][2])
@@ -1940,8 +1941,54 @@ class ResponsableAdmin(User):
         print(tabulate(tabular_data=[[text]],tablefmt='double_outline'))
         self.usecase.pause()
         
-
-
+    def moyenneEtuByMatricule(self, matricule: str) -> float:
+        marksEtu = self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule = '{matricule}' ")
+        moyenne = 0.0
+        coef = 0
+        for note in self.usecase.getListe(marksEtu[0][0]):
+            module = self.usecase.sql.getTables(f"SELECT coefficient,credit from Modules where libelle='{note[0]}' ")
+            totalEval = int(note[1])*0.4
+            totalExam = int(note[2])*0.6
+            moyenneMod = (totalEval+totalExam)*module[0][0]
+            coef += module[0][0]
+            moyenne += moyenneMod
+        return moyenne/coef
+    
+    def moyenneClasse(self, transList, classeEtu):
+        classeMoyenne, nbreVal, nbreNonVal = 0.0, 0, 0
+        etuMoyennes = []
+        etu = self.usecase.listTrans(classeEtu, "chaine")
+        for etuMatricule in etu:
+            moyEtu = self.moyenneEtuByMatricule(etuMatricule.strip())
+            if moyEtu >= 10:
+                nbreVal += 1
+            else:
+                nbreNonVal += 1
+            etuMoyennes.append(moyEtu)
+            classeMoyenne +=  moyEtu  
+        return [max(etuMoyennes), min(etuMoyennes), classeMoyenne/len(etu), nbreVal, nbreNonVal]
+        
+    def schoolYearClasses(self, school_year) -> list:
+        return self.usecase.sql.getTables(f"SELECT Libelle, etudiants FROM Classe WHERE Annee_Scolaire = '{school_year}' ")
+    
+    def viewClassesStats(self):
+        # Récupérer les classes de l'année_scolaire en cours
+        # Parcourir la liste de matricule de chaque classes pour calculer les moyennes
+        while True:
+            school_Year = self.usecase.testSaisie("Entrez l'année-scolaire de la statistique : ")
+            classes = self.schoolYearClasses(school_Year)
+            if classes != []:
+                data = []
+                for classe in classes:
+                    classeData = self.moyenneClasse(self.usecase.listTrans, classe[1])
+                    classeData.insert(0, classe[0])
+                    data.append(classeData)
+                attributs = ["Classe", "Forte moyenne", "Faible moyenne", "Moyenne générale", "Nombre etudiants validé", "Nombre etudiants Non-validé" ]
+                self.usecase.showMsg(f"Statistique des classes de l'année_scolaire : {school_Year}", wait = False)
+                print(tabulate(headers = attributs, tabular_data = data, tablefmt = "double_outline"))
+                print("")
+                self.usecase.pause()
+                break
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()

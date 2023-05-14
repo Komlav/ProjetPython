@@ -58,8 +58,8 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
   - Ajouter et lister une filières✅
   - Attribuer des classes aux chargés✅
   - Voir la moyenne des etudiants d'une classe et de la classe her self ✅
-  - Voir les statistiques des classes et de la filiere 
-  - Stat des Classes:forte et faible moyenne,moyenne de la classe,nbre Etu ayant validé ou Non le semestre==Stat des Classes(filtrées par Filiere)
+  - Voir les statistiques des classes ✅ et de la filiere 
+  - Stat des Classes:forte et faible moyenne, moyenne de la classe, nbre Etu ayant validé ou Non le semestre  ==Stat des Classes (filtrées par Filiere) 
 
 - **Admin**
   - Se connecter✅
@@ -67,6 +67,7 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
   - Lister et Ajouter une chargé / les chargés✅
   - Lister et Ajouter un responsable administratif / responsable administratif✅
   - Lister et Ajouter un partenaire✅
+
 ## Les entités
 
 - **User**
