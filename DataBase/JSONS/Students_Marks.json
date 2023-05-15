@@ -36,7 +36,21 @@
           "Programmation Web 1:, PhP": [10, 10],
           "Systèmes de Gestion de Bases de Données": [10, 10]
         }
-      }
+      },
+      "Commentaire":[
+        {
+          "Date":"15-5-2023",
+          "heure":"14h20",
+          "auteur":"ISM2023/DK5-0425",
+          "Commentaire":"Bonjour"
+        },
+        {
+          "Date":"15-5-2023",
+          "heure":"14h20",
+          "auteur":"ISM2023/staff2-0416",
+          "Commentaire":"Bonjour Mr/Mrs Etudiant"
+        }
+      ]
     },
     {
       "Année-Scolaire": "2021-2022",

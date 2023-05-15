@@ -780,7 +780,7 @@ class Chargé(User):
             self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             
     def ShowCommentaires(self)->None:
-        commentaires = self.usecase.sql.getTables(f"SELECT Commentaires from Chargé where Matricule='{self.matricule}'")
+        # commentaires = self.usecase.sql.getTables(f"SELECT Commentaires from Chargé where Matricule='{self.matricule}'")
         
 ###########################################################
 ################### Quelsques classes #####################
@@ -1321,8 +1321,7 @@ class Etudiant(User):
         self.usecase.sql.updateBase("Chargé",changement,"Matricule",self.charge)
         
     def showCommentaires(self)->None:
-        print(tabulate(headers=["Commentaires"],tabular_data=[self.commentaires], tablefmt='double_outline'))  #type:ignore
-        self.usecase.pause()
+        
         
         
     
@@ -1562,16 +1561,16 @@ class Professeur:
 
 
 class ResponsableAdmin(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
-    #     self.usecase = DefaultUseCases()
-    #     self.sql = MySql()
-    #     self.traitement()
-    
-    def __init__(self) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
         self.usecase = DefaultUseCases()
         self.sql = MySql()
         self.traitement()
+    
+    # def __init__(self) -> None:
+    #     self.usecase = DefaultUseCases()
+    #     self.sql = MySql()
+    #     self.traitement()
          
     def traitement(self):
         while True:
@@ -1628,7 +1627,7 @@ class ResponsableAdmin(User):
                                     self.viewClassesStats()
                                     pass
                                 case 2:
-                                    pass
+                                    self.viewClassesStatsByFiliere()
                         case 4:
                             break
                 case 5:
@@ -1989,6 +1988,26 @@ class ResponsableAdmin(User):
                 print("")
                 self.usecase.pause()
                 break
+            
+    def viewClassesStatsByFiliere(self):
+        while True:
+            filiere=self.usecase.testSaisie("Saisir la filiere de la statistique: ")
+            school_Year=self.usecase.testSaisie("Saisir l'annee de la statistique: ")
+            classes=self.usecase.sql.getTables(f"SELECT Libelle,etudiants from Classe where Filiere='{filiere}' and Annee_Scolaire='{school_Year}' ")
+            moyenneEtu,moyenneClasse,nbrVal,nbrNonVal=0.0 ,0.0 ,0 ,0
+            listMoyenne=list()
+            data=[]
+            if(classes!=[]):
+                for classe in classes:
+                    liste=self.moyenneClasse(self.usecase.listTrans,classe[1])
+                    liste.insert(0,classe[0])
+                    data.append(liste)
+                break
+        attributs = ["Classe", "Forte moyenne", "Faible moyenne", "Moyenne générale", "Nombre etudiants validé", "Nombre etudiants Non-validé" ]
+        self.usecase.showMsg(f"Statistique de la Filiere {filiere} à l'Annee_Scolaire {school_Year}",wait=False)
+        print(tabulate(headers=attributs,tabular_data=data,tablefmt="double_outline"))
+        self.usecase.pause()
+            
 class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
@@ -1996,9 +2015,9 @@ class Application:
         self.user_active=self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    # Application()
+    Application()
     # Admin()
-    ResponsableAdmin()
+    # ResponsableAdmin()
     # Chargé()
     # Partenaire()
     # Etudiant()
