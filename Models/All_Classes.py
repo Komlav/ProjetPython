@@ -36,7 +36,7 @@ TAILLE_SCREEN = 150
 BASE_FILE = "./DataBase/Database.sqlite3"
 FOLDER_FILE = "DataBase/JSONS/Students_Marks.json"
 FOLDER_CHARGES_FILE = "DataBase/JSONS/Chargés.json"
-CHAT_LENGHT = TAILLE_SCREEN // 2 - 30
+CHAT_LENGHT = TAILLE_SCREEN // 2 - 10
 
 EGALE = "="
 
@@ -1217,12 +1217,10 @@ class DefaultUseCases:
         if len(texte) >= CHAT_LENGHT:
             for mot in text:
                 ligne += mot + ' '
-                if len(ligne) <= CHAT_LENGHT: continue
-                else:
+                if len(ligne) >= CHAT_LENGHT:
                     print(f"| {BLUE}{ligne:<{TAILLE_SCREEN-3}} |")
                     ligne = ""
-        else:
-            print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
+        else: print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
     
     def chatRight(self, texte: str):
         text = texte.split(" ")
@@ -1231,27 +1229,12 @@ class DefaultUseCases:
         if len(texte) >= CHAT_LENGHT:
             for mot in text:
                 ligne += mot + ' '
-                if len(ligne) <= CHAT_LENGHT: continue
-                else:
+                if len(ligne) >= CHAT_LENGHT: 
                     print(f"| {BLUE}{ligne:>{TAILLE_SCREEN-3}} |")
                     ligne = ""
         else:
             print(f"| {BLUE}{texte:>{TAILLE_SCREEN-3}} |")
 
-    # def chatLeft(self, texte: str):
-    #     text = texte.split(" ")
-    #     if len(texte) <= CHAT_LENGHT:
-    #         print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
-    #     else:
-    #         print(f"| {BLUE}{texte[:CHAT_LENGHT]:<{TAILLE_SCREEN-3}} |")
-    #         self.chatLeft(texte[CHAT_LENGHT:])
-            
-    # def chatRight(self, texte: str):
-    #     if len(texte) <= CHAT_LENGHT:
-    #         print(f"| {BLUE}{texte:>{TAILLE_SCREEN-3}} |")
-    #     else:
-    #         print(f"| {SUCCESS}{texte[:CHAT_LENGHT]:>{TAILLE_SCREEN-3}} |")
-    #         self.chatRight(texte[CHAT_LENGHT:])
 class Classe:
     def __init__(self, idC:int, libelle:str, filière:str, niveau:str, effectif:int, chargéClasse:str, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
         self.idC = idC
