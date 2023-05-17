@@ -34,7 +34,10 @@ DEFAULT_PASSWORD = "passer@123"
 DEFAULT_EFFECTIF = 40
 TAILLE_SCREEN = 150
 BASE_FILE = "./DataBase/Database.sqlite3"
-FOLDER_FILE = "DataBase/Students_Marks.json"
+FOLDER_FILE = "DataBase/JSONS/Students_Marks.json"
+FOLDER_CHARGES_FILE = "DataBase/JSONS/Chargés.json"
+CHAT_LENGHT = TAILLE_SCREEN // 2 - 30
+
 EGALE = "="
 
 POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
@@ -780,6 +783,8 @@ class Chargé(User):
             self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             
     def ShowCommentaires(self)->None:
+        self.usecase.loadStudentsFolder()
+        pass
         # commentaires = self.usecase.sql.getTables(f"SELECT Commentaires from Chargé where Matricule='{self.matricule}'")
         
 ###########################################################
@@ -851,8 +856,8 @@ class DefaultUseCases:
         else:
             self.showMsg("Vous n'avez pas de données !", clear=False)
     
-    def loadStudentsFolder(self) -> dict:
-        with open(FOLDER_FILE, encoding="UTF-8") as f:
+    def loadStudentsFolder(self, fileName=FOLDER_FILE) -> dict:
+        with open(fileName, encoding="UTF-8") as f:
             return json.load(f)
         
     def convertion(self,liste:list)->dict:
@@ -1205,9 +1210,48 @@ class DefaultUseCases:
         if(currentDate[1]>=9):
             return f"{currentDate[0]}-{int(currentDate[0])+1}"
         else:return f"{int(currentDate[0])-1}-{currentDate[0]}"
-        
-        
-        
+
+    def chatLeft(self, texte: str):
+        text = texte.split(" ")
+        ligne = ''
+        if len(texte) >= CHAT_LENGHT:
+            for mot in text:
+                ligne += mot + ' '
+                if len(ligne) <= CHAT_LENGHT: continue
+                else:
+                    print(f"| {BLUE}{ligne:<{TAILLE_SCREEN-3}} |")
+                    ligne = ""
+        else:
+            print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
+    
+    def chatRight(self, texte: str):
+        text = texte.split(" ")
+        ligne = ''
+
+        if len(texte) >= CHAT_LENGHT:
+            for mot in text:
+                ligne += mot + ' '
+                if len(ligne) <= CHAT_LENGHT: continue
+                else:
+                    print(f"| {BLUE}{ligne:>{TAILLE_SCREEN-3}} |")
+                    ligne = ""
+        else:
+            print(f"| {BLUE}{texte:>{TAILLE_SCREEN-3}} |")
+
+    # def chatLeft(self, texte: str):
+    #     text = texte.split(" ")
+    #     if len(texte) <= CHAT_LENGHT:
+    #         print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
+    #     else:
+    #         print(f"| {BLUE}{texte[:CHAT_LENGHT]:<{TAILLE_SCREEN-3}} |")
+    #         self.chatLeft(texte[CHAT_LENGHT:])
+            
+    # def chatRight(self, texte: str):
+    #     if len(texte) <= CHAT_LENGHT:
+    #         print(f"| {BLUE}{texte:>{TAILLE_SCREEN-3}} |")
+    #     else:
+    #         print(f"| {SUCCESS}{texte[:CHAT_LENGHT]:>{TAILLE_SCREEN-3}} |")
+    #         self.chatRight(texte[CHAT_LENGHT:])
 class Classe:
     def __init__(self, idC:int, libelle:str, filière:str, niveau:str, effectif:int, chargéClasse:str, professeurs:list = [], étudiants:list = [], modules:list = []) -> None:
         self.idC = idC
@@ -1259,21 +1303,22 @@ class Classe:
 ###########################################################
 
 class Etudiant(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
-        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-        self.dateNaissance = dateNaissance
-        self.nationnalité = nationnalité
-        self.usecase=DefaultUseCases()
-        self.notes =self.usecase.getListe(notes)
-        self.classe = classe #id de la classe
-        self.commentaires = self.usecase.listTrans(commentaires,"chaine")
-        self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")# type: ignore
-        self.traitement()
-    
-    # def __init__(self) -> None:
-    #     self.matricule="ISM2023/DK5-0425"
-    #     self.idClasse=8
+    # def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
+    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+    #     self.dateNaissance = dateNaissance
+    #     self.nationnalité = nationnalité
     #     self.usecase=DefaultUseCases()
+    #     self.notes =self.usecase.getListe(notes)
+    #     self.classe = classe #id de la classe
+    #     self.commentaires = self.usecase.listTrans(commentaires,"chaine")
+    #     self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")# type: ignore
+    #     self.traitement()
+    
+    def __init__(self) -> None:
+        self.matricule="ISM2023/DK5-0425"
+        self.usecase=DefaultUseCases()
+        self.showCommentaires()
+    #     self.idClasse=8
     #     self.notes="[ ('Algorithme', ['17', 18]), ('Python', ['0', '0'])]"
     #     # self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.idClasse}' ") # type: ignore
     #     self.charge="ISM2023/staff2-0416"
@@ -1281,7 +1326,6 @@ class Etudiant(User):
     #     self.prénom="Kokou Godwin"
     #     self.commentaires=['', '02-05-2023---Bonjour votre bulletion du semestre 1 est disponible.Merci de passer le recupere']
     #     self.traitement()
-        
         
     
     def traitement(self)->None:
@@ -1321,7 +1365,33 @@ class Etudiant(User):
         self.usecase.sql.updateBase("Chargé",changement,"Matricule",self.charge)
         
     def showCommentaires(self)->None:
+        all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
+        student_commentaire = all_Data.get(f"{self.matricule}")[-1]["Commentaire"] #type: ignore
         
+        self.usecase.ligneMenu(2, TAILLE_SCREEN, 'haut')
+        print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
+        self.usecase.ligneMenu(2, TAILLE_SCREEN, 'milieu')
+        i, show = 0, True
+        for commentaire in student_commentaire:
+            if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+            if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
+                print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+            i += 1
+                
+            if commentaire["Auteur"] == self.matricule:
+                self.usecase.chatRight(commentaire["Commentaire"])
+                print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
+            else:    
+                self.usecase.chatLeft(commentaire["Commentaire"])
+                print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
+            if i == len(student_commentaire):
+                self.usecase.ligneMenu(2, TAILLE_SCREEN, 'bas')
+        
+        
+        
+        self.usecase.pause()
+                
+                
         
         
     
@@ -2012,12 +2082,12 @@ class Application:
     def __init__(self) -> None:
         self.useCases = DefaultUseCases()
         self.user_connect = self.useCases.accueil()
-        self.user_active=self.useCases.createUser(self.user_connect)
+        self.user_active = self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    Application()
+    # Application()
     # Admin()
     # ResponsableAdmin()
     # Chargé()
     # Partenaire()
-    # Etudiant()
+    Etudiant()
