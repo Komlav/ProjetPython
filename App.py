@@ -17,19 +17,4 @@
 "|                                                                           |"
 "----------------------------------------------------------------------------╣"
 l = "Bonjour Madame comment allez vous ? Bonjour Madame comment allez vous ?Bonjour Madame comment allez vous ?Bonjour Madame comment allez vous ?Bonjour Madame comment allez vous ?Bonjour Madame comment allez vous "
-CHAT_LENGHT = 50
-TAILLE_SCREEN = 100
-BLUE = ""
-
-
-def chatLeftt( texte: str):
-    text = texte.split(" ")
-    ligne = ''
-    for mot in text:
-        ligne += mot + ' '
-        if len(ligne) <= CHAT_LENGHT: continue
-        else:
-            print(f"| {BLUE}{ligne:<{TAILLE_SCREEN-3}} |")
-            ligne = ""
-            
-chatLeftt(l)
+f"Session {1 if 7 == 1 else 0 }"

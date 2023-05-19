@@ -74,6 +74,7 @@ CHARGE_USECASE={
     "insert":["Pour une classe","Pour un etudiant","Menu général"],
     "commentaire":["Faire un commentaire","Voir les commentaires","Menu général"]
 }
+
 PARTENAIRE_USECASES = {
     "main":["Consulter le dossier d'un etudiant", "Se deconnecter"],
     "dossier":["Menu général"]
@@ -111,7 +112,7 @@ class MySql:
             "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit"],
             "Niveau": ["idN","libelle","classes"],
             "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
-            "Classe": ["idC", 'libelle', 'effectif', 'chargé','filière', 'niveau', 'professeurs', 'modules', 'etudiants']
+            "Classe": ["idC", 'libelle', 'Filiere', 'niveau','effectif', 'chargé','professeurs', 'modules', 'etudiants', "Annee_Scolaire"]
         }
         
         self.TABLES = {
@@ -388,7 +389,7 @@ class Admin(User):
             break
     
     def ajoutChargé(self):
-        date=self.usecase.CurrentDate()
+        date = self.usecase.CurrentDate()
         charge = dict()
         charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}-{date[1]}{date[2]}"
         charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé : ").upper() # type: ignore
@@ -399,6 +400,9 @@ class Admin(User):
             if choix == "oui":
                 self.usecase.sql.insert("Chargé",self.addNewChargé(charge), self.usecase.sql.TABLES_USER["Chargé"])
                 self.usecase.sql = MySql()
+                data = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
+                data[f"{charge['Matricule']}"] = {"Commentaire": {}}
+                self.usecase.updateFile(FOLDER_CHARGES_FILE,data)
                 self.usecase.showMsg("Chargés ajouté avec succes")  
                 break
             break
@@ -408,6 +412,8 @@ class Admin(User):
         etudiant = dict()
         matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
+        print(classe)
+        self.usecase.pause()
         print("\nDONNEES DE L'ETUDIANT")
         etudiant = {
             "Matricule":matricule,
@@ -420,19 +426,56 @@ class Admin(User):
         while True:
             choix=self.usecase.question("Confirmer l'enregistrement")
             if choix =="oui":
+                data = self.usecase.loadStudentsFolder()
+                charge = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
                 if type(classe) == tuple:
+                    # if classe[1]['niveau'][-1] == '1':
+                    session = self.usecase.setSessions(classe[1]['niveau'])
+                    
+                    data[f"{etudiant['Matricule']}"] = [
+                        {
+                            "Année-Scolaire": self.usecase.CurrentSchoolYear(),
+                            "niveau": classe[1]["niveau"],
+                            "filière": classe[1]["Filiere"],
+                            "Classe": classe[1]["libelle"],
+                            "Période": {
+                                session[0]: {},
+                                session[1]: {}
+                            },
+                            "Commentaire": []
+                        }
+                    ]
+                    print(classe[1])
+                    charge[f"{classe[1]['chargé']}"]["Commentaire"][f"{etudiant['Matricule']}"] = [] #type: ignore
+                    self.usecase.updateFile(FOLDER_CHARGES_FILE,charge)
                     etudiant["IdClasse"] = classe[0]
                     listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
                     listeMatricules.append(matricule)
-                    changement=f"effectif={classe[1]['effectif'] + 1},etudiants=\"{str(listeMatricules)}\""
+                    changement=f"effectif={int(classe[1]['effectif']) + 1},etudiants=\"{str(listeMatricules)}\""
                     self.usecase.sql.updateBase("Classe", changement,"idC",classe[0])
                 elif type(classe) == dict: 
+                    session = self.usecase.setSessions(classe['niveau'])
+                    data[f"{etudiant['Matricule']}"] = [
+                        {
+                            "Année-Scolaire": self.usecase.CurrentSchoolYear(),
+                            "niveau": classe["niveau"],
+                            "filière": classe["filière"],
+                            "Classe": classe["libelle"],
+                            "Période": {
+                                session[0]: {},
+                                session[1]: {}
+                            },
+                            "Commentaire": []
+                        }
+                    ]
                     etudiant["IdClasse"] = classe["idC"]
                     classe["etudiants"] = f"{[matricule]}"
                     self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
                     
                 self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
                 self.usecase.sql = MySql()
+                
+                self.usecase.updateFile(FOLDER_FILE,data)
                 self.usecase.showMsg("Etudiant ajouté avec succes")
                 break
             break
@@ -454,7 +497,8 @@ class Admin(User):
             DEFAULT_PASSWORD,
             "Etudiant",
             newEtu.get("IdClasse"),
-            '[]'
+            '[]',
+            "[]"
         )
         
     def addNewChargé(self, newChargé:dict):
@@ -515,28 +559,6 @@ class Chargé(User):
     #     self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
     #     self.traitement()
     
-    
-        
-    def makeCommentaire(self,matriculeEtu:int, newCommentaire:str, data:list):
-        for etudiant in data:
-            if etudiant.get("Matricule") == matriculeEtu:
-                etudiant.get("Commentaires").append(newCommentaire)
-                return True
-        return False        
-        
-    #Fonctionnalités du chargé
-    def setCommentaires(self, newCommentaire:dict): self.commentaires.append(newCommentaire)
-        
-    def listeCommentaire(self):
-        print("="*TAILLE_SCREEN)
-        print(f"{'IdClasse':<20}{'IdEtudiant':<20}{'Commentaire'}")
-        print("="*TAILLE_SCREEN)
-        for com in self.commentaires:
-            print(f"{com.get('idClasse'):<20}{com.get('idEtu'):<20}{com.get('Commentaire')}")
-            print('-'*TAILLE_SCREEN)
-    
-    
-
     #Setters
     def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
         
@@ -602,6 +624,7 @@ class Chargé(User):
                             case 3: break
                 case 6:
                     break
+    
     def listeEtudiant(self)->None:
         while True:
             att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
@@ -753,34 +776,49 @@ class Chargé(User):
         self.usecase.pause()
              
     def DoCommentaire(self)->None:
+        all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
+        all_Charges_Data = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
+        
         entite = self.usecase.testSaisie("Enter le destinataire du commentaire[Classe|Etudiant]: ").capitalize() #type:ignore
         date = self.usecase.CurrentDate()
         if(entite == "Classe"):
             libelle = self.usecase.testSaisie("Entrer le libelle de la classe: ")
             classe = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE Libelle='{libelle}' ")
+            charge_commentaire = all_Charges_Data.get(f"{self.matricule}")["Commentaire"][f"{classe[0][0]}"] #type: ignore
+            
             print(classe[0][8])
             self.usecase.pause()
             commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
+            date = self.usecase.CurrentDate()
             listCom = list()
+            newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': self.matricule, 'Commentaire': commentaire}
             for matricule in self.usecase.listTrans(classe[0][8],"chaine"):
-                etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
+                student_commentaire = all_Data.get(f"{matricule}")[-1]["Commentaire"] #type: ignore
+                student_commentaire.append(newSend)
                 
-                com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
-                listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
-                listCom.append(com) #02-05-2023  ('02',)
-                changement = f'Commentaires="{listCom}" '
-                self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            charge_commentaire.append(newSend)
+            self.usecase.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
+            self.usecase.updateFile(FOLDER_FILE, all_Data)
+                # etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
+                
+                # com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
+                # listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
+                # listCom.append(com) #02-05-2023  ('02',)
+                # changement = f'Commentaires="{listCom}" '
+                # self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             self.usecase.pause()
                 
         elif(entite == "Etudiant"):
             matricule = self.usecase.testSaisie("Saisir le matricule de l'etudiant: ")
-            commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
-            etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
-            com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
-            listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
-            listCom.append(com) #02-05-2023  ('02',)
-            changement = f'Commentaires="{listCom}" '
-            self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+            self.usecase.commentaires(str(matricule), self.matricule, self.matricule)
+            
+            # commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
+            # etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
+            # com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
+            # listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
+            # listCom.append(com) #02-05-2023  ('02',)
+            # changement = f'Commentaires="{listCom}" '
+            # self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             
     def ShowCommentaires(self)->None:
         self.usecase.loadStudentsFolder()
@@ -796,6 +834,49 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
     
+    def setSessions(self, niveau):
+        num = int(niveau[-1])*2
+        return (f'Session {num-1}', f'Session {num}')
+        
+    
+    def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str)->None:
+        while True:
+            all_Data = self.loadStudentsFolder(FOLDER_FILE)
+            all_Charges_Data = self.loadStudentsFolder(FOLDER_CHARGES_FILE)
+            charge_commentaire = all_Charges_Data.get(f"{chargeMatricule}")["Commentaire"][f"{etudiantMatricule}"] #type: ignore
+            student_commentaire = all_Data.get(f"{etudiantMatricule}")[-1]["Commentaire"] #type: ignore
+            
+            self.ligneMenu(2, TAILLE_SCREEN, 'haut')
+            print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
+            self.ligneMenu(2, TAILLE_SCREEN, 'milieu')
+            i, show = 0, True
+            for commentaire in student_commentaire:
+                if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+                if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
+                    print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+                i += 1
+                if commentaire["Auteur"] == matriculeAuteur:
+                    self.chatRight(commentaire["Commentaire"])
+                    print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
+                else:    
+                    self.chatLeft(commentaire["Commentaire"])
+                    print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
+                if i == len(student_commentaire):
+                    self.ligneMenu(2, TAILLE_SCREEN, 'bas')
+
+            # Envoie d'un nouveau commentaire
+            commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
+            if commentaire != '-1':
+                date = self.CurrentDate()
+                newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': matriculeAuteur, 'Commentaire': commentaire}
+                student_commentaire.append(newSend)
+                charge_commentaire.append(newSend)
+                
+                self.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
+                self.updateFile(FOLDER_FILE, all_Data)
+            else:
+                break
+
     def lister(self, table:str, filtre: str = "Tous", value: str = ""):
         match table:
             case 'Etudiants':
@@ -859,6 +940,10 @@ class DefaultUseCases:
     def loadStudentsFolder(self, fileName=FOLDER_FILE) -> dict:
         with open(fileName, encoding="UTF-8") as f:
             return json.load(f)
+        
+    def updateFile(self, fileName, data) :
+        with open(fileName, 'w', encoding="UTF-8") as f:
+            json.dump(data, f)
         
     def convertion(self,liste:list)->dict:
         it = iter(liste)
@@ -974,7 +1059,7 @@ class DefaultUseCases:
             print(f"Loading{'.'*nbrePoints}{' '*nbreEspace}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*((TAILLE_SCREEN-50)-20-(2*i))}  " + f"{2*i}%", end='\r')
             nbrePoints += 1
             if nbrePoints > 3:nbrePoints, nbreEspace = 0, 4
-            sleep(randint(1, 50)/100)
+            sleep(randint(1, 50)/1000)
         sleep(3)
 
     def accueil(self):
@@ -1171,7 +1256,7 @@ class DefaultUseCases:
         for classe in all_classes:
             if classe.get("libelle")[0:fin] == libelle:
                 cpt += 1
-                if classe.get("effectif") <= DEFAULT_EFFECTIF: return (classe["idC"], classe) 
+                if int(classe.get("effectif")) <= DEFAULT_EFFECTIF: return (classe["idC"], classe) 
                 
         if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
         if cpt == 1:
@@ -1203,11 +1288,11 @@ class DefaultUseCases:
     def CurrentDate(self)->tuple:
         time = datetime.now()
         a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
-        return (a,m,j)
+        return (a,m,j, f"{str(time).split(' ')[1][:5]}")
     
     def CurrentSchoolYear(self)->str:
-        currentDate=self.CurrentDate()
-        if(currentDate[1]>=9):
+        currentDate = self.CurrentDate()
+        if(int(currentDate[1])>=9):
             return f"{currentDate[0]}-{int(currentDate[0])+1}"
         else:return f"{int(currentDate[0])-1}-{currentDate[0]}"
 
@@ -1286,31 +1371,16 @@ class Classe:
 ###########################################################
 
 class Etudiant(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-    #     self.dateNaissance = dateNaissance
-    #     self.nationnalité = nationnalité
-    #     self.usecase=DefaultUseCases()
-    #     self.notes =self.usecase.getListe(notes)
-    #     self.classe = classe #id de la classe
-    #     self.commentaires = self.usecase.listTrans(commentaires,"chaine")
-    #     self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")# type: ignore
-    #     self.traitement()
-    
-    def __init__(self) -> None:
-        self.matricule="ISM2023/DK5-0425"
-        self.usecase=DefaultUseCases()
-        self.showCommentaires()
-    #     self.idClasse=8
-    #     self.notes="[ ('Algorithme', ['17', 18]), ('Python', ['0', '0'])]"
-    #     # self.charge=self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.idClasse}' ") # type: ignore
-    #     self.charge="ISM2023/staff2-0416"
-    #     self.nom="THAPKANA"
-    #     self.prénom="Kokou Godwin"
-    #     self.commentaires=['', '02-05-2023---Bonjour votre bulletion du semestre 1 est disponible.Merci de passer le recupere']
-    #     self.traitement()
+    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
+        self.dateNaissance = dateNaissance
+        self.nationnalité = nationnalité
+        self.usecase = DefaultUseCases()
+        self.notes = self.usecase.getListe(notes)
+        self.classe = classe #id de la classe
+        self.charge = self.usecase.sql.getTables(f"SELECT chargé From Classe WHERE idC='{self.classe}' ")[0][0]# type: ignore
+        self.traitement()
         
-    
     def traitement(self)->None:
         while True:
             match self.usecase.controlMenu("Menu General",ETUDIANT_USECASE["main"]):
@@ -1318,13 +1388,8 @@ class Etudiant(User):
                     self.usecase.showMsg("Mes notes",wait=False)
                     self.showNotes()
                 case 2:
-                    match self.usecase.controlMenu("Menu Commentaire",ETUDIANT_USECASE["commentaire"]):
-                        case 1:
-                            self.usecase.showMsg("Faire un commentaire/Reclamation",wait=False)
-                            self.makeCommentaireCharge()
-                        case 2:
-                            self.usecase.showMsg("Mes Commentaires",wait=False)
-                            self.showCommentaires()
+                    self.usecase.showMsg("Mes Commentaires",wait=False)
+                    self.usecase.commentaires(self.matricule, self.charge, self.matricule)
                 case 3:
                     break
      
@@ -1333,52 +1398,46 @@ class Etudiant(User):
         print(f"Etudiant: {self.nom} {self.prénom}")
         print(tabulate(headers=attributs,tabular_data=self.notes, tablefmt='double_outline'))  #type:ignore
         self.usecase.pause()
-        
-    def makeCommentaireCharge(self)->None:
-        date = self.usecase.CurrentDate()
-        listCom = list()
-        commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
-        chargeCom=self.usecase.sql.getTables(f"SELECT Commentaires FROM Chargé WHERE Matricule='{self.charge}' ")
-        com = f"{self.nom} {self.prénom}_________{date[2]}-{date[1]}-{date[0]}---{commentaire}"
-        
-        
-        listCom = self.usecase.listTrans(chargeCom[0][0],"chaine")
-        listCom.append(com)
-        changement = f'Commentaires="{listCom}" '
-        self.usecase.sql.updateBase("Chargé",changement,"Matricule",self.charge)
-        
-    def showCommentaires(self)->None:
-        all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
-        student_commentaire = all_Data.get(f"{self.matricule}")[-1]["Commentaire"] #type: ignore
-        
-        self.usecase.ligneMenu(2, TAILLE_SCREEN, 'haut')
-        print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
-        self.usecase.ligneMenu(2, TAILLE_SCREEN, 'milieu')
-        i, show = 0, True
-        for commentaire in student_commentaire:
-            if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
-            if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
-                print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
-            i += 1
+
+    # def commentaires(self)->None:
+    #     while True:
+    #         all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
+    #         all_Charges_Data = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
+    #         charge_commentaire = all_Charges_Data.get(f"{self.charge}")["Commentaire"][f"{self.matricule}"] #type: ignore
+    #         student_commentaire = all_Data.get(f"{self.matricule}")[-1]["Commentaire"] #type: ignore
+            
+    #         self.usecase.ligneMenu(2, TAILLE_SCREEN, 'haut')
+    #         print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
+    #         self.usecase.ligneMenu(2, TAILLE_SCREEN, 'milieu')
+    #         i, show = 0, True
+    #         for commentaire in student_commentaire:
+    #             if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+    #             if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
+    #                 print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+    #             i += 1
+                    
+    #             if commentaire["Auteur"] == self.matricule:
+    #                 self.usecase.chatRight(commentaire["Commentaire"])
+    #                 print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
+    #             else:    
+    #                 self.usecase.chatLeft(commentaire["Commentaire"])
+    #                 print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
+    #             if i == len(student_commentaire):
+    #                 self.usecase.ligneMenu(2, TAILLE_SCREEN, 'bas')
+
+    #         # Envoie d'un nouveau commentaire
+    #         commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
+    #         if commentaire != '-1':
+    #             date = self.usecase.CurrentDate()
+    #             newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': self.matricule, 'Commentaire': commentaire}
+    #             student_commentaire.append(newSend)
+    #             charge_commentaire.append(newSend)
                 
-            if commentaire["Auteur"] == self.matricule:
-                self.usecase.chatRight(commentaire["Commentaire"])
-                print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
-            else:    
-                self.usecase.chatLeft(commentaire["Commentaire"])
-                print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
-            if i == len(student_commentaire):
-                self.usecase.ligneMenu(2, TAILLE_SCREEN, 'bas')
-        
-        
-        
-        self.usecase.pause()
-                
-                
-        
-        
-    
-        
+    #             self.usecase.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
+    #             self.usecase.updateFile(FOLDER_FILE, all_Data)
+    #         else:
+    #             break
+
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None: self.dateNaissance = newDateNaissance
         
@@ -2068,9 +2127,9 @@ class Application:
         self.user_active = self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    # Application()
+    Application()
     # Admin()
     # ResponsableAdmin()
     # Chargé()
     # Partenaire()
-    Etudiant()
+    # Etudiant()
