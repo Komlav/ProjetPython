@@ -676,7 +676,10 @@ class Chargé(User):
                             case 2:
                                 self.usecase.showMsg("Modifier la note d'un etudiant",wait=False)
                                 self.modifNoteEtu()
-                            case 3: break
+                            
+                            case 3: 
+                                self.modifyEtudiant()
+                            case 4: break
                 case 4:
                     while True:
                         match self.usecase.controlMenu("Menu initialisation Notes",CHARGE_USECASE["insert"]):
@@ -938,7 +941,32 @@ class DefaultUseCases:
         self.sql = MySql()
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
-    
+        self.students_data = self.loadStudentsFolder()
+        # self.students_discuss = self.loadStudentsFolder(FOLDER_STUDENTS_DISCUSS) 
+    def report(self, matricule:str):
+        student = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
+        if student != []:
+            dossierEtudiant = self.students_data.get(f"{matricule}")
+            dat = [année["Année-Scolaire"]  for année in dossierEtudiant] #type:ignore ["2020-2021", "2021-2022", "2022-2023"]
+            dat.append("Menu général")
+            while True:
+                date = int(self.controlMenu("Liste des années_scolaire", dat))
+                if 0 < date and date  <= len(dat)-1: 
+                    periode = [i[0] for i in self.dicoTrans(dossierEtudiant[dat.index(dat[date-1])].get("Période"))]#type: ignore #[(NomSession, DicoModules), (NomSession, DicoModules)]
+                    periode.append("Menu général")
+                    while True:
+                        choix = int(self.controlMenu("Liste des sessions", periode))
+                        if  date > 0 and choix <= 2:
+                            annee = dat[date-1] #type: ignore
+                            attributs = ["Modules", "Note Evaluation", "Note Examen"]
+                            data_session = self.consultStudentFolder(matricule, annee, choix-1)
+                            moySession_1 = self.calculMoy(data_session)  # type: ignore
+                            print(f"\nNotes de {periode[choix-1]}\n{'-'*50}\n{self.showData(attributs,data_session)}")  # type: ignore
+                            print(f"╔{'═'*(moySession_1[1] + 11)}╗\n║ Moyenne: {SUCCESS}{str(moySession_1[0])[:5]:>{moySession_1[1]}}{WHITE} ║\n╚{'═'*(moySession_1[1] + 11)}╝\n")
+                            self.pause()
+                        elif choix == 3: break
+                elif date == len(dat): break
+                
     def showTableau(self, titre: str, donne):
         self.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'haut')
         self.showMenu([['Position', (TAILLE_SCREEN//2)-2,'center'],[titre, (TAILLE_SCREEN//2)-2,'center']])
