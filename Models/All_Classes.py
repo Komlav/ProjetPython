@@ -62,10 +62,10 @@ NIVEAUX = {
 }
 
 ADMIN_USECASES = {
-    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information", "Se déconnecter"],
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Supprimer un Responsable", "Se déconnecter"],
     "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable","Ajouter un partenaire", "Retourner au menu général"],
     "liste" : ["Lister les étudiants", "Lister les chargé(e)s", "Lister les responsables","Lister les partenaires", "Retourner au menu général"],
-    "edit": ["Profil", "Menu général"]
+    "delete": ["Suppression du responsable Administratif", "Menu général"]
 }
 
 CHARGE_USECASE={
@@ -339,23 +339,30 @@ class Admin(User):
                     pass
                 case 3:
                     while True:
-                        match  self.usecase.controlMenu("Modifier une info", ADMIN_USECASES["edit"]):
+                        match  self.usecase.controlMenu("Suppression d'un Responsable", ADMIN_USECASES["delete"]):
                             case 1:
-                                # self.ajoutEtudiant()
-                                pass
+                                self.usecase.showMsg("Suppression du responsable Administratif",wait=False)
+                                self.deleteRP()
                             case 2:
-                                # self.ajoutChargé()
-                                pass
-                            case 3:
-                                # self.ajoutRP()
-                                pass
-                            case 4:
                                 break
                     pass
                 case 4:
                     self.usecase.sql.closeDB()
                     break
         pass
+        
+    def deleteRP(self):
+        while True:
+            RPs=self.usecase.sql.getTables("SELECT * FROM responsableAdmin ")
+            print(tabulate(headers=["Matricule","Nom","Prenom"],tabular_data=[[rp[0],rp[1],rp[2]]for rp in RPs],tablefmt="double_outline"))
+            matricule=self.usecase.testSaisie("Entrer le matricule du Responsable: ")
+            for resp in RPs:
+                if resp[0]==matricule:
+                    self.usecase.sql.getTables(f"delete FROM responsableAdmin where Matricule='{matricule}' ")
+                    self.usecase.showMsg("Responsable Adminitratif supprimé avec succes!")
+                    return None
+            self.usecase.showMsg("Le matricule saisi ne coorespond à aucun Responsable")
+            
         
     def ajoutPartenaire(self):
         date=self.usecase.CurrentDate()
@@ -424,7 +431,7 @@ class Admin(User):
             "DateNaissance":self.usecase.ver_date("\nINFORMATIONS SUR LA DATE DE NAISSANCE"),
             "Nationnalité":self.usecase.testSaisie(f"\nDONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
             "Telephone":self.usecase.agree_number("Etudiant")
-        SIUD crud
+        }
         while True:
             choix=self.usecase.question("Confirmer l'enregistrement")
             if choix =="oui":
@@ -631,28 +638,29 @@ class Chargé(User):
                     break
     
     def deleteEtudiant(self):
-        att=["Matricule", "Nom", "Prenom", "Classe"]
-        listes=list()
-        for classEtu in self.classeChargé:
-            if self.usecase.listTrans(classEtu[8],"chaine")!=[""] :
-                for etu in self.usecase.listTrans(classEtu[8],"chaine"):
-                    etudiant=self.usecase.sql.getTables(f"select Nom,Prenom from Etudiants where Matricule='{etu}' ")[0]
-                    listes.append([etu,etudiant[0],etudiant[1],classEtu[2]])
-        print(tabulate(headers=att,tabular_data= listes, tablefmt='double_outline'))
-        
-        matricule=self.usecase.testSaisie("Entrez le matricule de l'etudiant:")
-        idClasse=self.usecase.sql.getTables(f"select IdClasse from Etudiants where Matricule='{matricule}' ")[0]
-        self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
-        et=self.usecase.sql.getTables(f"select effectif,etudiants from Classe where idC={idClasse[0]} ")[0]
-        listMat=self.usecase.listTrans(et[1],"chaine")
-        listMat.remove(matricule)
-        changement1=f'effectif={et[0]-1},etudiants="{listMat}"  '
-        # changement1=f'etudiants="{listMat}"  '
-        # changement2=f'effectif={et[0]-1} '
-        self.usecase.sql.updateBase("Classe",changement1,"idC",idClasse[0])
-        # self.usecase.sql.updateBase("Classe",changement2,"idC",idClasse)
-        self.usecase.showMsg("Etudiant supprimé avec succes")
-        self.usecase.pause()
+        while True:
+            listes=list()
+            liste2=list()
+            for classEtu in self.classeChargé:
+                if self.usecase.listTrans(classEtu[8],"chaine")!=[""] :
+                    for etu in self.usecase.listTrans(classEtu[8],"chaine"):
+                        etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu}' ")[0]
+                        listes.append([etu,etudiant[1],etudiant[2],classEtu[2]])
+                        liste2.append(etudiant[0])
+            print(tabulate(headers=["Matricule", "Nom", "Prenom", "Classe"],tabular_data= listes, tablefmt='double_outline'))
+
+            matricule=self.usecase.testSaisie("Entrez le matricule de l'etudiant:")
+            if matricule in liste2:
+                idClasse=self.usecase.sql.getTables(f"select IdClasse from Etudiants where Matricule='{matricule}' ")[0]
+                self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
+                et=self.usecase.sql.getTables(f"select effectif,etudiants from Classe where idC={idClasse[0]} ")[0]
+                listMat=self.usecase.listTrans(et[1],"chaine")
+                listMat.remove(matricule)
+                changement1=f'effectif={et[0]-1},etudiants="{listMat}"  '
+                self.usecase.sql.updateBase("Classe",changement1,"idC",idClasse[0])
+                self.usecase.showMsg("Etudiant supprimé avec succes")
+                return None
+            self.usecase.showMsg("Le matricule saisi ne correspond à aucun Etudiant")
         
     def listeEtudiant(self)->None:
         while True:
@@ -1793,53 +1801,60 @@ class ResponsableAdmin(User):
                 
     #Fonctionnalité de la responsable
     def deleteChargé(self):
-        att=["Matricule", "Nom", "Prenom"]
-        chargés=self.usecase.sql.getTables("select Matricule,Nom,Prenom from Chargé ")
-        listChargé=list()
-        for chargé in chargés:
-            listChargé.append([chargé[0],chargé[1],chargé[2]])
-        print(tabulate(headers=att,tabular_data= listChargé, tablefmt='double_outline'))
-        
-        matricule=self.usecase.testSaisie("Entrez le matricule du Chargé:")
-        chargéClasses=self.usecase.sql.getTables(f"select Classes from Chargé where Matricule='{matricule}' ")[0]
-        for idclasse in self.usecase.listTrans(chargéClasses[0]):
-            changement='chargé=" " '
-            self.usecase.sql.updateBase("Classe",changement,"idC",idclasse)
-        self.usecase.sql.getTables(f"Delete from Chargé where Matricule='{matricule}'")
-        
-        #self.usecase.sql.delete()
-        self.usecase.showMsg("Chargé supprimé avec succes")
-        self.usecase.pause()
- 
-    def deleteProf(self):
-        att=["Id Professeur", "Nom", "Prenom"]
-        profs=self.usecase.sql.getTables(f"select idP,Nom,Prenom from professeurs ")
-        listprofs=list()
-        for prof in profs:
-            listprofs.append([prof[0],prof[1],prof[2]])
-        print(tabulate(headers=att,tabular_data= listprofs, tablefmt='double_outline'))   
-        
-        idProf=self.usecase.testSaisie("Saisir l'id du professeur: ","int")
-        ClassProfMod=self.usecase.sql.getTables(f"select Classes,modules from professeurs where idP={idProf}")[0]
-        print(ClassProfMod[0])
-        if(ClassProfMod[0]!=[]):
-            for classP in self.usecase.listTrans(ClassProfMod[0]):
-                idProfs=self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
-                liste=self.usecase.listTrans(idProfs[0])
-                liste.remove(idProf)
-                changement=f'professeurs="{liste}" '
-                self.usecase.sql.updateBase("Classe",changement,"idC",classP)
-        for idMod in self.usecase.listTrans(ClassProfMod[1]):
-            professeurs=self.usecase.sql.getTables(f"select professeurs from Modules where idM={idMod}")[0][0]
-            listProfesseurs=self.usecase.listTrans(professeurs)
-            listProfesseurs.remove(idProf)
-            changement=f'professeurs="{listProfesseurs}" '
-            self.usecase.sql.updateBase("Modules",changement,"idM",idMod)
+        while True:
+            chargés=self.usecase.sql.getTables("select Matricule,Nom,Prenom from Chargé ")
+            listChargé=list()
+            listMat=list()
+            for chargé in chargés:
+                listChargé.append([chargé[0],chargé[1],chargé[2]])
+                listMat.append(chargé[0])
+            print(tabulate(headers=["Matricule", "Nom", "Prenom"],tabular_data= listChargé, tablefmt='double_outline'))
             
-        self.usecase.sql.getTables(f"Delete from professeurs where idP={idProf} ")
-        
-        self.usecase.showMsg("Professeur supprimé avec succes")
-        self.usecase.pause() 
+            matricule=self.usecase.testSaisie("Entrez le matricule du Chargé:")
+            if matricule in listMat:
+                chargéClasses=self.usecase.sql.getTables(f"select Classes from Chargé where Matricule='{matricule}' ")[0]
+                for idclasse in self.usecase.listTrans(chargéClasses[0]):
+                    changement='chargé=" " '
+                    self.usecase.sql.updateBase("Classe",changement,"idC",idclasse)
+                self.usecase.sql.getTables(f"Delete from Chargé where Matricule='{matricule}'")
+                self.usecase.showMsg("Chargé supprimé avec succes!")
+                return None
+            self.usecase.showMsg("Le matricule saisi ne correspond à aucun Chargé")
+
+    def deleteProf(self):
+        while True:
+            att=["Id Professeur", "Nom", "Prenom"]
+            profs=self.usecase.sql.getTables(f"select idP,Nom,Prenom from professeurs ")
+            listId=list()
+            listprofs=list()
+            for prof in profs:
+                listprofs.append([prof[0],prof[1],prof[2]])
+                listId.append(prof[0])
+            print(tabulate(headers=att,tabular_data= listprofs, tablefmt='double_outline'))   
+            
+            idProf=self.usecase.testSaisie("Saisir l'id du professeur: ","int")
+            if idProf in listId:
+                ClassProfMod=self.usecase.sql.getTables(f"select Classes,modules from professeurs where idP={idProf}")[0]
+                print(ClassProfMod[0])
+                if(ClassProfMod[0]!=[]):
+                    for classP in self.usecase.listTrans(ClassProfMod[0]):
+                        idProfs=self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
+                        liste=self.usecase.listTrans(idProfs[0])
+                        liste.remove(idProf)
+                        changement=f'professeurs="{liste}" '
+                        self.usecase.sql.updateBase("Classe",changement,"idC",classP)
+                for idMod in self.usecase.listTrans(ClassProfMod[1]):
+                    professeurs=self.usecase.sql.getTables(f"select professeurs from Modules where idM={idMod}")[0][0]
+                    listProfesseurs=self.usecase.listTrans(professeurs)
+                    listProfesseurs.remove(idProf)
+                    changement=f'professeurs="{listProfesseurs}" '
+                    self.usecase.sql.updateBase("Modules",changement,"idM",idMod)
+                    
+                self.usecase.sql.getTables(f"Delete from professeurs where idP={idProf} ")
+                
+                self.usecase.showMsg("Professeur supprimé avec succes")
+                return None
+            self.usecase.showMsg("L' Id saisi ne correspond à aucun professeur")
         
     def deleteModules(self):
         while True:
@@ -1884,7 +1899,7 @@ class ResponsableAdmin(User):
                 if part[0] == idPart:
                     # Suppression du partenaire de la liste des partanires...add()
                     self.usecase.sql.delete("id", idPart, "partenaires")
-                    self.usecase.showMsg(f"Le partenaire {part[1]} à été retiré de la liste de vos partenaires !", wait = False)
+                    self.usecase.showMsg(f"{part[1]} à été retiré de la liste de vos partenaires !", wait = False)
                     self.usecase.pause()
                     return None
                 
