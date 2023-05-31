@@ -210,19 +210,12 @@ class User:
 ###########################################################
 ############### Class de l'administrateur #################
 ###########################################################
+
 class Admin(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, etudiants:list = [], chargés:list = [], responsableAdmin:list = [], partenaires:list = []) -> None:
-        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-        self.etudiants = etudiants
-        self.chargés = chargés
-        self.responsableAdmins = responsableAdmin
-        self.partenaires = partenaires
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "Admin")
         self.usecase = DefaultUseCases()
         self.traitement()
-        
-    # def __init__(self) -> None:
-    #     self.usecase = DefaultUseCases()
-    #     self.traitement()
         
     def traitement(self):
         while True:
@@ -295,7 +288,6 @@ class Admin(User):
                     return None
             self.usecase.showMsg("Le matricule saisi ne coorespond à aucun Responsable")
             
-        
     def ajoutPartenaire(self):
         date=self.usecase.CurrentDate()
         part = dict()
@@ -349,20 +341,20 @@ class Admin(User):
             break
              
     def ajoutEtudiant(self):
-        date=self.usecase.CurrentDate()
+        date = self.usecase.CurrentDate()
         etudiant = dict()
         matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
         print(classe)
         self.usecase.pause()
-        print("\nDONNEES DE L'ETUDIANT")
+        self.usecase.centerTexte("Renseigner les informations de l'étudiant")
         etudiant = {
             "Matricule":matricule,
             "Nom":self.usecase.testSaisie("Nom de l'Etudiant : ").upper(), # type: ignore
             "Prénom":self.usecase.testSaisie("Prenom de l'Etudiant : ").title(), # type: ignore
-            "DateNaissance":self.usecase.ver_date("\nINFORMATIONS SUR LA DATE DE NAISSANCE"),
-            "Nationnalité":self.usecase.testSaisie(f"\nDONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
-            "Telephone":self.usecase.agree_number("Etudiant")
+            "DateNaissance":self.usecase.ver_date("INFORMATIONS SUR LA DATE DE NAISSANCE"),
+            "Nationnalité":self.usecase.testSaisie(f"DONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
+            "Telephone":self.usecase.agree_number("Numéro de téléphone : ")
         }
         while True:
             choix=self.usecase.question("Confirmer l'enregistrement")
@@ -370,9 +362,7 @@ class Admin(User):
                 data = self.usecase.loadStudentsFolder()
                 charge = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
                 if type(classe) == tuple:
-                    # if classe[1]['niveau'][-1] == '1':
                     session = self.usecase.setSessions(classe[1]['niveau'])
-                    
                     data[f"{etudiant['Matricule']}"] = [
                         {
                             "Année-Scolaire": self.usecase.CurrentSchoolYear(),
@@ -489,16 +479,162 @@ class Chargé(User):
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.classes = classes #les ids des classes
         self.commentaires = commentaires
-        self.usecase=DefaultUseCases()
-        self.classeChargé=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
+        self.usecase = DefaultUseCases()
+        self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
         self.traitement()
-    
-    # def __init__(self) -> None:
-    #     self.classes = [1,3,5,8] #les ids des classes
-    #     self.matricule = "ISM2023/staff2-0416"
-    #     self.usecase = DefaultUseCases()
-    #     self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
-    #     self.traitement()
+        
+    def modifyEtudiant(self):
+        while True:
+            self.usecase.showMsg("Menu de modification d'un étudiant", wait= False)
+            chargéClasses = self.usecase.sql.getTables(f"SELECT idC, Libelle FROM Classe WHERE chargé = \"{self.matricule}\" ")
+            self.usecase.centerTexte(tabulate(headers=["Id classe", "Libelle"], tabular_data= chargéClasses, tablefmt= "double_outline"))
+            print("")
+            idC = self.usecase.testSaisie("Entrez l'id de la classe ou (-1) pour quitter: ", 'int', min= -1)
+            if idC != -1:
+                cpt = 0
+                for classe in chargéClasses:
+                    if classe[0] == idC:
+                        cpt = 1
+                        self.usecase.showMsg(f"Liste des étudiants de la classe: {classe[1]}", wait= False)
+                        etudiants = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom FROM Etudiants WHERE idClasse = {idC}")
+                        if etudiants != []:
+                            print(tabulate(headers=["Matricule", "Nom", "Prénom"], tabular_data=etudiants, tablefmt="double_outline"))
+                            print("")
+                            matricule = self.usecase.testSaisie("Entrez le matricule de l'étudiant à modifier ou (-1) pour quitter : ", nbreChar = 2)
+                            
+                            if matricule != '-1':
+                                for etu in etudiants:
+                                    if etu[0] == matricule:
+                                        while True:
+                                            self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                            chargé = self.usecase.showStudentInfo(matricule) # type: ignore
+                                            print("")
+                                            choix = self.usecase.testSaisie("Entrez le numéro pour modifier l'élément ou (-1) pour quitter : ", 'int', min= -1)
+                                            if choix in [1,2,3,4,5,6,7]:
+                                                match choix:
+                                                    case 1:
+                                                        self.usecase.showMsg("Modification du Nom", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancien Nom: {BLUE} {chargé[choix]}") #type: ignore
+                                                        new = self.usecase.testSaisie("Entrez le nouveau nom : ")
+                                                        self.usecase.modifyStudentAttribute("Nom", new.upper(), matricule) #type: ignore
+                                                        mail = f"{chargé[3]}".replace(chargé[choix].lower(), new.lower())#type: ignore
+                                                        self.usecase.modifyStudentAttribute("Mail", mail, matricule) #type: ignore
+                                                        self.usecase.showMsg("le Nom a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 2:
+                                                        self.usecase.showMsg("Modification du Prénom", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancien prénom: {BLUE} {std[choix]}") #type: ignore
+                                                        new = self.usecase.testSaisie("Entrez le nouveau prénom :")
+                                                        mail = f"{std[3]}".replace(std[choix].replace(" ", '-').lower(), new.replace(" ", '-').lower())#type: ignore
+                                                        self.usecase.modifyStudentAttribute("Prenom", new.title(), matricule) #type: ignore
+                                                        self.usecase.modifyStudentAttribute("Mail", mail, matricule) #type: ignore
+                                                        self.usecase.showMsg("le prénom a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 3:
+                                                        self.usecase.showMsg("Modification du Mail", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancien mail: {BLUE} {std[choix]}") #type: ignore
+                                                        new = self.usecase.testSaisie("Entrez le nouveau mail :")
+                                                        self.usecase.modifyStudentAttribute("Mail", new.lower(), matricule) #type: ignore
+                                                        self.usecase.showMsg("le mail a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 4:
+                                                        self.usecase.showMsg("Modification de la nationnalité", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancienne nationnalité: {BLUE} {std[choix]}") #type: ignore
+                                                        new = self.usecase.testSaisie("Entrez la nouvelle nationnalité :")
+                                                        self.usecase.modifyStudentAttribute("Nationnalité", new.title(), matricule) #type: ignore
+                                                        self.usecase.showMsg("la nationnalité a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 5:
+                                                        self.usecase.showMsg("Modification de la date de naissance", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancienne date de naissance: {BLUE} {std[choix]}") #type: ignore
+                                                        new = self.usecase.ver_date("INFORMATIONS SUR LA DATE DE NAISSANCE")
+                                                        self.usecase.modifyStudentAttribute("DateNaissance", new, matricule) #type: ignore
+                                                        self.usecase.showMsg("la nationnalité a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 6:
+                                                        self.usecase.showMsg("Modification du numéro de téléphone", wait= False)
+                                                        print("")
+                                                        self.usecase.centerTexte(f"Ancienne téléphone: {BLUE} {std[choix]}") #type: ignore
+                                                        new = self.usecase.agree_number("Entrez le nouveau téléphone : ")
+                                                        self.usecase.modifyStudentAttribute("Telephone", new, matricule) #type: ignore
+                                                        self.usecase.showMsg("le téléphone a bien été changé !", wait= False)
+                                                        print("")
+                                                        self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                        self.usecase.showStudentInfo(matricule) # type: ignore
+                                                        
+                                                        print("")
+                                                        if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                            return None
+                                                    case 7:
+                                                        while True:
+                                                            self.usecase.showMsg("Modification de la classe", wait= False)
+                                                            print("")
+                                                            self.usecase.centerTexte(f"Ancienne classe: {BLUE} {std[choix]}") #type: ignore
+                                                            self.usecase.lister("Classes")
+                                                            print("")
+                                                            idC = self.usecase.testSaisie("Entrez l'id de la classe : ", 'int')
+                                                            if self.usecase.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC = {idC}") != []:
+                                                                self.usecase.modifyStudentAttribute("idClasse", idC, matricule) #type: ignore
+                                                                self.usecase.showMsg("la classe a bien été changé !", wait= False)
+                                                                print("")
+                                                                self.usecase.showMsg(f"Information de {etu[1]} {etu[2]}", wait=False)
+                                                                self.usecase.showStudentInfo(matricule) # type: ignore
+                                                                
+                                                                print("")
+                                                                if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                                                    return None
+                                                                else: break
+                                                        
+                                            elif choix == -1:
+                                                return None
+                                            else:
+                                                self.usecase.showMsg("Le numéro n'est pas valide !", wait= False, clear= False)
+                                                self.usecase.pause()
+                            else:
+                                return None    
+                        else:
+                            self.usecase.showMsg("Il n'y pas d'étudiant dans cette classe !", wait=False)
+                            self.usecase.pause()
+                if cpt == 0:
+                    self.usecase.showMsg("L'id ne correspond à aucune classe !", wait= False)
+                    self.usecase.pause()
+            else:
+                return None
     
     #Setters
     def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
@@ -803,10 +939,66 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
     
+    def showTableau(self, titre: str, donne):
+        self.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'haut')
+        self.showMenu([['Position', (TAILLE_SCREEN//2)-2,'center'],[titre, (TAILLE_SCREEN//2)-2,'center']])
+        self.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
+        i = 1
+        for element in donne:
+            self.showMenu([[i, (TAILLE_SCREEN//2)-2,'center'],[element, (TAILLE_SCREEN//2)-2,'center']])
+            if i == len(donne):
+                self.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'bas')
+                break
+            self.ligneMenu(3,(TAILLE_SCREEN//2)-2, 'milieu')
+            i += 1
+        print("\n")
+        
     def setSessions(self, niveau):
         num = int(niveau[-1])*2
         return (f'Session {num-1}', f'Session {num}')
         
+    def modifyStudentAttribute(self, key: str, newValue, matricule: str):
+        self.sql.updateBase("Etudiants", f"{key} = \"{newValue}\"", "Matricule", matricule)
+    
+    def showStudentInfo(self, matricule: str) :
+        std = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, Mail, Nationnalité, DateNaissance,  Telephone, idClasse FROM Etudiants WHERE Matricule = \"{matricule}\" ")
+        if std != []:
+            classe = self.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC = {std[0][7]}")[0][0]
+            self.ligneMenu(4, TAILLE_SCREEN//3, 'haut')
+            self.showMenu([["Matricule",(TAILLE_SCREEN//3), 'center'], ['Nom (1)',(TAILLE_SCREEN//3), 'center'], ["Prénom (2)",(TAILLE_SCREEN//3), 'center']])
+            self.showMenu([[std[0][0],(TAILLE_SCREEN//3), 'center'], [std[0][1],(TAILLE_SCREEN//3), 'center'], [std[0][2],(TAILLE_SCREEN//3), 'center']])
+            self.ligneMenu(4, TAILLE_SCREEN//3, 'milieu')
+            self.showMenu([["Mail (3)",(TAILLE_SCREEN//2)-1, 'center'], ['Nationnalité (4)',(TAILLE_SCREEN//2)-1, 'center']])
+            self.showMenu([[std[0][3],(TAILLE_SCREEN//2)-1, 'center'], [std[0][4],(TAILLE_SCREEN//2)-1, 'center']])
+            self.ligneMenu(3, TAILLE_SCREEN//2 - 1 , 'milieu')
+            self.showMenu([["Date Naissance (5)",(TAILLE_SCREEN//3), 'center'], ['Téléphone (6)',(TAILLE_SCREEN//3), 'center'], ["Classe (7)",(TAILLE_SCREEN//3), 'center']])
+            self.showMenu([[std[0][5],(TAILLE_SCREEN//3), 'center'], [std[0][6],(TAILLE_SCREEN//3), 'center'], [classe,(TAILLE_SCREEN//3), 'center']])
+            self.ligneMenu(4, TAILLE_SCREEN//3, 'bas')
+            return std[0]
+        
+    def showChargeInfo(self, matricule: str) :
+        """Matricule, Nom, Prenom, Mail, Telephone, classes
+
+        Args:
+            matricule (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        std = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, Mail, Telephone, classes FROM Chargé WHERE Matricule = \"{matricule}\" ")
+        if std != []:
+            classes = self.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC IN ({std[0][5][1:-1]})")
+            self.ligneMenu(4, TAILLE_SCREEN//3, 'haut')
+            self.showMenu([["Matricule",(TAILLE_SCREEN//3), 'center'], ['Nom (1)',(TAILLE_SCREEN//3), 'center'], ["Prénom (2)",(TAILLE_SCREEN//3), 'center']])
+            self.showMenu([[std[0][0],(TAILLE_SCREEN//3), 'center'], [std[0][1],(TAILLE_SCREEN//3), 'center'], [std[0][2],(TAILLE_SCREEN//3), 'center']])
+            self.ligneMenu(4, TAILLE_SCREEN//3, 'milieu')
+            self.showMenu([["Mail (3)",(TAILLE_SCREEN//2)-1, 'center'], ['Téléphone (4)',(TAILLE_SCREEN//2)-1, 'center']])
+            self.showMenu([[std[0][3],(TAILLE_SCREEN//2)-1, 'center'], [std[0][4],(TAILLE_SCREEN//2)-1, 'center']])
+            self.ligneMenu(3, TAILLE_SCREEN//2 - 1 , 'milieu')
+            self.showMenu([[" Liste des classes",(TAILLE_SCREEN-2), 'center']])
+            self.showMenu([[" \t".join([classe[0] for classe in classes]),(TAILLE_SCREEN-(4*len(classes))-2), 'center']])
+            self.ligneMenu(2, TAILLE_SCREEN-2, 'bas')
+            return std[0]
     
     def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str)->None:
         while True:
@@ -942,25 +1134,79 @@ class DefaultUseCases:
     
     def opération(self,title:str): self.showMsg(title,clear=False, wait=False)
     
-    def menuUse(self,titre, fonctionnalités:list, Fermer=True):
+    def menuUse(self,titre, fonctions:list):
         self.clear()
         self.opération(titre)
-        options = []
-        choices = []
-        numChoix, tailleCollonne, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
+        numChoix, tailleCollonne, nbreFonction = 1, len(max(fonctions)), len(fonctions)
         m = tailleCollonne*nbreFonction
         l = TAILLE_SCREEN-m
-        # t = (TAILLE_SCREEN//nbreFonction)
         if l > 0:tailleCollonne += (l // nbreFonction)
         else:tailleCollonne = TAILLE_SCREEN // nbreFonction
-        for useCase in  fonctionnalités:
-            options.append([useCase,tailleCollonne, 'center'])
-            choices.append([numChoix, tailleCollonne, 'center'])
-            numChoix += 1
-        self.ligneMenu(numChoix,tailleCollonne,'haut')
-        self.showMenu(options)
-        self.showMenu(choices)
-        if Fermer:self.ligneMenu(numChoix,tailleCollonne,'bas')
+        if nbreFonction <= 3:
+            options = list()
+            choices = list()
+            for useCase in  fonctions:
+                options.append([useCase,(TAILLE_SCREEN//3), 'center'])
+                choices.append([numChoix, (TAILLE_SCREEN//3), 'center'])
+                numChoix += 1
+                
+            self.ligneMenu(numChoix,(TAILLE_SCREEN//3),'haut')
+            self.showMenu(options)
+            self.showMenu(choices)
+            self.ligneMenu(numChoix,(TAILLE_SCREEN//3),'bas')
+        else:
+            cpt, n = 1, 0
+            # numChoix, tailleCollonne = 1, len(max(fonctions))
+            options, choices, mainOptions, mainChoices = list(), list(), list(), list()
+            for useCase in  fonctions:
+                options.append([useCase,(TAILLE_SCREEN//3), 'center'])
+                choices.append([numChoix, (TAILLE_SCREEN//3), 'center'])
+                numChoix += 1
+                if cpt == 3:
+                    n += 1
+                    mainOptions.append(options)
+                    mainChoices.append(choices)
+                    options, choices = list(), list()
+                    cpt = 0
+                cpt += 1
+            x = None
+            if len(mainOptions)*3 != nbreFonction:
+                x = nbreFonction - n*3
+                for i in range(len(options)):
+                    options[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2))
+                    choices[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2))
+                mainOptions.append(options)
+                mainChoices.append(choices)
+            
+            cpt = 0
+            for i in range(len(mainOptions)):
+                if i == 0: self.ligneMenu(4,(TAILLE_SCREEN//3),'haut')
+                elif i < len(mainOptions) and i != 0: self.ligneMenu(4,(TAILLE_SCREEN//3),'milieu')   
+                self.showMenu(mainOptions[i])
+                self.showMenu(mainChoices[i])
+                if i == len(mainOptions) - 1:
+                    if x != None: self.ligneMenu(x+1,(TAILLE_SCREEN//(x)-(1 if x%2 == 0 else 2)),'bas')
+                    else: self.ligneMenu(4,(TAILLE_SCREEN//3),'bas')
+    
+    # def menuUseOld(self,titre, fonctionnalités:list, Fermer=True):
+    #     self.clear()
+    #     self.opération(titre)
+    #     options = []
+    #     choices = []
+    #     numChoix, tailleCollonne, nbreFonction = 1, len(max(fonctionnalités)) + 10, len(fonctionnalités)
+    #     m = tailleCollonne*nbreFonction
+    #     l = TAILLE_SCREEN-m
+    #     # t = (TAILLE_SCREEN//nbreFonction)
+    #     if l > 0:tailleCollonne += (l // nbreFonction)
+    #     else:tailleCollonne = TAILLE_SCREEN // nbreFonction
+    #     for useCase in  fonctionnalités:
+    #         options.append([useCase,tailleCollonne, 'center'])
+    #         choices.append([numChoix, tailleCollonne, 'center'])
+    #         numChoix += 1
+    #     self.ligneMenu(numChoix,tailleCollonne,'haut')
+    #     self.showMenu(options)
+    #     self.showMenu(choices)
+    #     if Fermer:self.ligneMenu(numChoix,tailleCollonne,'bas')
         
     def ligneMenu(self,nombreFonctionnalités:int,longueurCellule:int,niveau:str):
         match niveau:
@@ -1142,7 +1388,7 @@ class DefaultUseCases:
         ver = nbre.replace("-","")
         if  ver.isdigit() and (int(nbre) >= min and int(nbre) <= max): return int(nbre)
          
-    def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3):
+    def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3)-> int|str:
         while True:
             element = input(f"{push}{message}{SUCCESS}")
             print(f"{push}{BLUE}{'='*len(message + element)}")
@@ -1162,7 +1408,7 @@ class DefaultUseCases:
     def createUser(self,user:dict): 
         Profil=user.get("TypeP")
         match(Profil):
-            case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "ResponsableAdmin": return ResponsableAdmin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "Chargé": return Chargé(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             case "Etudiant": return Etudiant(user["Matricule"],user["Nom"],user["Prenom"],user["DateNaissance"],user["Nationnalité"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"],user["IdClasse"],user["Notes"],user["Commentaires"])
@@ -1174,22 +1420,29 @@ class DefaultUseCases:
             element=input(message)
             if(element!=""): return element
                 
-    def ver_date(self, message:str=""):
-        print(message)
-        max=self.CurrentDate()[0]
-        annee = "{:04d}".format(self.testSaisie("Entrer l'annee","int",1900,int(max)))
-        mois = "{:02d}".format(self.testSaisie("Enter le mois","int",1,12))
-        jour = "{:02d}".format(self.testSaisie("Enter le jour","int",1,31))
+    def ver_date(self, message:str="")-> str:
+        # self.centerTexte(message)
+        print(f"\n{push}{message}{YELLOW} ex: jour : 12 | mois : 06 | année : 2001")
+        print(f"{push}{BLUE}{'='*(len(message)+41)}")
+        max = self.CurrentDate()[0]
+        annee = "{:04d}".format(self.testSaisie("Entrer l'annee : ","int",1900,int(max)))
+        mois = "{:02d}".format(self.testSaisie("Enter le mois : ","int",1,12))
+        jour = "{:02d}".format(self.testSaisie("Enter le jour : ","int",1,31))
         return f"{jour}-{mois}-{annee}"
-            
+    
+    def centerTexte(self, message: str):
+        texte = message.split("\n")
+        for line in texte:
+            print(f"{line:^{TAILLE_SCREEN}}")
+        
     def agree_number(self,msg='') -> int:
         phone = [70,75,76,77,78]
         while True:
-            number = self.testSaisie(f"{msg}","int",700000000,790000000)
+            number = self.testSaisie(f"{msg} : ","int",700000000,790000000)
             if (number // 10000000) in phone:   #type:ignore
                 return number #type:ignore
         
-    def getIdClasse(self):
+    def getIdClasse(self)-> str:
         niveau = ["L1","L2","L3","M1","M2"]
         all_filières = self.all_Other_Data["filiere"]
         
@@ -1207,7 +1460,7 @@ class DefaultUseCases:
             else :self.clear()
             
         while True:
-            print("\n1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\n")
+            self.centerTexte("\n1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\n")
             pos = self.testSaisie("Entrez l'id du niveau de l'étudiant: ","int",1,5)
             if niveau != None:  break
             else: self.clear()
@@ -1218,7 +1471,7 @@ class DefaultUseCases:
     
         return classe_libelle
         
-    def createOrSearchClasse(self, libelle:str) -> tuple | dict:
+    def createOrSearchClasse(self, libelle:str) -> tuple[int,dict] | dict:
         all_classes = self.all_Other_Data["Classe"]
         fin, alphabet, cpt = len(libelle), '', 0
         
@@ -1254,12 +1507,12 @@ class DefaultUseCases:
             if choix != None: return choix
             else: self.clear()
             
-    def CurrentDate(self)->tuple:
+    def CurrentDate(self) -> tuple[str, str, str, str]:
         time = datetime.now()
         a, m, j = time.strftime('%Y'),time.strftime('%m'),time.strftime('%d')
         return (a,m,j, f"{str(time).split(' ')[1][:5]}")
     
-    def CurrentSchoolYear(self)->str:
+    def CurrentSchoolYear(self) -> str:
         currentDate = self.CurrentDate()
         if(int(currentDate[1])>=9):
             return f"{currentDate[0]}-{int(currentDate[0])+1}"
@@ -1367,45 +1620,6 @@ class Etudiant(User):
         print(f"Etudiant: {self.nom} {self.prénom}")
         print(tabulate(headers=attributs,tabular_data=self.notes, tablefmt='double_outline'))  #type:ignore
         self.usecase.pause()
-
-    # def commentaires(self)->None:
-    #     while True:
-    #         all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
-    #         all_Charges_Data = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
-    #         charge_commentaire = all_Charges_Data.get(f"{self.charge}")["Commentaire"][f"{self.matricule}"] #type: ignore
-    #         student_commentaire = all_Data.get(f"{self.matricule}")[-1]["Commentaire"] #type: ignore
-            
-    #         self.usecase.ligneMenu(2, TAILLE_SCREEN, 'haut')
-    #         print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
-    #         self.usecase.ligneMenu(2, TAILLE_SCREEN, 'milieu')
-    #         i, show = 0, True
-    #         for commentaire in student_commentaire:
-    #             if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
-    #             if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
-    #                 print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
-    #             i += 1
-                    
-    #             if commentaire["Auteur"] == self.matricule:
-    #                 self.usecase.chatRight(commentaire["Commentaire"])
-    #                 print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
-    #             else:    
-    #                 self.usecase.chatLeft(commentaire["Commentaire"])
-    #                 print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
-    #             if i == len(student_commentaire):
-    #                 self.usecase.ligneMenu(2, TAILLE_SCREEN, 'bas')
-
-    #         # Envoie d'un nouveau commentaire
-    #         commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
-    #         if commentaire != '-1':
-    #             date = self.usecase.CurrentDate()
-    #             newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': self.matricule, 'Commentaire': commentaire}
-    #             student_commentaire.append(newSend)
-    #             charge_commentaire.append(newSend)
-                
-    #             self.usecase.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
-    #             self.usecase.updateFile(FOLDER_FILE, all_Data)
-    #         else:
-    #             break
 
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None: self.dateNaissance = newDateNaissance
@@ -1913,22 +2127,152 @@ class ResponsableAdmin(User):
         self.usecase.showMsg("Liste des etudiants",wait=False)
         self.usecase.lister("Etudiants",filtre, valeur)#type:ignore
         self.usecase.pause()
-        
-    def setChargeClasse(self):
-        listeClasse = list()
+    
+    def modifyCharger(self):
         while True:
-            self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+            self.usecase.showMsg("Menu de modification d'un chargé", wait= False)
+            print("")
             self.usecase.lister("Chargés")
-            matChargé = self.usecase.testSaisie("Entrez le matricule du chargé : ")
-            chargé = self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = '{matChargé}' ") #[(Matricule, nom, prenom),]chargé[0][0]
-            if chargé != []:
-                break
+            print("")
+            matricule = self.usecase.testSaisie("Entrez le matricule du chargé à modifier ou (-1 pour quitter) : ", nbreChar=2)
+            if matricule != '-1':
+                if self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = \"{matricule}\"") != []:
+                    while True:
+                        self.usecase.showMsg(f"Menu de modification de la chargé", wait=False)
+                        chargé = self.usecase.showChargeInfo(matricule) # type: ignore
+                        print("")
+                        choix = self.usecase.testSaisie("Entrez le numéro de l'élément à modifier ou (-1) pour quitter : ",'int', min = -1)
+                        match choix:
+                            case -1:
+                                return None
+                            case 1:
+                                self.usecase.showMsg("Modification du Nom", wait= False)
+                                print("")
+                                self.usecase.centerTexte(f"Ancien Nom: {BLUE} {chargé[choix]}") #type: ignore
+                                new = self.usecase.testSaisie("Entrez le nouveau nom :")
+                                mail = f"{chargé[3]}".replace(chargé[choix].lower(), new.lower())#type: ignore
+                                self.sql.updateBase("Chargé", f"Nom = \"{new.upper()}\"", "Matricule", matricule) #type: ignore
+                                self.sql.updateBase("Chargé", f"mail = \"{mail}\"", "Matricule", matricule) #type: ignore
+                                self.usecase.showMsg("le Nom a bien été changé !", wait= False)
+                                print("")
+                                self.usecase.showMsg(f"Information de {chargé[1]} {chargé[2]}", wait=False) #type: ignore
+                                self.usecase.showStudentInfo(matricule) # type: ignore
+                                
+                                print("")
+                                if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                    return None
+                            case 2:
+                                self.usecase.showMsg("Modification du prénom", wait= False)
+                                print("")
+                                self.usecase.centerTexte(f"Ancien prénom: {BLUE} {chargé[choix]}") #type: ignore
+                                new = self.usecase.testSaisie("Entrez le nouveau prénom :")
+                                mail = f"{chargé[3]}".replace(chargé[choix].replace(" ", '-').lower(), new.replace(" ", '-').lower())#type: ignore
+                                self.sql.updateBase("Chargé", f"Prenom = \"{new.title()}\"", "Matricule", matricule) #type: ignore
+                                self.sql.updateBase("Chargé", f"mail = \"{mail}\"", "Matricule", matricule) #type: ignore
+                                self.usecase.showMsg("le prénom a bien été changé !", wait= False)
+                                print("")
+                                self.usecase.showMsg(f"Information de {chargé[1]} {chargé[2]}", wait=False) #type: ignore
+                                self.usecase.showChargeInfo(matricule) # type: ignore
+                                
+                                print("")
+                                if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                    return None
+                            case 4:
+                                self.usecase.showMsg("Modification du numéro de téléphone", wait= False)
+                                print("")
+                                self.usecase.centerTexte(f"Ancienne téléphone: {BLUE} {chargé[choix]}") #type: ignore
+                                new = self.usecase.agree_number("Entrez le nouveau téléphone : ")
+                                self.sql.updateBase("Chargé", f"Telephone = {new}", "Matricule", matricule)
+                                self.usecase.showMsg("le téléphone a bien été changé !", wait= False)
+                                print("")
+                                self.usecase.showMsg(f"Information de {chargé[1]} {chargé[2]}", wait=False)#type: ignore
+                                self.usecase.showChargeInfo(matricule) # type: ignore
+                                
+                                print("")
+                                if self.usecase.question("Voulez-vous modifier un autre élément") == 'non':
+                                    return None
+                            case 5:
+                                while True:
+                                    self.usecase.showMsg(f"Liste des classes de {chargé[1]}", wait=False)#type: ignore
+                                    classes = self.sql.getTables(f"SELECT Libelle FROM Classe WHERE idC IN ({chargé[5][1:-1]})")#type: ignore
+                                    self.usecase.ligneMenu(2, TAILLE_SCREEN - 2 , 'haut')
+                                    self.usecase.showMenu([[" Liste des classes",(TAILLE_SCREEN-2), 'center']])
+                                    self.usecase.showMenu([[" \t".join([classe[0] for classe in classes]),(TAILLE_SCREEN-(4*len(classes))-2), 'center']])
+                                    self.usecase.ligneMenu(2, TAILLE_SCREEN-2, 'milieu')
+                                    self.usecase.showMenu([["Retiré une classe", TAILLE_SCREEN//2-1, 'center'], ["Ajouter une classe", TAILLE_SCREEN//2-1, 'center']])
+                                    self.usecase.showMenu([[1, TAILLE_SCREEN//2-1, 'center'], [2, TAILLE_SCREEN//2-1, 'center']])
+                                    self.usecase.ligneMenu(3, TAILLE_SCREEN//2-1, 'bas')
+                                    print("")
+                                    choix = self.usecase.testSaisie("Faites votre choix : ", 'int')
+                                    if choix in [1, 2]:
+                                        match choix:
+                                            case 1:
+                                                while True:
+                                                    self.usecase.showMsg("Retirer une classe", wait= False)
+                                                    print("")
+                                                    self.usecase.ligneMenu(2, TAILLE_SCREEN - 2 , 'haut')
+                                                    self.usecase.showMenu([[f" Liste des classes de {chargé[1]}",(TAILLE_SCREEN-2), 'center']])#type: ignore
+                                                    self.usecase.showMenu([[" \t".join([classe[0] for classe in classes]),(TAILLE_SCREEN-(4*len(classes))-2), 'center']])
+                                                    self.usecase.ligneMenu(2, TAILLE_SCREEN-2, 'bas')
+                                                    print()
+                                                    classe = self.usecase.testSaisie("Entrez le libellé de la classe à retirer ou (-1 pour quitter): ", nbreChar = 2).upper()# type: ignore
+                                                    if classe != '-1':
+                                                        if classe in [classe[0] for classe in classes]:
+                                                            clas = self.usecase.listTrans(chargé[5])# type: ignore
+                                                            idC = clas[classes.index((classe,))]
+                                                            clas.remove(idC) # type: ignore
+                                                            self.usecase.sql.updateBase("Classe", "chargé = ''", "idC", idC)
+                                                            self.sql.updateBase("Chargé", f"Classes = \"{clas}\"", "Matricule", matricule)# type: ignore
+                                                            
+                                                            self.usecase.showMsg("La classe a bien été retirée!", wait=False)
+                                                            self.usecase.pause()
+                                                            
+                                                            self.usecase.showMsg(f"Information de {chargé[1]} {chargé[2]}", wait=False) #type: ignore
+                                                            self.usecase.showChargeInfo(matricule) # type: ignore
+                                                            print("")
+                                                            
+                                                            if self.usecase.question("Voulez-vous modifier un autre élément") == 'non': break
+                                                        else:
+                                                            self.usecase.showMsg("Le libelle n'est pas correct !", wait=False)
+                                                            self.usecase.pause()
+                                                    else: break
+                                            case 2:
+                                                self.setChargeClasse(matricule) # type: ignore
+                                                break
+                                    else:
+                                        self.usecase.showMsg("Erreur de saisie", wait= False)
+                                        print("")
+                                        if self.usecase.question("Voulez-vous réessayer") == 'non':
+                                            return None
+                else:
+                    self.usecase.showMsg("Le matricule est incorrect !", wait=False)
+                    self.usecase.pause()
+            elif matricule == '-1':  return None
             else:
-                self.usecase.showMsg("Le matricule du chargé le correspond pas !", clear=True)
-        
+                self.usecase.showMsg("Le matricule est incorrecte ! ", wait=False)
+                self.usecase.pause()
+       
+    def setChargeClasse(self, matricule: str = ""):
+        listeClasse = list()
+        if matricule == "":
+            while True:
+                self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+                self.usecase.lister("Chargés")
+                matricule = self.usecase.testSaisie("Entrez le matricule du chargé : ") # type: ignore
+                chargé = self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = '{matricule}' ") #[(Matricule, nom, prenom),]chargé[0][0]
+                if chargé != []:
+                    break
+                else:
+                    self.usecase.showMsg("Le matricule du chargé le correspond pas !", clear=True)
+        else:  chargé = self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = '{matricule}' ") #[(Matricule, nom, prenom),]chargé[0][0]
+
         while True:
-            self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
-            self.usecase.lister("Classes")
+            self.usecase.showMsg("Attribuer une classe à la chargé",wait=False)
+            print("")
+            self.usecase.centerTexte(f"{BLUE}Liste des classes n'ayant pas de chargé")
+            classes = self.usecase.sql.getTables("SELECT idC, Libelle, effectif, niveau FROM Classe WHERE chargé = '' ")
+            self.usecase.centerTexte(tabulate(headers= ["id Classe", "Libelle", "Effectif", "Niveau", "Chargé de classe"], tabular_data= classes, tablefmt='double_outline'))            
+            print("")
             idClasse = self.usecase.testSaisie("Entrez l'id de la classe : ", 'int',min=1, max=1000)
             classe = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE idC = {idClasse} ") #[(informations_chargé),]
             if classe != []:
@@ -1938,25 +2282,78 @@ class ResponsableAdmin(User):
                 else: break
             else:
                 self.usecase.showMsg("L'id de la classe ne correspond pas !", clear=True)
+                
+                
         self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
         if self.usecase.question("Voulez vous enregistrer les modifications") == 'oui':
             chargéClasses = self.usecase.listTrans(chargé[0][8])
             classeAyChargé = list()            
             for idC in listeClasse:
-                classe = self.usecase.sql.getTables(f"SELECT libelle, chargé FROM Classe WHERE idC = {idC}")
+                classe = self.usecase.sql.getTables(f"SELECT libelle, chargé, etudiants FROM Classe WHERE idC = {idC}")
                 if classe[0][1]  == "":
                     if idC not in chargéClasses:
                         chargéClasses.append(idC)
-                        self.usecase.sql.updateBase("Classe", f"chargé = '{matChargé}'", "idC", idC)
+                        self.usecase.sql.updateBase("Classe", f"chargé = '{matricule}'", "idC", idC)
+                        
+                        #Ajout des étudiants dans la liste de commentaire de la chargé !
+                        charges = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
+                        chargeCommentaire = charges[f"{matricule}"]["Commentaire"]
+                        for MatriculeEtudiant in self.usecase.listTrans(classe[0][2], 'chaine'):
+                            chargeCommentaire[f"{MatriculeEtudiant.strip()}"] = []
+                        self.usecase.updateFile(FOLDER_CHARGES_FILE, charges)
                 else:
                     classeAyChargé.append(classe[0][0])
-                    
             if len(listeClasse) != len(chargéClasses):
                 classes = ", ".join(classeAyChargé)
                 self.usecase.showMsg(f"Les classes : {classes} ont déjà un chargé(e) !", clear=False, wait=False)
                 self.usecase.pause()
-            self.usecase.sql.updateBase("Chargé", f"classes = '{str(chargéClasses)}' ", "Matricule", matChargé)
+                
+            self.usecase.sql.updateBase("Chargé", f"classes = '{str(chargéClasses)}' ", "Matricule", matricule)
             self.usecase.showMsg(f"La liste des classes a bien été attribuer à {chargé[0][1]}")
+            
+    # def setChargeClasseOld(self):
+    #     listeClasse = list()
+    #     while True:
+    #         self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+    #         self.usecase.lister("Chargés")
+    #         matChargé = self.usecase.testSaisie("Entrez le matricule du chargé : ")
+    #         chargé = self.usecase.sql.getTables(f"SELECT * FROM Chargé WHERE Matricule = '{matChargé}' ") #[(Matricule, nom, prenom),]chargé[0][0]
+    #         if chargé != []:
+    #             break
+    #         else:
+    #             self.usecase.showMsg("Le matricule du chargé le correspond pas !", clear=True)
+        
+    #     while True:
+    #         self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+    #         self.usecase.lister("Classes")
+    #         idClasse = self.usecase.testSaisie("Entrez l'id de la classe : ", 'int',min=1, max=1000)
+    #         classe = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE idC = {idClasse} ") #[(informations_chargé),]
+    #         if classe != []:
+    #             listeClasse.append(idClasse)
+    #             if self.usecase.question("Voulez vous ajouter une autre classe") == 'oui':
+    #                 continue
+    #             else: break
+    #         else:
+    #             self.usecase.showMsg("L'id de la classe ne correspond pas !", clear=True)
+    #     self.usecase.showMsg("Attribuer une classe a un chargé",wait=False)
+    #     if self.usecase.question("Voulez vous enregistrer les modifications") == 'oui':
+    #         chargéClasses = self.usecase.listTrans(chargé[0][8])
+    #         classeAyChargé = list()            
+    #         for idC in listeClasse:
+    #             classe = self.usecase.sql.getTables(f"SELECT libelle, chargé FROM Classe WHERE idC = {idC}")
+    #             if classe[0][1]  == "":
+    #                 if idC not in chargéClasses:
+    #                     chargéClasses.append(idC)
+    #                     self.usecase.sql.updateBase("Classe", f"chargé = '{matChargé}'", "idC", idC)
+    #             else:
+    #                 classeAyChargé.append(classe[0][0])
+                    
+    #         if len(listeClasse) != len(chargéClasses):
+    #             classes = ", ".join(classeAyChargé)
+    #             self.usecase.showMsg(f"Les classes : {classes} ont déjà un chargé(e) !", clear=False, wait=False)
+    #             self.usecase.pause()
+    #         self.usecase.sql.updateBase("Chargé", f"classes = '{str(chargéClasses)}' ", "Matricule", matChargé)
+    #         self.usecase.showMsg(f"La liste des classes a bien été attribuer à {chargé[0][1]}")
         
     def ajoutFiliere(self):
         filiere = dict()
@@ -2184,7 +2581,7 @@ class ResponsableAdmin(User):
             moyenne += moyenneMod
         return moyenne/coef
     
-    def moyenneClasse(self, transList, classeEtu):
+    def moyenneClasse(self, classeEtu):
         classeMoyenne, nbreVal, nbreNonVal = 0.0, 0, 0
         etuMoyennes = []
         etu = self.usecase.listTrans(classeEtu, "chaine")
@@ -2246,9 +2643,9 @@ class Application:
         self.user_active = self.useCases.createUser(self.user_connect)
         
 if __name__ == "__main__":
-    # Application()
+    Application()
     # Admin()
-    ResponsableAdmin()
+    # ResponsableAdmin()
     # Chargé()
     # Partenaire()
     # Etudiant()
