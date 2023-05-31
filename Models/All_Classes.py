@@ -662,7 +662,6 @@ class Chargé(User):
                             case 1:
                                 self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
                                 self.showNotes()
-                                pass
                             case 2:
                                 self.usecase.showMsg("Notes de l'etudiant",wait=False)
                                 self.showNotesEtu()
@@ -676,7 +675,6 @@ class Chargé(User):
                             case 2:
                                 self.usecase.showMsg("Modifier la note d'un etudiant",wait=False)
                                 self.modifNoteEtu()
-                            
                             case 3: 
                                 self.modifyEtudiant()
                             case 4: break
@@ -696,16 +694,14 @@ class Chargé(User):
                             case 1:
                                 self.usecase.showMsg("Faire un Commentaire",wait=False)
                                 self.DoCommentaire()
-                                
-                                pass
                             case 2:
                                 self.usecase.showMsg("Voir les Commentaires")
-                                pass
                             case 3: break
                 case 6:
                     self.usecase.showMsg("Suppression d'etudiant",wait=False)
                     self.deleteEtudiant()
                 case 7:
+                    self.usecase.quitter()
                     break
     
     def deleteEtudiant(self):
@@ -942,7 +938,29 @@ class DefaultUseCases:
         self.all_User_Data = self.sql.datas #Données des utilisateurs.
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
         self.students_data = self.loadStudentsFolder()
-        # self.students_discuss = self.loadStudentsFolder(FOLDER_STUDENTS_DISCUSS) 
+        self.students_discuss = self.loadStudentsFolder(FOLDER_FILE) 
+    
+    def consultStudentFolder(self, matricule: str, année_scolaire: str, session: int)-> list[list]:
+        """ ### Cett méthode permet de consulter la liste de note d'un étudiant selon l'année_scolaire et la session.
+        - ##### Arguments:
+            - `matricule (str)`: C'est le matricule de l'étudiant
+            - `année_scolaire (str)`: année de fréquentation de l'étudiant
+            - `session (int)`: la session de note que vous voulez voir (Session 1, 2, 3 etc...)
+
+        - ##### Retourne:
+            - Une liste des notes de l'année_scolaire et de la session
+        """
+        matricule = matricule.strip()
+        student_data = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
+        if student_data != []:
+            student_folder = self.students_data.get(f"{matricule}")
+            school_years = [data["Année-Scolaire"]  for data in student_folder] #type:ignore ["2020-2021", "2021-2022", "2022-2023"]
+            if année_scolaire in school_years:
+                data_of_year = student_folder[school_years.index(année_scolaire)] #type: ignore
+                session_marks = self.dicoTrans(data_of_year.get("Période")) # [(NomSession, DicoModules), (NomSession, DicoModules)]            
+                return [[module, notes[0], notes[1]] for module, notes in session_marks[session][1].items()]
+        return [] 
+    
     def report(self, matricule:str):
         student = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
         if student != []:
@@ -1644,10 +1662,11 @@ class Etudiant(User):
                     break
      
     def showNotes(self)->None:
-        attributs = ["Module","Note Evalution","Note Examen"]
-        print(f"Etudiant: {self.nom} {self.prénom}")
-        print(tabulate(headers=attributs,tabular_data=self.notes, tablefmt='double_outline'))  #type:ignore
-        self.usecase.pause()
+        # attributs = ["Module","Note Evalution","Note Examen"]
+        # print(f"Etudiant: {self.nom} {self.prénom}")
+        # print(tabulate(headers=attributs,tabular_data=self.notes, tablefmt='double_outline'))  #type:ignore
+        # self.usecase.pause()
+        self.usecase.report(self.matricule)
 
     #Setters
     def setDateNaissance(self, newDateNaissance: str) -> None: self.dateNaissance = newDateNaissance
@@ -1764,15 +1783,16 @@ class Note:
 
 class Partenaire:
     def __init__(self,id:int,libelle:str, mail: str, téléphone: int, login: str, password: str, typeP: str) -> None:
+        self.id = id
+        self.libelle = libelle
+        self.mail = mail
+        self.telephone = téléphone
+        self.login = login
+        self.password = password
         self.usecase = DefaultUseCases()
         self.all_Etudiants = self.usecase.loadStudentsFolder()
         self.traitement()
         
-    # def __init__(self) -> None:
-    #     self.usecase = DefaultUseCases()
-    #     self.all_Etudiants = self.usecase.loadStudentsFolder()
-    #     self.traitement()
-    
     def traitement(self):
         while True:
             match self.usecase.controlMenu("Menu général", PARTENAIRE_USECASES["main"]): 
@@ -1780,6 +1800,7 @@ class Partenaire:
                     self.consult()
                     self.usecase.pause()
                 case 2:
+                    self.usecase.quitter()
                     break
                 
     def consult(self):
@@ -1884,13 +1905,8 @@ class Professeur:
 
 
 class ResponsableAdmin(User):
-    # def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
-    #     super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
-    #     self.usecase = DefaultUseCases()
-    #     self.sql = MySql()
-    #     self.traitement()
-    
-    def __init__(self) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str) -> None:
+        super().__init__(matricule, nom, prénom, mail, téléphone, login, password, "ResponsableAdmin")
         self.usecase = DefaultUseCases()
         self.sql = MySql()
         self.traitement()
@@ -1959,19 +1975,21 @@ class ResponsableAdmin(User):
                         case 1:
                             self.setChargeClasse()
                         case 2:
+                            self.modifyCharger()
+                        case 3:
                             self.usecase.showMsg("Moyenne des Etudiant et de la Classe",wait=False)
                             self.showMoyenne()
-                        case 3:
+                        case 4:
                             match(self.usecase.controlMenu("Menu Statistique",RP_USECASES["stat"])):
                                 case 1:
                                     self.viewClassesStats()
                                     pass
                                 case 2:
                                     self.viewClassesStatsByFiliere()
-                        case 4:
-                            break
+                        case 5:
+                            continue
                 case 6:
-                    break
+                    self.usecase.quitter()
                 
     #Fonctionnalité de la responsable
     def deleteChargé(self):
@@ -2635,7 +2653,7 @@ class ResponsableAdmin(User):
             if classes != []:
                 data = []
                 for classe in classes:
-                    classeData = self.moyenneClasse(self.usecase.listTrans, classe[1])
+                    classeData = self.moyenneClasse(classe[1])
                     classeData.insert(0, classe[0])
                     data.append(classeData)
                 attributs = ["Classe", "Forte moyenne", "Faible moyenne", "Moyenne générale", "Nombre etudiants validé", "Nombre etudiants Non-validé" ]
@@ -2655,7 +2673,7 @@ class ResponsableAdmin(User):
             data=[]
             if(classes!=[]):
                 for classe in classes:
-                    liste=self.moyenneClasse(self.usecase.listTrans,classe[1])
+                    liste=self.moyenneClasse(classe[1])
                     liste.insert(0,classe[0])
                     data.append(liste)
                 break

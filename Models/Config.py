@@ -19,11 +19,11 @@ POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isomet
 
 # ================================== Users Functions =============================== #
 RP_USECASES = {
-    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier une information","Supprimer","Plus", "Se déconnecter"],
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier un élément","Supprimer","Plus", "Se déconnecter"],
     "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière"],
     "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants", "Liste des partenaires", "Menu général"],
     "delete": ["Supprimer un chargé","Supprimer un Professeur", "Supprimer un module", "Supprimer un partenaire"],
-    "more": ["Attribuer des classes aux chargés", "Voir la moyenne des etudiants d'une classe","Voir les statistiques", "Menu general"],
+    "more": ["Attribuer des classes aux chargés","Modifier un chargé", "Voir la moyenne des etudiants d'une classe","Voir les statistiques", "Menu general"],
     "stat":["Les Statistiques d'une classe","Les Statistiques d'une Filiere"],
     "filtre": ["Tous","Filiere", "Classe", "Niveau", "Nationnalité"]
     
@@ -45,7 +45,7 @@ ADMIN_USECASES = {
 }
 
 CHARGE_USECASE={
-    "main":["Lister un profil","Voir les notes","Modifier une note","Initier Les notes d'un module","Commentaire","Supprimer un etudiant", "Se deconnecter"],
+    "main":["Lister un profil","Voir les notes","Modifier un élément","Initier Les notes d'un module","Commentaire","Supprimer un etudiant", "Se deconnecter"],
     "Liste":["Lister les etudiants par Classe","Lister les professeurs", "Menu général"],
     "notes":["Notes d'une Classe","Notes d'un etudiant", "Menu général"],
     "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant", "Modifier un etudiant", "Menu général"],
