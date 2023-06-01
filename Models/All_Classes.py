@@ -11,7 +11,7 @@ import colorama as color
 from colorama import init
 from pyfiglet import figlet_format
 from tabulate import tabulate 
-from Config import *
+from Models.Config import *
 init(autoreset=True)
 
 #Couleur utilisées dans le code !
@@ -36,7 +36,7 @@ class MySql:
         self.TABLES_USER = {
             "Admin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login","Password","TypeP"],
             "Chargé": ["Matricule", "Nom", "Prenom", "Mail", "Telephone", "Login", "Password", "TypeP",  "Classes"],
-            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes","Commentaires"],
+            "Etudiants": [ "Matricule", "Nom", "Prenom", "DateNaissance", "Nationnalité", "Mail", "Telephone", "Login", "Password", "TypeP","IdClasse", "Notes"],
             "partenaires": ["Id", "Libelle", "Mail", "Telephone", "Login", "Password", "TypeP"],
             "responsableAdmin": ["Matricule", "Nom", "Prenom", "Mail", "Telephone","Login", "Password", "TypeP"]
         }
@@ -44,7 +44,6 @@ class MySql:
         self.TABLES_OTHERS = {
             "filiere": ["idF","libelle","classes"], 
             "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit"],
-            "Niveau": ["idN","libelle","classes"],
             "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
             "Classe": ["idC", 'libelle', 'Filiere', 'niveau','effectif', 'chargé','professeurs', 'modules', 'etudiants', "Annee_Scolaire"]
         }
@@ -54,16 +53,24 @@ class MySql:
             "Chargé":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text,  Classes text", 
             "Admin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text", 
             "Filiere":"idF number, libelle text, classes text", 
-            "Modules":"idM number, libelle text, classes text, professeurs text, notes text", 
-            "Niveau":"idN number, libelle text, classes text", 
+            "Modules":"idM number, libelle text, classes text, professeurs text, notes text, coefficient integer, credit integer", 
             "partenaires":"id integer primary key autoincrement, libelle varchar(150), mail varchar(255), Telephone integer, Login varchar(255), Password varchar(150), TypeP varchar(150)", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
             "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text",
-            "Classe":"idC number, Libelle text, Filiere text, niveau number, effectif number, chargé text, professeurs text, modules text, etudiants text"
+            "Classe":"idC number, Libelle text, Filiere text, niveau number, effectif number, chargé text, professeurs text, modules text, etudiants text, Annee_Scolaire text"
         }
         
         self.initTables(self.TABLES)
-        
+        # INSERT INTO Admin (Matricule, Nom, Prenom, mail, Telephone, Login, Password, TypeP)VALUES ();
+        if self.getTables("SELECT count(matricule) FROM Admin")[0][0] == 0:
+            # Définition de l'administrateur par défaut...
+            self.insert("Admin", ("ISM2023/staff01-0001", "SANGARE", "Mohamed", "mohamed.sangare@groupism.sn", 781077144, "mohamed.sangare@groupism.sn", 'passer@123', 'Admin'), self.TABLES_USER["Admin"])
+            
+            #Insertion de quelques filières dans la base...
+            filiere = ["MAIE", "MOSIEF", "GLRS", "ETSE", "IAGE", "TTL", "CPD", "CDSD"]
+            for i in range(len(filiere)):
+                self.insert("Filiere", (i, filiere[i], "[]"), self.TABLES_OTHERS['filiere'])
+            
         self.datas = self.getUserData(self.TABLES_USER)
         self.component = self.getUserData(self.TABLES_OTHERS)
            
@@ -224,38 +231,40 @@ class Admin(User):
                     while True:
                         match  self.usecase.controlMenu("Ajout d'un nouvel utilisateur", ADMIN_USECASES["add"]):
                             case 1:
-                                self.usecase.showMsg("Liste des étudiants", clear=False)
+                                self.usecase.showMsg("Menu d'ajout d'un étudiants",wait=False)
                                 self.ajoutEtudiant()
-                                break
                             case 2:
                                 self.usecase.showMsg("Liste des chargés")
                                 self.ajoutChargé()
-                                break
                             case 3:
                                 self.usecase.showMsg("Liste des responsables administratifs")
                                 self.ajoutRP()
-                                break
                             case 4:
                                 self.usecase.showMsg("Liste des partenaires")
                                 self.ajoutPartenaire()
-                                break
                             case 5:  break
                 case 2:
                     while True:
                         match  self.usecase.controlMenu("Liste des utilisateurs", ADMIN_USECASES["liste"]):
                             case 1:
+                                self.usecase.showMsg("Liste des étudiants", wait=False)
                                 self.usecase.lister("Etudiants")
                                 self.usecase.pause()
                                 pass
                             case 2:
+                                self.usecase.showMsg("Liste des chargés", wait=False)
                                 self.usecase.lister("Chargés")
                                 self.usecase.pause()
                                 pass
                             case 3:
+                                self.usecase.showMsg("Liste des responsables", wait=False)
+                                
                                 self.usecase.lister("ResponsablesAdmin")
                                 self.usecase.pause()
                                 pass
                             case 4:
+                                self.usecase.showMsg("Liste des partenaires", wait=False)
+                                
                                 self.usecase.lister("Partenaires")
                                 self.usecase.pause()
                                 pass
@@ -272,6 +281,7 @@ class Admin(User):
                                 break
                     pass
                 case 4:
+                    self.usecase.quitter()
                     self.usecase.sql.closeDB()
                     break
         pass
@@ -345,19 +355,32 @@ class Admin(User):
         etudiant = dict()
         matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
-        print(classe)
-        self.usecase.pause()
-        self.usecase.centerTexte("Renseigner les informations de l'étudiant")
+        self.usecase.showMsg("Menu d'ajout d'un etudiant", wait=False)
+        self.usecase.centerTexte(f"{BLUE}Renseigner les informations de l'étudiant")
+        print("")
         etudiant = {
             "Matricule":matricule,
             "Nom":self.usecase.testSaisie("Nom de l'Etudiant : ").upper(), # type: ignore
             "Prénom":self.usecase.testSaisie("Prenom de l'Etudiant : ").title(), # type: ignore
             "DateNaissance":self.usecase.ver_date("INFORMATIONS SUR LA DATE DE NAISSANCE"),
-            "Nationnalité":self.usecase.testSaisie(f"DONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
-            "Telephone":self.usecase.agree_number("Numéro de téléphone : ")
+            "Nationnalité":self.usecase.testSaisie(f"\n{push}DONNEES SUPPLEMENTAIRES\n{push}Nationnalité: ").capitalize(), # type: ignore
+            "Telephone":self.usecase.agree_number("Numéro de téléphone ")
         }
+        etudiant["Mail"] = self.setUserMail(etudiant)
         while True:
-            choix=self.usecase.question("Confirmer l'enregistrement")
+            self.usecase.showMsg("Menu d'jaout d'un étudiant", wait= False)
+            self.usecase.ligneMenu(4, TAILLE_SCREEN//3, 'haut')
+            self.usecase.showMenu([["Matricule",(TAILLE_SCREEN//3), 'center'], ['Nom (1)',(TAILLE_SCREEN//3), 'center'], ["Prénom (2)",(TAILLE_SCREEN//3), 'center']])
+            self.usecase.showMenu([[etudiant["Matricule"],(TAILLE_SCREEN//3), 'center'], [etudiant["Nom"],(TAILLE_SCREEN//3), 'center'], [etudiant["Prénom"],(TAILLE_SCREEN//3), 'center']])
+            self.usecase.ligneMenu(4, TAILLE_SCREEN//3, 'milieu')
+            self.usecase.showMenu([["Mail (3)",(TAILLE_SCREEN//2)-1, 'center'], ['Nationnalité (4)',(TAILLE_SCREEN//2)-1, 'center']])
+            self.usecase.showMenu([[etudiant["Mail"],(TAILLE_SCREEN//2)-1, 'center'], [etudiant["Nationnalité"],(TAILLE_SCREEN//2)-1, 'center']])
+            self.usecase.ligneMenu(3, TAILLE_SCREEN//2 - 1 , 'milieu')
+            self.usecase.showMenu([["Date Naissance (5)",(TAILLE_SCREEN//3), 'center'], ['Téléphone (6)',(TAILLE_SCREEN//3), 'center'], ["Classe (7)",(TAILLE_SCREEN//3), 'center']])
+            self.usecase.showMenu([[etudiant["DateNaissance"],(TAILLE_SCREEN//3), 'center'], [etudiant['Telephone'],(TAILLE_SCREEN//3), 'center'], [classe[1]["libelle"] if type(classe) == tuple else classe["libelle"] ,(TAILLE_SCREEN//3), 'center']]) # type: ignore
+            self.usecase.ligneMenu(4, TAILLE_SCREEN//3, 'bas')
+            print("")
+            choix = self.usecase.question("Confirmer l'enregistrement")
             if choix =="oui":
                 data = self.usecase.loadStudentsFolder()
                 charge = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
@@ -376,9 +399,9 @@ class Admin(User):
                             "Commentaire": []
                         }
                     ]
-                    print(classe[1])
-                    charge[f"{classe[1]['chargé']}"]["Commentaire"][f"{etudiant['Matricule']}"] = [] #type: ignore
-                    self.usecase.updateFile(FOLDER_CHARGES_FILE,charge)
+                    if classe[1]["chargé"] != "":
+                        charge[f"{classe[1]['chargé']}"]["Commentaire"][f"{etudiant['Matricule']}"] = [] #type: ignore
+                        self.usecase.updateFile(FOLDER_CHARGES_FILE,charge)
                     etudiant["IdClasse"] = classe[0]
                     listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
                     listeMatricules.append(matricule)
@@ -428,8 +451,7 @@ class Admin(User):
             DEFAULT_PASSWORD,
             "Etudiant",
             newEtu.get("IdClasse"),
-            '[]',
-            "[]"
+            '[]'
         )
         
     def addNewChargé(self, newChargé:dict):
@@ -749,6 +771,7 @@ class Chargé(User):
             if(classeEtu!=[]):#type:ignore
                 break
             
+        self.usecase.showMsg("Liste des étudiants", wait=False)
         attributs=self.usecase.sql.TABLES_USER["Etudiants"][:7]
         print(tabulate(headers=attributs,tabular_data=classeEtu, tablefmt='double_outline')) #type:ignore
         self.usecase.pause()
@@ -816,7 +839,11 @@ class Chargé(User):
             else: break
         
     def showNotesEtu(self)->None:
+        
         while True:
+            classes = self.usecase.sql.getTables(f'SELECT Classes FROM Chargé WHERE Matricule = \"{self.matricule}\"')[0]
+            da =  self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom FROM Etudiants Where idClasse IN ({classes[0][1:-1]})")
+            self.usecase.centerTexte(tabulate(headers=['Matricule', "Nom", "Prénom"], tabular_data=da, tablefmt="double_outline"))
             matEtu = self.usecase.testSaisie("Entrez le matricule de l'etudiant : ").upper() # type: ignore
             listEtu = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes FROM Etudiants ")
             for etu in listEtu:
@@ -1140,7 +1167,7 @@ class DefaultUseCases:
                 data = self.sql.getTables(f"SELECT Matricule, Nom, Prenom, mail, Telephone FROM responsableAdmin")
             
         if data != []:#type:ignore
-            print(tabulate(headers=attributs,tabular_data= data, tablefmt='double_outline'))#type:ignore
+            self.centerTexte(tabulate(headers=attributs,tabular_data= data, tablefmt='double_outline'))#type:ignore
         else:
             self.showMsg("Vous n'avez pas de données !", clear=False)
     
@@ -1468,8 +1495,8 @@ class DefaultUseCases:
                 
     def ver_date(self, message:str="")-> str:
         # self.centerTexte(message)
-        print(f"\n{push}{message}{YELLOW} ex: jour : 12 | mois : 06 | année : 2001")
-        print(f"{push}{BLUE}{'='*(len(message)+41)}")
+        print(f"\n{push}{message}")
+        print(f"{push}{BLUE}{'='*(len(message))}")
         max = self.CurrentDate()[0]
         annee = "{:04d}".format(self.testSaisie("Entrer l'annee : ","int",1900,int(max)))
         mois = "{:02d}".format(self.testSaisie("Enter le mois : ","int",1,12))
@@ -1491,24 +1518,18 @@ class DefaultUseCases:
     def getIdClasse(self)-> str:
         niveau = ["L1","L2","L3","M1","M2"]
         all_filières = self.all_Other_Data["filiere"]
-        
         while True:
-            self.ligne('=', nombre= 50)
-            print(f"{'Position':<10}{'Id':<10}{'Libelle'}")
-            self.ligne('=', nombre= 50)
-            i = 1
-            for filiere in all_filières:
-                print(f"{i:<10} {filiere['idF']:<10}{filiere['libelle']}")
-                self.ligne(nombre=50)
-                i += 1
+            self.showMsg("Liste des filieres", wait=False)
+            self.showTableau("Libelle", [filiere['libelle'] for filiere in all_filières])
             posFiliere = self.testSaisie("Entrez la position de la filière: ","int",1,len(all_filières))
             if posFiliere != None:  break
             else :self.clear()
             
         while True:
-            self.centerTexte("\n1---- Licence 1\n2---- Licence 2\n3---- Licence 3\n4---- Master 1\n5---- Master 2\n")
-            pos = self.testSaisie("Entrez l'id du niveau de l'étudiant: ","int",1,5)
-            if niveau != None:  break
+            self.showMsg("Liste des filieres", wait=False)
+            self.showTableau("Libelle", ["Licence 1", "Licence 2", "Licence 3", 'Master 1', 'Master 2'])
+            pos = self.testSaisie("Entrez la position du niveau de l'étudiant: ","int",1,5)
+            if pos in [1,2,3,4,5]:  break
             else: self.clear()
         
         filiere = all_filières[posFiliere-1] # type: ignore
@@ -1541,6 +1562,7 @@ class DefaultUseCases:
             "chargé": "",
             "professeurs":'[]',
             "modules":'[]',
+            "Etudiants": "[]",
             "Annee_Scolaire":self.CurrentSchoolYear()
         }
             
@@ -1927,36 +1949,41 @@ class ResponsableAdmin(User):
                             self.usecase.showMsg("Ajout d'une filière",wait=False)
                             self.ajoutFiliere()
                 case 2:
-                    match self.usecase.controlMenu("Menu général", RP_USECASES["liste"]):
-                        case 1:
-                            self.usecase.showMsg("Liste des professeurs",wait=False)
-                            self.usecase.lister("Professeurs")
-                            self.usecase.pause()
-                        case 2:
-                            self.usecase.showMsg("Liste des modules",wait=False)
-                            self.usecase.lister("Modules")
-                            self.usecase.pause()
-                        
-                        case 3:
-                            self.usecase.showMsg("Liste des filière",wait=False)
-                            self.usecase.lister("Filiere")
-                            self.usecase.pause()
-                        case 4:
-                            self.usecase.showMsg("Liste des Chargés",wait=False)
-                            self.usecase.lister("Chargés")
-                            self.usecase.pause()
-                        case 5:
-                            self.usecase.showMsg("Liste des niveaux",wait=False)
-                            self.usecase.lister("Niveau")
-                            self.usecase.pause()
-                        case 6:
-                            self.filtrer()
-                            pass
-                        
-                        case 7: 
-                            self.usecase.lister("Partenaires")
-                            self.usecase.pause()
-                        case 8: pass
+                    while True:
+                        match self.usecase.controlMenu("Menu général", RP_USECASES["liste"]):
+                            case 1:
+                                self.usecase.showMsg("Liste des professeurs",wait=False)
+                                self.usecase.lister("Professeurs")
+                                self.usecase.pause()
+                            case 2:
+                                self.usecase.showMsg("Liste des modules",wait=False)
+                                self.usecase.lister("Modules")
+                                self.usecase.pause()
+                            
+                            case 3:
+                                self.usecase.showMsg("Liste des filière",wait=False)
+                                self.usecase.lister("Filiere")
+                                self.usecase.pause()
+                            case 4:
+                                self.usecase.showMsg("Liste des Chargés",wait=False)
+                                self.usecase.lister("Chargés")
+                                self.usecase.pause()
+                            case 5:
+                                self.usecase.showMsg("Liste des niveaux",wait=False)
+                                self.usecase.lister("Niveau")
+                                self.usecase.pause()
+                            case 6:
+                                self.filtrer()
+                                pass
+                            
+                            case 7: 
+                                self.usecase.showMsg("Liste des partenaires", wait=False)
+                                self.usecase.lister("Partenaires")
+                                self.usecase.pause()
+                            case 8: break
+                case 3:
+                    self.usecase.showMsg("Menu de modification du chargé", wait=False)
+                    self.modifyCharger()
                 case 4:
                     match self.usecase.controlMenu("Menu général", RP_USECASES["delete"]):
                         case 1:
@@ -2000,18 +2027,20 @@ class ResponsableAdmin(User):
             for chargé in chargés:
                 listChargé.append([chargé[0],chargé[1],chargé[2]])
                 listMat.append(chargé[0])
-            print(tabulate(headers=["Matricule", "Nom", "Prenom"],tabular_data= listChargé, tablefmt='double_outline'))
-            
-            matricule=self.usecase.testSaisie("Entrez le matricule du Chargé:")
-            if matricule in listMat:
-                chargéClasses=self.usecase.sql.getTables(f"select Classes from Chargé where Matricule='{matricule}' ")[0]
-                for idclasse in self.usecase.listTrans(chargéClasses[0]):
-                    changement='chargé=" " '
-                    self.usecase.sql.updateBase("Classe",changement,"idC",idclasse)
-                self.usecase.sql.getTables(f"Delete from Chargé where Matricule='{matricule}'")
-                self.usecase.showMsg("Chargé supprimé avec succes!")
+            self.usecase.centerTexte(tabulate(headers=["Matricule", "Nom", "Prenom"],tabular_data= listChargé, tablefmt='double_outline'))    
+            matricule=self.usecase.testSaisie("Entrez le matricule du Chargé ou (-1 pour quitter): ", nbreChar = 2)
+            if matricule != '-1':
+                if matricule in listMat:
+                    chargéClasses=self.usecase.sql.getTables(f"select Classes from Chargé where Matricule='{matricule}' ")[0]
+                    for idclasse in self.usecase.listTrans(chargéClasses[0]):
+                        changement='chargé=" " '
+                        self.usecase.sql.updateBase("Classe",changement,"idC",idclasse)
+                    self.usecase.sql.getTables(f"Delete from Chargé where Matricule='{matricule}'")
+                    self.usecase.showMsg("Chargé supprimé avec succes!")
+                    return None
+                self.usecase.showMsg("Le matricule saisi ne correspond à aucun Chargé")
+            else:
                 return None
-            self.usecase.showMsg("Le matricule saisi ne correspond à aucun Chargé")
 
     def deleteProf(self):
         while True:
@@ -2022,31 +2051,37 @@ class ResponsableAdmin(User):
             for prof in profs:
                 listprofs.append([prof[0],prof[1],prof[2]])
                 listId.append(prof[0])
-            print(tabulate(headers=att,tabular_data= listprofs, tablefmt='double_outline'))   
+            self.usecase.centerTexte(tabulate(headers=att,tabular_data= listprofs, tablefmt='double_outline'))   
             
-            idProf=self.usecase.testSaisie("Saisir l'id du professeur: ","int")
-            if idProf in listId:
-                ClassProfMod=self.usecase.sql.getTables(f"select Classes,modules from professeurs where idP={idProf}")[0]
-                print(ClassProfMod[0])
-                if(ClassProfMod[0]!=[]):
-                    for classP in self.usecase.listTrans(ClassProfMod[0]):
-                        idProfs=self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
-                        liste=self.usecase.listTrans(idProfs[0])
-                        liste.remove(idProf)
-                        changement=f'professeurs="{liste}" '
-                        self.usecase.sql.updateBase("Classe",changement,"idC",classP)
-                for idMod in self.usecase.listTrans(ClassProfMod[1]):
-                    professeurs=self.usecase.sql.getTables(f"select professeurs from Modules where idM={idMod}")[0][0]
-                    listProfesseurs=self.usecase.listTrans(professeurs)
-                    listProfesseurs.remove(idProf)
-                    changement=f'professeurs="{listProfesseurs}" '
-                    self.usecase.sql.updateBase("Modules",changement,"idM",idMod)
-                    
-                self.usecase.sql.getTables(f"Delete from professeurs where idP={idProf} ")
+            idProf=self.usecase.testSaisie("Saisir l'id du professeur ou (-1 pour quitter): ","int")
+            if idProf != -1:
+                l = list()
                 
-                self.usecase.showMsg("Professeur supprimé avec succes")
-                return None
-            self.usecase.showMsg("L' Id saisi ne correspond à aucun professeur")
+                if idProf in listId:
+                    ClassProfMod=self.usecase.sql.getTables(f"select Classes,modules from professeurs where idP={idProf}")[0]
+                    if(ClassProfMod[0]!=[]):
+                        for classP in self.usecase.listTrans(ClassProfMod[0]):
+                            idProfs=self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
+                            liste=self.usecase.listTrans(idProfs[0])
+                            print(liste)
+                            if idProf in liste:
+                                liste.remove(idProf)
+                                changement=f'professeurs="{liste}" '
+                                self.usecase.sql.updateBase("Classe",changement,"idC",classP)
+                    for idMod in self.usecase.listTrans(ClassProfMod[1]):
+                        professeurs=self.usecase.sql.getTables(f"select professeurs from Modules where idM={idMod}")[0][0]
+                        listProfesseurs=self.usecase.listTrans(professeurs)
+                        if idProf in listProfesseurs:
+                            listProfesseurs.remove(idProf)
+                            changement=f'professeurs="{listProfesseurs}" '
+                            self.usecase.sql.updateBase("Modules",changement,"idM",idMod)
+                        
+                    self.usecase.sql.getTables(f"Delete from professeurs where idP={idProf} ")
+                    
+                    self.usecase.showMsg("Professeur supprimé avec succes")
+                    return None
+                self.usecase.showMsg("L' Id saisi ne correspond à aucun professeur")
+            else: return None
         
     def deleteModules(self):
         while True:
@@ -2054,30 +2089,31 @@ class ResponsableAdmin(User):
             modules = self.usecase.sql.getTables(f"select idM, libelle, coefficient, professeurs, classes from Modules")
             print(tabulate(headers=["idM", "libelle", "coefficient"], tabular_data= [[mod[0], mod[1], mod[2]] for mod in modules ], tablefmt= "double_outline" ))
             print("")
-            idM = self.usecase.testSaisie("Entrez l'id du module à supprimer : ", 'int')
-            for Mod in modules:
+            idM = self.usecase.testSaisie("Entrez l'id du module à supprimer ou (-1 pour quitter): ", 'int', min= -1)
+            if idM != -1:
+                for Mod in modules:
                 #REcherche de l'id saisie par l'utilisateur dans la liste des modules
-                if Mod[0] == idM:
-                    # Suppression du modules dans la liste de module des professeurs
-                    for idPro in self.usecase.listTrans(Mod[3]):
-                        modProf = self.usecase.listTrans(self.usecase.sql.getTables(f"SELECT modules FROM professeurs WHERE idP = {idPro}")[0][0])
-                        modProf.remove(idM)
-                        self.usecase.sql.updateBase("professeurs", f"modules = '{modProf}' ", "idP", idPro)
-                    
-                    # Suppression du module dans la liste des classes
-                    for idClasse in self.usecase.listTrans(Mod[4]):
-                        classeMods = self.usecase.listTrans(self.usecase.sql.getTables(f"SELECT modules FROM Classe WHERE idC = {idClasse}")[0][0])
-                        classeMods.remove(idM)
-                        self.usecase.sql.updateBase("Classe", f"modules = '{classeMods}' ", "idC", idClasse)
-                    
-                    # Suppression du module dans la liste des modules
-                    self.usecase.sql.delete("idM", idM, "Modules")
-                    self.usecase.showMsg(f"Le module {Mod[1]} a été supprimé avec succes !")
-                    
-                    return None
-            self.usecase.showMsg("L'id saisie ne correspond à aucun module !", wait=False)
-            print("")
-            self.usecase.pause()
+                    if Mod[0] == idM:
+                        # Suppression du modules dans la liste de module des professeurs
+                        for idPro in self.usecase.listTrans(Mod[3]):
+                            modProf = self.usecase.listTrans(self.usecase.sql.getTables(f"SELECT modules FROM professeurs WHERE idP = {idPro}")[0][0])
+                            modProf.remove(idM)
+                            self.usecase.sql.updateBase("professeurs", f"modules = '{modProf}' ", "idP", idPro)
+                        
+                        # Suppression du module dans la liste des classes
+                        for idClasse in self.usecase.listTrans(Mod[4]):
+                            classeMods = self.usecase.listTrans(self.usecase.sql.getTables(f"SELECT modules FROM Classe WHERE idC = {idClasse}")[0][0])
+                            classeMods.remove(idM)
+                            self.usecase.sql.updateBase("Classe", f"modules = '{classeMods}' ", "idC", idClasse)
+                        
+                        # Suppression du module dans la liste des modules
+                        self.usecase.sql.delete("idM", idM, "Modules")
+                        self.usecase.showMsg(f"Le module {Mod[1]} a été supprimé avec succes !")
+                        
+                        return None
+                self.usecase.showMsg("L'id saisie ne correspond à aucun module !")
+                print("")
+            else: return None
              
     def deletePartenaire(self):
         while True:
@@ -2086,18 +2122,20 @@ class ResponsableAdmin(User):
             print(tabulate(headers= ["Id", "Libelle", "E-Mail"], tabular_data= partenaires, tablefmt= "double_outline" ))
             print("")
             
-            idPart = self.usecase.testSaisie("Entrez le libelle du partenaire à supprimer : ", 'int')
-            for part in partenaires:
-                if part[0] == idPart:
-                    # Suppression du partenaire de la liste des partanires...add()
-                    self.usecase.sql.delete("id", idPart, "partenaires")
-                    self.usecase.showMsg(f"{part[1]} à été retiré de la liste de vos partenaires !", wait = False)
-                    self.usecase.pause()
-                    return None
-                
-            self.usecase.showMsg("L'id du partenaire que vous avez saisie est invalide !", wait= False)
-            self.usecase.pause()
+            idPart = self.usecase.testSaisie("Entrez le libelle du partenaire à supprimer ou (-1 pour quitter): ", 'int', min = -1)
+            if idPart != -1:
+                for part in partenaires:
+                    if part[0] == idPart:
+                        # Suppression du partenaire de la liste des partanires...add()
+                        self.usecase.sql.delete("id", idPart, "partenaires")
+                        self.usecase.showMsg(f"{part[1]} à été retiré de la liste de vos partenaires !", wait = False)
+                        self.usecase.pause()
+                        return None
                     
+                self.usecase.showMsg("L'id du partenaire que vous avez saisie est invalide !", wait= False)
+                self.usecase.pause()
+            else:
+                return None
     # def deleteFilière(self):
     #     while True:
     #         self.usecase.showMsg("Supprimer une filière",wait=False)
@@ -2421,8 +2459,8 @@ class ResponsableAdmin(User):
         mod = dict()
         mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
         mod["Libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
-        mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module:","int",min=1)
-        mod["credit"]=self.usecase.testSaisie("Entrer le credit du module:","int",min=1)
+        mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module : ","int",min=1)
+        mod["credit"]=self.usecase.testSaisie("Entrer le credit du module : ","int",min=1)
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
@@ -2440,12 +2478,13 @@ class ResponsableAdmin(User):
         prof["IdP"] = self.usecase.sql.getTables("SELECT count(idP) FROM professeurs;")[0][0] + 1
         prof["Nom"] = self.usecase.testSaisie("Entrez le nom du professeur : ").upper() # type: ignore
         prof["Prenom"] = self.usecase.testSaisie("Entrez le prénom du professeur : ").title() # type: ignore
-        prof["Mail"] = self.usecase.testSaisie("Entrez le mail de l'établissement : ").lower() # type: ignore
-        prof["Telephone"] = self.usecase.agree_number("Entrez le téléphone de l'établissement : ")
+        prof["Mail"] = self.usecase.testSaisie("Entrez le mail : ").lower() # type: ignore
+        prof["Telephone"] = self.usecase.agree_number("Entrez le téléphone  : ")
         prof["Classes"] = []
         prof["Modules"] = []
         print('')
         while True:
+            self.usecase.showMsg("Liste des classes", wait=False)
             self.usecase.lister("Classes")
             resul = self.usecase.sql.getTables("SELECT count(idC) FROM Classe")[0][0]
             if resul != 0:
@@ -2457,8 +2496,8 @@ class ResponsableAdmin(User):
                     
         while True:
             result = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0]
-            print(result)
             if result != 0:
+                self.usecase.showMsg("Liste des modules", wait=False)
                 self.usecase.lister("Modules")
                 idM = self.usecase.testSaisie("Entrez l'id de du module du prof : ", 'int', 1, result) 
                 prof["Modules"].append(idM)
@@ -2467,6 +2506,7 @@ class ResponsableAdmin(User):
             else: break
             
         while True:
+            self.usecase.showMsg("Enregistrement du nouveau prof", wait=False)
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
                 for idM in prof['Modules']:
@@ -2584,7 +2624,8 @@ class ResponsableAdmin(User):
         self.sql.updateBase("Classes",changeCharge,"idC",idClasse)                
 
     def showMoyenne(self)->None:
-        libelle = self.usecase.testSaisie("Entrer le libelle de la classe ")
+        self.usecase.lister("Classes")
+        libelle = self.usecase.testSaisie("Entrer le libelle de la classe : ").upper()#type:ignore
         etudiants = self.usecase.sql.getTables(f"SELECT etudiants From Classe where Libelle='{libelle}' ")
         listMoyenne = list()
         moyenneClasse = 0.0
@@ -2601,11 +2642,12 @@ class ResponsableAdmin(User):
                 moyenneMod=(totalEval+totalExam)*module[0][0]
                 coef+=module[0][0]
                 moyenne+=moyenneMod
-            dico.append(f"{etu[0][0]} {etu[0][1]}")
-            dico.append(moyenne/coef)
-            listMoyenne.append(dico)
-            moyenneClasse+=(moyenne/coef)
-        
+            if coef != 0:
+                dico.append(f"{etu[0][0]} {etu[0][1]}")
+                dico.append(moyenne/coef)
+                listMoyenne.append(dico)
+                moyenneClasse+=(moyenne/coef)
+        self.usecase.showMsg("Moyenne des étudiants dans la classe", wait=False)
         attributs=["Etudiant","Moyenne"]
         print(tabulate(headers=attributs,tabular_data=listMoyenne,tablefmt='double_outline'))
         print("-"*100)
@@ -2625,7 +2667,7 @@ class ResponsableAdmin(User):
             moyenneMod = (totalEval+totalExam)*module[0][0]
             coef += module[0][0]
             moyenne += moyenneMod
-        return moyenne/coef
+        return 0.0 if coef == 0 else moyenne/coef
     
     def moyenneClasse(self, classeEtu):
         classeMoyenne, nbreVal, nbreNonVal = 0.0, 0, 0
@@ -2662,6 +2704,7 @@ class ResponsableAdmin(User):
                 print("")
                 self.usecase.pause()
                 break
+            
             
     def viewClassesStatsByFiliere(self):
         while True:

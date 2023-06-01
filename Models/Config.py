@@ -5,7 +5,7 @@ push = '\t'*4
 DEFAULT_PASSWORD = "passer@123"
 DEFAULT_EFFECTIF = 40
 TAILLE_SCREEN = 150
-BASE_FILE = "./DataBase/Database.sqlite3"
+BASE_FILE = "./DataBase/Data.sqlite3"
 FOLDER_FILE = "DataBase/JSONS/Students_Marks.json"
 FOLDER_CHARGES_FILE = "DataBase/JSONS/Chargés.json"
 CHAT_LENGHT = TAILLE_SCREEN // 2 - 10
@@ -19,10 +19,10 @@ POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isomet
 
 # ================================== Users Functions =============================== #
 RP_USECASES = {
-    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier un élément","Supprimer","Plus", "Se déconnecter"],
-    "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière"],
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier un chargé","Supprimer","Plus", "Se déconnecter"],
+    "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière", "Menu général"],
     "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants", "Liste des partenaires", "Menu général"],
-    "delete": ["Supprimer un chargé","Supprimer un Professeur", "Supprimer un module", "Supprimer un partenaire"],
+    "delete": ["Supprimer un chargé","Supprimer un Professeur", "Supprimer un module", "Supprimer un partenaire","Menu général"],
     "more": ["Attribuer des classes aux chargés","Modifier un chargé", "Voir la moyenne des etudiants d'une classe","Voir les statistiques", "Menu general"],
     "stat":["Les Statistiques d'une classe","Les Statistiques d'une Filiere"],
     "filtre": ["Tous","Filiere", "Classe", "Niveau", "Nationnalité"]

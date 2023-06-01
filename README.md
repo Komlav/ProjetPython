@@ -1,4 +1,10 @@
-# Projet-Python : Gestion des notes
+# Projet-Python : Gestion des notes et du personel 
+## Description du projet
+
+## Les fonctionnalités par acteur
+### L'administrateur:
+> - Ajouter, modifier, lister les profils et supprimer le responsable administratif
+> - Se connecter et se déconnecter
 
 ## Modules et bibliothèques utilisées:
 --------------
