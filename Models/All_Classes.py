@@ -302,7 +302,8 @@ class Admin(User):
                     pass
                 case 4:
                     self.usecase.quitter()
-                    self.usecase.sql.closeDB()
+                    self.user_connect = self.usecase.accueil()
+                    self.user_active = self.usecase.createUser(self.user_connect)
                     break
         pass
         
@@ -744,6 +745,8 @@ class Chargé(User):
                     self.deleteEtudiant()
                 case 7:
                     self.usecase.quitter()
+                    self.user_connect = self.usecase.accueil()
+                    self.user_active = self.usecase.createUser(self.user_connect)
                     break
     
     def deleteEtudiant(self):
@@ -1130,6 +1133,7 @@ class DefaultUseCases:
     
     def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str)->None:
         while True:
+            self.showMsg("Mes commentaires", wait=False)
             all_Data = self.loadStudentsFolder(FOLDER_FILE)
             all_Charges_Data = self.loadStudentsFolder(FOLDER_CHARGES_FILE)
             charge_commentaire = all_Charges_Data.get(f"{chargeMatricule}")["Commentaire"][f"{etudiantMatricule}"] #type: ignore
@@ -1460,7 +1464,6 @@ class DefaultUseCases:
         print(SUCCESS + self.showWord("a bientot :)"))
         sleep(5)
         self.clear()
-        exit(0)
     
     def clear(self):
         if os.name == 'nt':  os.system("cls") 
@@ -1736,6 +1739,9 @@ class Etudiant(User):
                     self.usecase.showMsg("Mes Commentaires",wait=False)
                     self.usecase.commentaires(self.matricule, self.charge, self.matricule)
                 case 3:
+                    self.usecase.quitter()
+                    self.user_connect = self.usecase.accueil()
+                    self.user_active = self.usecase.createUser(self.user_connect)
                     break
      
     def showNotes(self)->None:
@@ -1878,6 +1884,8 @@ class Partenaire:
                     self.usecase.pause()
                 case 2:
                     self.usecase.quitter()
+                    self.user_connect = self.usecase.accueil()
+                    self.user_active = self.usecase.createUser(self.user_connect)
                     break
                 
     def consult(self):
@@ -2072,6 +2080,9 @@ class ResponsableAdmin(User):
                             continue
                 case 6:
                     self.usecase.quitter()
+                    self.user_connect = self.usecase.accueil()
+                    self.user_active = self.usecase.createUser(self.user_connect)
+                    break
                 
     #Fonctionnalité de la responsable
     def deleteChargé(self):
