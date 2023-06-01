@@ -1031,6 +1031,17 @@ class DefaultUseCases:
         student_mark = student_points / somCoef
         return (student_mark, max(longueur) + 27)
     
+    def showData(self, headers: list, data: list, showIndex=False) -> str:
+        """### Cette méthode 
+        - ##### Arguments:
+            - `headers (list)`: ex: ["Id", "Nom", "Prénom], Une liste qui contient les entetes du tableau
+            - `data (list)`: ex: [[1, 'TAM', 'Rock'], [2, 'NDEYE', 'Binta'], Une liste qui contient des listes de données selon chaque
+            entete qui seront mis dans le tableau
+        - ##### Retourne:
+            - `Un tableau (str)`: retourne un tableau des données que vous lui passez en parametre
+        """
+        return tabulate(headers = headers, tabular_data=data, tablefmt='double_outline', showindex=showIndex)
+    
     
     def report(self, matricule:str):
         student = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
