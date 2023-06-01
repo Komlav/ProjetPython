@@ -24,7 +24,27 @@ BLUE  = color.Fore.BLUE
 CYAN  = color.Fore.CYAN
 MAGENTA  = color.Fore.MAGENTA
 WHITE  = color.Fore.WHITE
-
+m = {
+        "Administration Système Windows": [2, 3],
+        "Algo Avancée & Structures de Données": [2, 4],
+        "Analyse Combinatoire et Lois de Probabilité": [2, 2],
+        "Analyse et Conception 1 (UML)": [2, 3],
+        "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [2, 2],
+        "Business English": [2, 2],
+        "Electronique Digitale": [1, 2],
+        "Entrepreneurship: Atelier Build Your Business (BYB)": [2, 3],
+        "Programmation C": [2, 2],
+        "Programmation Objet 2: Python": [2, 2],
+        "Programmation Web 1:, PhP": [2, 2],
+        "Systèmes de Gestion de Bases de Données": [2, 2]
+}
+s = sqlite3.connect(BASE_FILE)
+c = s.cursor()
+i = 2
+for libelle, data in m.items():
+    c.execute(f"INSERT INTO Modules (idM, libelle, classes, professeurs, notes, coefficient, credit) VALUES ({i}, '{libelle}', '[1,2]', '[1,2,3]', '[]', {data[0]}, {data[1]})")
+    i += 1
+    s.commit()
 
 class MySql: 
     def __init__(self) -> None:
@@ -988,6 +1008,30 @@ class DefaultUseCases:
                 return [[module, notes[0], notes[1]] for module, notes in session_marks[session][1].items()]
         return [] 
     
+        
+    def calculMoy(self, notes: list) -> tuple[float, int]:
+        """
+        ### Cette méthode calcul la moyenne d'une liste de module qu'on lui passe. 
+        - Arguments:
+            - notes (list): Il prend e paramètre une liste qui contient une liste 
+            qui contient le module, le coefficient du module et son crédit
+        - Returns:
+            - _type_: tuple(0: moyenne, 1: longueur)
+            - Retourne un tuple de la moyenne de l'étudiant et la longueur du
+        module qui a le plus de caractères...
+        """
+        student_points, somCredit, somCoef, longueur = 0, 0, 0, []
+        for note in notes:
+            module = self.sql.getTables(f"SELECT libelle, coefficient, credit FROM modules WHERE libelle = '{note[0]}' ")[0]
+            moyenne_module = (note[1]*(0.4) + note[2]*(0.6))*module[1]
+            longueur.append(len(note[0]))
+            somCoef += module[1]
+            somCredit += module[2]
+            student_points += moyenne_module
+        student_mark = student_points / somCoef
+        return (student_mark, max(longueur) + 27)
+    
+    
     def report(self, matricule:str):
         student = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
         if student != []:
@@ -1484,7 +1528,7 @@ class DefaultUseCases:
             case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "ResponsableAdmin": return ResponsableAdmin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "Chargé": return Chargé(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
-            case "Etudiant": return Etudiant(user["Matricule"],user["Nom"],user["Prenom"],user["DateNaissance"],user["Nationnalité"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"],user["IdClasse"],user["Notes"],user["Commentaires"])
+            case "Etudiant": return Etudiant(user["Matricule"],user["Nom"],user["Prenom"],user["DateNaissance"],user["Nationnalité"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"],user["IdClasse"],user["Notes"])
             case "Partenaire": return Partenaire(user["Id"],user["Libelle"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             
     def test(self,message,text=""):
@@ -1661,7 +1705,7 @@ class Classe:
 ###########################################################
 
 class Etudiant(User):
-    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes,commentaires) -> None:
+    def __init__(self, matricule: str, nom: str, prénom: str, dateNaissance:str, nationnalité:str, mail: str, téléphone: int, login: str, password: str, typeP:str, classe, notes) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
         self.dateNaissance = dateNaissance
         self.nationnalité = nationnalité

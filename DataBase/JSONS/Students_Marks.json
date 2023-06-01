@@ -1,5 +1,5 @@
 {
-  "ISM2023/DK5-0425": [
+  "ISM2023/DK1-0601": [
     {
       "Ann\u00e9e-Scolaire": "2020-2021",
       "niveau": "Licence 1",
@@ -261,36 +261,6 @@
       "fili\u00e8re": "GLRS",
       "Classe": "M2-GLRS",
       "P\u00e9riode": { "Session 3": {}, "Session 4": {} },
-      "Commentaire": []
-    }
-  ],
-  "ISM2023/DK1-0601": [
-    {
-      "Ann\u00e9e-Scolaire": "2022-2023",
-      "niveau": "L2",
-      "fili\u00e8re": "GLRS",
-      "Classe": "L2-GLRS",
-      "P\u00e9riode": { "Session 3": {}, "Session 4": {} },
-      "Commentaire": []
-    }
-  ],
-  "ISM2023/DK2-0601": [
-    {
-      "Ann\u00e9e-Scolaire": "2022-2023",
-      "niveau": "L2",
-      "fili\u00e8re": "GLRS",
-      "Classe": "L2-GLRS",
-      "P\u00e9riode": { "Session 3": {}, "Session 4": {} },
-      "Commentaire": []
-    }
-  ],
-  "ISM2023/DK3-0601": [
-    {
-      "Ann\u00e9e-Scolaire": "2022-2023",
-      "niveau": "L1",
-      "fili\u00e8re": "MAIE",
-      "Classe": "L1-MAIE",
-      "P\u00e9riode": { "Session 1": {}, "Session 2": {} },
       "Commentaire": []
     }
   ]
