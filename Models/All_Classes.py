@@ -24,27 +24,7 @@ BLUE  = color.Fore.BLUE
 CYAN  = color.Fore.CYAN
 MAGENTA  = color.Fore.MAGENTA
 WHITE  = color.Fore.WHITE
-m = {
-        "Administration Système Windows": [2, 3],
-        "Algo Avancée & Structures de Données": [2, 4],
-        "Analyse Combinatoire et Lois de Probabilité": [2, 2],
-        "Analyse et Conception 1 (UML)": [2, 3],
-        "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [2, 2],
-        "Business English": [2, 2],
-        "Electronique Digitale": [1, 2],
-        "Entrepreneurship: Atelier Build Your Business (BYB)": [2, 3],
-        "Programmation C": [2, 2],
-        "Programmation Objet 2: Python": [2, 2],
-        "Programmation Web 1:, PhP": [2, 2],
-        "Systèmes de Gestion de Bases de Données": [2, 2]
-}
-s = sqlite3.connect(BASE_FILE)
-c = s.cursor()
-i = 2
-for libelle, data in m.items():
-    c.execute(f"INSERT INTO Modules (idM, libelle, classes, professeurs, notes, coefficient, credit) VALUES ({i}, '{libelle}', '[1,2]', '[1,2,3]', '[]', {data[0]}, {data[1]})")
-    i += 1
-    s.commit()
+
 
 class MySql: 
     def __init__(self) -> None:
@@ -737,9 +717,7 @@ class Chargé(User):
                             case 1:
                                 self.usecase.showMsg("Faire un Commentaire",wait=False)
                                 self.DoCommentaire()
-                            case 2:
-                                self.usecase.showMsg("Voir les Commentaires")
-                            case 3: break
+                            case 2: break
                 case 6:
                     self.usecase.showMsg("Suppression d'etudiant",wait=False)
                     self.deleteEtudiant()
@@ -754,9 +732,11 @@ class Chargé(User):
             listes=list()
             liste2=list()
             for classEtu in self.classeChargé:
-                if self.usecase.listTrans(classEtu[8],"chaine")!=[""] :
+                listeMat = self.usecase.listTrans(classEtu[8],"chaine")
+                print(listeMat)
+                if listeMat != ['']:
                     for etu in self.usecase.listTrans(classEtu[8],"chaine"):
-                        etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu}' ")[0]
+                        etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu.strip()}' ")[0]
                         listes.append([etu,etudiant[1],etudiant[2],classEtu[2]])
                         liste2.append(etudiant[0])
             print(tabulate(headers=["Matricule", "Nom", "Prenom", "Classe"],tabular_data= listes, tablefmt='double_outline'))
@@ -827,19 +807,29 @@ class Chargé(User):
             matricule = self.usecase.testSaisie("Entrez le matricule de l'etudiant' : ").upper() # type: ignore
             notes=self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{matricule}' ")
             noteList=self.usecase.listTrans(notes[0][0])
-            dicoList=self.usecase.convertion(noteList)
+            dicoList=dict()
+            if noteList==[]:
+                dicoList=self.usecase.convertion(noteList)
             dicoList[f"{module}"]=list()
             dicoList[f"{module}"].append(noteEvaluation)
             dicoList[f"{module}"].append(noteExam)
             print(self.usecase.dicoTrans(dicoList))
-            changement=f'Notes="{self.usecase.dicoTrans(dicoList)}" '
+            if noteList==[]:
+                changement=f'Notes="{self.usecase.dicoTrans(dicoList)}" '
+            else:
+                noteList.append(self.usecase.dicoTrans(dicoList))
+                changement=f'Notes="{noteList}" '
             self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             if self.usecase.question("Voulez vous ajouter les notes d'un autre module") == 'oui':
                 continue
-            else: break
+            else:
+                break
             
     def InitNotesClasse(self)->None:
         while True:
+            self.usecase.showMsg("Liste des classes", wait=False)
+            self.usecase.lister("Classes")
+
             libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ").upper() # type: ignore
             module = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
             classe=self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE Libelle='{libelle}' ")
@@ -848,15 +838,14 @@ class Chargé(User):
                 noteEvaluation = self.usecase.testSaisie("Entrez la note d'evaluation : ","int",0,20)
                 noteExam = self.usecase.testSaisie("Entrez la note d'examen : ","int",0,20)
                 notes = self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{etu}' ")
-                print(notes[0][0])
+                print(notes)
                 noteList = self.usecase.listTrans(notes[0][0])
                 dicoList = self.usecase.convertion(noteList)
                 dicoList[f"{module}"] = list()
                 dicoList[f"{module}"].append(noteEvaluation)
                 dicoList[f"{module}"].append(noteExam)
-                print(self.usecase.dicoTrans(dicoList))
                 changement = f'Notes="{self.usecase.dicoTrans(dicoList)}" '
-                self.usecase.sql.updateBase("Etudiants",changement,"Matricule",etu[0])
+                self.usecase.sql.updateBase("Etudiants",changement,"Matricule",etu)
             if self.usecase.question("Voulez vous ajouter les notes d'un autre module") == 'oui':
                 continue
             else: break
@@ -1464,6 +1453,7 @@ class DefaultUseCases:
         print(SUCCESS + self.showWord("a bientot :)"))
         sleep(5)
         self.clear()
+        exit(0)
     
     def clear(self):
         if os.name == 'nt':  os.system("cls") 

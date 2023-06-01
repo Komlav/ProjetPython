@@ -50,7 +50,7 @@ CHARGE_USECASE={
     "notes":["Notes d'une Classe","Notes d'un etudiant", "Menu général"],
     "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant", "Modifier un etudiant", "Menu général"],
     "insert":["Pour une classe","Pour un etudiant","Menu général"],
-    "commentaire":["Faire un commentaire","Voir les commentaires","Menu général"]
+    "commentaire":["Faire un commentaire","Menu général"]
 }
 
 PARTENAIRE_USECASES = {
