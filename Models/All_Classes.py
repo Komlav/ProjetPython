@@ -1,4 +1,5 @@
 from http.client import SWITCHING_PROTOCOLS
+from math import e
 import os
 import json
 import sqlite3
@@ -15,15 +16,82 @@ from Models.Config import *
 init(autoreset=True)
 
 #Couleur utilisées dans le code !
+RED = color.Fore.RED
 ERROR = color.Fore.RED
-SUCCESS  = color.Fore.GREEN
+SUCCESS = color.Fore.GREEN
 WHITE  = color.Fore.WHITE
-RED  = color.Fore.RED
 YELLOW  = color.Fore.YELLOW
 BLUE  = color.Fore.BLUE
 CYAN  = color.Fore.CYAN
 MAGENTA  = color.Fore.MAGENTA
-WHITE  = color.Fore.WHITE
+
+# Session_1 = {
+#     "Algorithmique et Langages de Programmation":	[2,	3],
+#     "Business English 1":	[2,	2],
+#     "CISCO IT Essentials 1 PC Harware & Software":	[2,	2],
+#     "Comptabilité Générale 1":	[2,	3],
+#     "Conception Graphique et Multimédia 1":	[2,	2],
+#     "Droit du Numérique":	[1,	2],
+#     "Fondamentaux du Management":	[1,	2],
+#     "Informatique Appliquée":	[2,	2],
+#     "Leadership - Dév. Personnel - Techniques d'enquete - Actions de Recherche Encadrées (ARE)":	[1,	2],
+#     "Marketing 1: Concepts Fondamentaux & Comportement du Consommateur":	[1,	2],
+#     "Statistiques Descriptives":	[2,	2],
+#     "Technologies Web 1: HTLM5 - CSS3":	[2,	2],
+#     "Théories des Systèmes d'Exploitation": [2,2]
+# }
+
+# Session_2 = {
+    # Algorithmique et Langages de Programmation	19,00	19,00
+    # Business English 1	13,00	13,00
+    # CISCO IT Essentials 1 PC Harware & Software	17,00	19,00
+    # Comptabilité Générale 1	17,00	15,50
+    # Conception Graphique et Multimédia 1	16,00	17,00
+    # Droit du Numérique	17,00	17,00
+    # Fondamentaux du Management	12,50	12,50
+    # Informatique Appliquée	18,00	18,00
+    # Leadership - Dév. Personnel - Techniques d'enquete - Actions de Recherche Encadrées (ARE)	15,00	15,00
+    # Marketing 1: Concepts Fondamentaux & Comportement du Consommateur	19,00	19,00
+    # Statistiques Descriptives	15,50	15,50
+    # Technologies Web 1: HTLM5 - CSS3	18,00	18,00
+    # Théories des Systèmes d'Exploitation
+# }
+# Session_3 = {
+#         "Administration Système Windows": [2, 3],
+#         "Algo Avancée & Structures de Données": [2, 4],
+#         "Analyse Combinatoire et Lois de Probabilité": [2, 2],
+#         "Analyse et Conception 1 (UML)": [2, 3],
+#         "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [2, 2],
+#         "Business English": [2, 2],
+#         "Electronique Digitale": [1, 2],
+#         "Entrepreneurship: Atelier Build Your Business (BYB)": [2, 3],
+#         "Programmation C": [2, 2],
+#         "Programmation Objet 2: Python": [2, 2],
+#         "Programmation Web 1:, PhP": [2, 2],
+#         "Systèmes de Gestion de Bases de Données": [2, 2]
+# }
+# Session_4 = {
+# "Business English 4": [2, 2, 3],
+# "AGORA - Soft Skills & Grands Projets": [3, 4, 9],
+# "Mathématiques Appliquées: Analyse 2 - Algèbre 2": [2, 3, 5],
+# "Recherche Opérationelle": [1, 2, 5],
+# "Administration Systèmes Linux": [2, 2, 4],
+# "Electronique Digitale 2": [1, 2, 7],
+# "Architecture des Réseaux Informatiques: Certification CISCO CCNA 1-2": [1, 2, 6],
+# "Algo Avancée & Structures de Données 2": [2, 3, 1],
+# "Programmation Objet 3: Python": [1,2, 2 ],
+# "Programmation Objet 4: C++": [1, 2, 2],
+# "Programmation Objet 5: JAVA": [2, 2, 1], 
+# "Analyse et Conception 2": [2, 2, 1],
+# "Technologies Web 3: PhP/MySQL": [2, 2, 1]
+# }
+# s = sqlite3.connect(BASE_FILE)
+# c = s.cursor()
+# i = 14
+# for libelle, data in Session_1.items():
+#     c.execute(f"INSERT INTO Modules (idM, libelle, classes, professeurs,notes, coefficient, credit, Session) VALUES ({i}, \"{libelle}\", '[2]', '[]', '[]', {data[0]},  {data[1]}, 1)")
+#     i += 1
+#     s.commit()
 
 
 class MySql: 
@@ -43,7 +111,7 @@ class MySql:
         
         self.TABLES_OTHERS = {
             "filiere": ["idF","libelle","classes"], 
-            "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit"],
+            "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit", "Session"],
             "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
             "Classe": ["idC", 'libelle', 'Filiere', 'niveau','effectif', 'chargé','professeurs', 'modules', 'etudiants', "Annee_Scolaire"]
         }
@@ -53,7 +121,7 @@ class MySql:
             "Chargé":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text,  Classes text", 
             "Admin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text", 
             "Filiere":"idF number, libelle text, classes text", 
-            "Modules":"idM number, libelle text, classes text, professeurs text, notes text, coefficient integer, credit integer", 
+            "Modules":"idM number, libelle text, classes text, professeurs text, notes text, coefficient integer, credit integer, Session INTEGER", 
             "partenaires":"id integer primary key autoincrement, libelle varchar(150), mail varchar(255), Telephone integer, Login varchar(255), Password varchar(150), TypeP varchar(150)", 
             "professeurs":"idP number, Nom text, Prenom text, mail text, Telephone number, Classes text, modules text", 
             "ResponsableAdmin":"Matricule text, Nom text, Prenom text, mail text, Telephone number, Login text, Password text, TypeP text",
@@ -319,7 +387,7 @@ class Admin(User):
     def ajoutRP(self):
         date=self.usecase.CurrentDate()
         rp = dict()
-        rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}-{date[1]}{date[2]}"
+        rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
         rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP : ").upper() # type: ignore
         rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP : ").title() # type: ignore
         rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP : ")
@@ -335,7 +403,7 @@ class Admin(User):
     def ajoutChargé(self):
         date = self.usecase.CurrentDate()
         charge = dict()
-        charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}-{date[1]}{date[2]}"
+        charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
         charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé : ").upper() # type: ignore
         charge["Prénom"] = self.usecase.testSaisie("Entrez le prenom du chargé : ").title()# type: ignore
         charge["Telephone"] = self.usecase.agree_number("Entrez le téléphone du chargé : ")
@@ -354,7 +422,7 @@ class Admin(User):
     def ajoutEtudiant(self):
         date = self.usecase.CurrentDate()
         etudiant = dict()
-        matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
+        matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
         self.usecase.showMsg("Menu d'ajout d'un etudiant", wait=False)
         self.usecase.centerTexte(f"{BLUE}Renseigner les informations de l'étudiant")
@@ -392,7 +460,7 @@ class Admin(User):
                             "Année-Scolaire": self.usecase.CurrentSchoolYear(),
                             "niveau": classe[1]["niveau"],
                             "filière": classe[1]["Filiere"],
-                            "Classe": classe[1]["libelle"],
+                            "Classe": classe[1]["idC"],
                             "Période": {
                                 session[0]: {},
                                 session[1]: {}
@@ -404,7 +472,7 @@ class Admin(User):
                         charge[f"{classe[1]['chargé']}"]["Commentaire"][f"{etudiant['Matricule']}"] = [] #type: ignore
                         self.usecase.updateFile(FOLDER_CHARGES_FILE,charge)
                     etudiant["IdClasse"] = classe[0]
-                    listeMatricules=self.usecase.listTrans(classe[1]["etudiants"])
+                    listeMatricules=self.usecase.listTrans(classe[1]["etudiants"], 'chaine')
                     listeMatricules.append(matricule)
                     changement=f"effectif={int(classe[1]['effectif']) + 1},etudiants=\"{str(listeMatricules)}\""
                     self.usecase.sql.updateBase("Classe", changement,"idC",classe[0])
@@ -415,7 +483,7 @@ class Admin(User):
                             "Année-Scolaire": self.usecase.CurrentSchoolYear(),
                             "niveau": classe["niveau"],
                             "filière": classe["filière"],
-                            "Classe": classe["libelle"],
+                            "Classe": classe["idC"],
                             "Période": {
                                 session[0]: {},
                                 session[1]: {}
@@ -424,13 +492,16 @@ class Admin(User):
                         }
                     ]
                     etudiant["IdClasse"] = classe["idC"]
-                    classe["etudiants"] = f"{[matricule]}"
+                    classe["Etudiants"] = f"{[matricule]}"
+                    print(classe)
+                    
                     self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
                     
                 self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
+                self.usecase.initModules(etudiant["Matricule"])
+                self.usecase.updateFile(FOLDER_FILE,data)
                 self.usecase.sql = MySql()
                 
-                self.usecase.updateFile(FOLDER_FILE,data)
                 self.usecase.showMsg("Etudiant ajouté avec succes")
                 break
             break
@@ -500,11 +571,12 @@ class Admin(User):
 class Chargé(User):
     def __init__(self, matricule: str, nom: str, prénom: str, mail: str, téléphone: int, login: str, password: str, typeP: str, classes:list = [], commentaires:list = []) -> None:
         super().__init__(matricule, nom, prénom, mail, téléphone, login, password, typeP)
-        self.classes = classes #les ids des classes
-        self.commentaires = commentaires
         self.usecase = DefaultUseCases()
+        self.classes = classes
+        self.commentaires = commentaires
         self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
-        self.traitement()
+        # self.traitement()
+        self.showClasseStudents(2)
         
     def modifyEtudiant(self):
         while True:
@@ -659,6 +731,168 @@ class Chargé(User):
             else:
                 return None
     
+    def showClasseModuleMark(self, idClasse: int):
+        pass
+    
+    def setClasseGroupeMark(self, idClasse: int):
+        pass
+    
+    def writeMark(self):
+        """Fonction qui permet la saisie de la note d'un étudiant
+        Returns:
+            - `tuple`: Contient à la position:
+                - `0`: la note 
+                - `1`: la nature de la note >>> (1: Evaluation, 2: Examen)
+            - `None`: Si on annule la saisie...
+        """
+        while True:
+            # Saisie du type de la note...
+            self.usecase.showMsg("Nature de la note", wait= False)
+            typeNote = self.usecase.controlMenu("Ajout d'une note d'étudiant", ["Note d'Evaluation", "Note d'Examen", "quitter"])
+            if typeNote in ['1', '2']: break
+            elif typeNote == '3': return
+            else: self.usecase.showMsg("Veuillez entrez soit 1 ou 2 ")
+        
+        while True:
+            # Saisie de la note de l'étudiant...
+            self.usecase.showMsg("Saisie de la note", wait= False)
+            note = self.usecase.testSaisie(f"Entrez la note {'Evalutation' if typeNote == '1' else 'Examen'} ou (-1 pour quitter): ", nbreChar=0)
+            if note != '-1':
+                if str(note).isdigit():
+                    note = int(note)
+                    if 0 <= note <= 20: return (note, int(typeNote)-1)
+                    else: self.usecase.showMsg("Veuillez entrez une note compris entre 0 et 20 !")
+                else: self.usecase.showMsg("Veuillez entrez un entier !")
+            elif note == '-1': return 
+            else: self.usecase.showMsg("Veuillez entrez un entier !")
+ 
+    def saveStudentMark(self, matricule: str, session: str, note, typeNote: int, idModule: str):
+        """Cette fonction enregistre la note d'un étudiant..
+        Args:
+            matricule (str): _description_
+            session (int): _description_
+            note (_type_): _description_
+            typeNote (int): _description_
+            idModule (int): _description_
+        Returns:
+            _type_: _description_
+        """
+        data = self.usecase.loadStudentsFolder()
+        try:
+            data.get(f"{matricule}")[-1].get("Période").get(f"{session}").get(idModule)[typeNote] = note #type: ignore
+            self.usecase.updateFile(FOLDER_FILE, data)
+            return True
+        except:
+            return False
+    
+    def showClasseModules(self, session: int, idModules: str) -> list[tuple[int, str, int, int]]:
+        classeModules = self.usecase.sql.getTables(f"SELECT idM, libelle, coefficient, credit FROM Modules WHERE idM IN ({idModules}) AND Session = {session}")
+        self.usecase.centerTexte(
+            tabulate(
+                headers= ["id", "Libelle", "Coefficient", "Credit"],
+                tabular_data= classeModules,
+                tablefmt= "double_outline"
+            ))
+        return classeModules
+    
+    def chooseModule(self, idClasse: int) -> int:
+        while True:
+            self.usecase.showMsg("Choix du module", wait= False)
+            idModule = self.usecase.controlMenu("Choix du module", [f"{module.get('Nom')}" for module in self.usecase.loadModulesFolder().get(f"{idClasse}")])
+        return 0
+    
+    def chooseSession(self, niveau: str) -> str:
+        session = self.usecase.setSessions(niveau)
+        while True:
+            choix = self.usecase.controlMenu("Selection de la session", [session[0], session[1], "Retourner"])
+            if choix in ['1', '2']: break
+            elif choix == '3': break
+        return session[int(choix)-1]
+    
+    def showClasses(self) -> list[tuple[int, str, int]]:
+        """Fonction qui affiche toutes les classes du chargé
+        Returns:
+            - `Tuple`: Contient à ma position
+                - `0`: la position de la classe
+                - `1`: le libelle de la classe
+                - `2`: l'effectif de la classe
+        """
+        classes = [(i, self.classeChargé[i-1][1], self.classeChargé[i-1][4] ) for i in range(1, len(self.classeChargé))]
+        self.usecase.centerTexte(
+            tabulate(
+                headers= ["Position", "Libelle", "Effectif"],
+                tabular_data= classes,
+                tablefmt= "double_outline"
+            )
+        )
+        return classes
+        
+    def showClasseStudents(self, idClasse: int) -> list[tuple[int, str, str, str]]:
+        """Fonction qui affiche les étudiants d'un classe selon l'id de la classe
+        Args:
+            idClasse (int): Id de la classe
+        Returns:
+            - `list[tuple[int, str, str, str]]`: Retourne une liste de tuple qui contient à la postion:
+                - `0`: la position de l'étudiant dans la liste
+                - `1`: le matricule de l'étudiant dans la liste
+                - `2`: le nom 
+                - `3`: le prénom 
+        """
+        liste = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom FROM Etudiants WHERE idClasse = {idClasse}")
+        liste = [(i, liste[i][0], liste[i][1], liste[i][2]) for i in range(len(liste))]
+        self.usecase.centerTexte(
+            tabulate(
+                headers= ["Position","Matricule", "Nom", "Prénom"],
+                tabular_data= liste,
+                tablefmt= "double_outline"
+            )
+        )
+        return liste
+    
+    def setStudentMark(self):
+        self.showClasses()
+        choix = self.usecase.testSaisie("Entrez la position de la classe (ou -1 pour quitter): ", nbreChar=0)
+        if choix != '-1':
+            if str(choix).isdigit():
+                pos = int(choix )
+                if 1 <= pos < len(self.classeChargé):
+                    classe = self.classeChargé[pos-1]
+                    
+                    while True:
+                        students = self.showClasseStudents(classe[-2])
+                        std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
+                        if std != '-1':
+                            if str(std).isdigit():
+                                pos = int(std)
+                                if 1 <= pos < len(students):
+                                    student = students[pos-1]  
+                                    
+                                    # Saisie du module
+                                    idModule = 0
+                                    # Saisie de la session
+                                    session = self.chooseSession(classe[3])
+                                    # Demander à l'utilisateur de saisir la note
+                                    noteEtType = self.writeMark()
+                                    if type(noteEtType) == tuple:
+                                        self.saveStudentMark(student[1], session, noteEtType[0], noteEtType[1], str(idModule))
+                                        pass
+                                    else: return 
+                            else: self.usecase.showMsg("Veuillez entrez un entier !")
+                        elif std == '-1': return 
+                        else: self.usecase.showMsg("Position incorrecte !")
+                else: self.usecase.showMsg("Saisie incorrecte !")
+            else: self.usecase.showMsg("Veuillez entrez un entier !")
+        elif choix == '-1': return 
+        else: return 
+
+                
+        # Choisir la classe de l'étudiant 
+        # Choisir la session 
+        # Choisir l'etudiant
+        # Choisir la nature de la note (évaluation|examen)
+        # Saisir la note...
+        # Sauvegarder la note
+        
     #Setters
     def setClasse(self, newClasse:str) -> None: self.classes.append(newClasse)
         
@@ -787,38 +1021,39 @@ class Chargé(User):
             libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ").upper() # type: ignore
             for classe in self.classeChargé:
                 listEtu=list()
-                if(classe[1]==libelle):
+                if(classe[1] == libelle):
                     if(self.usecase.listTrans(classe[8],"chaine")!=[]):
-                        listEtu=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes FROM Etudiants WHERE IdClasse='{classe[0]}' ")
+                        listEtu = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, Notes FROM Etudiants WHERE IdClasse='{classe[0]}' ")
                     break
             break
         
-        attributs=self.usecase.sql.TABLES_USER["Etudiants"][:3]
-        note=self.usecase.sql.TABLES_USER["Etudiants"][11]
+        attributs = self.usecase.sql.TABLES_USER["Etudiants"][:3]
+        note = self.usecase.sql.TABLES_USER["Etudiants"][11]
         attributs.append(note)
-        print(tabulate(headers=attributs,tabular_data= listEtu, tablefmt='double_outline'))  #type:ignore
+        print(tabulate(headers = attributs,tabular_data= listEtu, tablefmt='double_outline'))  #type:ignore
         self.usecase.pause()
-        
+
     def InitNotesMod(self)->None:
         while True: 
+            self.usecase.lister("Modules")
             module = self.usecase.testSaisie("Entrez le libelle du module : ")
             noteEvaluation = self.usecase.testSaisie("Entrez la note d'evaluation : ","int",0,20)
             noteExam = self.usecase.testSaisie("Entrez la note d'examen : ","int",0,20)
+            
+            self.usecase.showMsg("Liste de vos étudiants", wait=False)
+            classes = self.usecase.sql.getTables(f'SELECT Classes FROM Chargé WHERE Matricule = \"{self.matricule}\"')[0]
+            da =  self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom FROM Etudiants Where idClasse IN ({classes[0][1:-1]})")
+            self.usecase.centerTexte(tabulate(headers=['Matricule', "Nom", "Prénom"], tabular_data=da, tablefmt="double_outline"))
             matricule = self.usecase.testSaisie("Entrez le matricule de l'etudiant' : ").upper() # type: ignore
-            notes=self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{matricule}' ")
-            noteList=self.usecase.listTrans(notes[0][0])
-            dicoList=dict()
-            if noteList==[]:
-                dicoList=self.usecase.convertion(noteList)
-            dicoList[f"{module}"]=list()
+            notes = self.usecase.sql.getTables(f"SELECT Notes FROM Etudiants WHERE Matricule='{matricule}' ")
+            noteList = self.usecase.listTrans(notes[0][0])
+            dicoList = self.usecase.convertion(noteList)
+            dicoList[f"{module}"] = list()
             dicoList[f"{module}"].append(noteEvaluation)
             dicoList[f"{module}"].append(noteExam)
             print(self.usecase.dicoTrans(dicoList))
-            if noteList==[]:
-                changement=f'Notes="{self.usecase.dicoTrans(dicoList)}" '
-            else:
-                noteList.append(self.usecase.dicoTrans(dicoList))
-                changement=f'Notes="{noteList}" '
+            changement = f'Notes = "{self.usecase.dicoTrans(dicoList)}" '
+
             self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
             if self.usecase.question("Voulez vous ajouter les notes d'un autre module") == 'oui':
                 continue
@@ -962,12 +1197,7 @@ class Chargé(User):
             # listCom.append(com) #02-05-2023  ('02',)
             # changement = f'Commentaires="{listCom}" '
             # self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
-            
-    def ShowCommentaires(self)->None:
-        self.usecase.loadStudentsFolder()
-        pass
-        # commentaires = self.usecase.sql.getTables(f"SELECT Commentaires from Chargé where Matricule='{self.matricule}'")
-        
+
 ###########################################################
 ################### Quelsques classes #####################
 ###########################################################
@@ -978,8 +1208,29 @@ class DefaultUseCases:
         self.all_Other_Data = self.sql.component #Données des filières et autres infos
         self.students_data = self.loadStudentsFolder()
         self.students_discuss = self.loadStudentsFolder(FOLDER_FILE) 
+            
+    def initModules(self, matricule: str, evaluation: int|None = None, examen: int|None  = None):
+        data = self.loadStudentsFolder()
+        try:
+            student = data[f"{matricule}"][-1]['Période']
+            idC = self.sql.getTables(f"SELECT idClasse FROM Etudiants WHERE Matricule = \"{matricule}\"")
+            if idC != []:
+                modules = self.sql.getTables(f"SELECT modules FROM Classe WHERE idC = {idC[0][0]}")
+                if modules != []:
+                    periodes = dict()
+                    for session in student.keys():
+                        session_modules = dict()
+                        for module in self.sql.getTables(f"SELECT idM FROM Modules WHERE idM IN ({modules[0][0][1:-1]}) AND Session = {session[-1]}"):
+                            session_modules[module[0]] = [evaluation, examen]
+                        periodes[f"{session}"] = session_modules
+                    data[f"{matricule}"][-1]['Période'] = periodes
+                    self.updateFile(FOLDER_FILE, data)
+                    return True
+        except:
+            return False
+            
     
-    def consultStudentFolder(self, matricule: str, année_scolaire: str, session: int)-> list[list]:
+    def consultStudentFolder(self, matricule: str, année_scolaire: str, session: int)-> list[tuple[str,str|int|float, str|int|float]]:
         """ ### Cett méthode permet de consulter la liste de note d'un étudiant selon l'année_scolaire et la session.
         - ##### Arguments:
             - `matricule (str)`: C'est le matricule de l'étudiant
@@ -997,7 +1248,7 @@ class DefaultUseCases:
             if année_scolaire in school_years:
                 data_of_year = student_folder[school_years.index(année_scolaire)] #type: ignore
                 session_marks = self.dicoTrans(data_of_year.get("Période")) # [(NomSession, DicoModules), (NomSession, DicoModules)]            
-                return [[module, notes[0], notes[1]] for module, notes in session_marks[session][1].items()]
+                return [(self.sql.getTables(f"SELECT Libelle FROM Modules WHERE idM = {module}")[0][0], "-" if notes[0] == None else notes[0], "-" if notes[1] == None else notes[1]) for module, notes in session_marks[session][1].items()]
         return [] 
     
         
@@ -1012,16 +1263,18 @@ class DefaultUseCases:
             - Retourne un tuple de la moyenne de l'étudiant et la longueur du
         module qui a le plus de caractères...
         """
-        student_points, somCredit, somCoef, longueur = 0, 0, 0, []
+        student_points, student_mark, somCredit, somCoef, longueur = 0, 0.0, 0, 0, []
         for note in notes:
-            module = self.sql.getTables(f"SELECT libelle, coefficient, credit FROM modules WHERE libelle = '{note[0]}' ")[0]
-            moyenne_module = (note[1]*(0.4) + note[2]*(0.6))*module[1]
             longueur.append(len(note[0]))
-            somCoef += module[1]
-            somCredit += module[2]
-            student_points += moyenne_module
-        student_mark = student_points / somCoef
-        return (student_mark, max(longueur) + 27)
+            if type(note[1]) == int and type(note[2]) == int:
+                module = self.sql.getTables(f"SELECT libelle, coefficient, credit FROM Modules WHERE libelle = '{note[0]}' ")[0]
+                moyenne_module = (note[1]*(0.4) + note[2]*(0.6))*module[1]
+                somCoef += module[1]
+                somCredit += module[2]
+                student_points += moyenne_module
+        if somCoef != 0:
+            student_mark = student_points / somCoef
+        return (student_mark, 36 if longueur == [] else max(longueur) + 27)
     
     def showData(self, headers: list, data: list, showIndex=False) -> str:
         """### Cette méthode 
@@ -1073,7 +1326,7 @@ class DefaultUseCases:
             i += 1
         print("\n")
         
-    def setSessions(self, niveau):
+    def setSessions(self, niveau: str):
         num = int(niveau[-1])*2
         return (f'Session {num-1}', f'Session {num}')
         
@@ -1122,20 +1375,33 @@ class DefaultUseCases:
     
     def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str)->None:
         while True:
-            self.showMsg("Mes commentaires", wait=False)
+            self.clear()
             all_Data = self.loadStudentsFolder(FOLDER_FILE)
             all_Charges_Data = self.loadStudentsFolder(FOLDER_CHARGES_FILE)
             charge_commentaire = all_Charges_Data.get(f"{chargeMatricule}")["Commentaire"][f"{etudiantMatricule}"] #type: ignore
             student_commentaire = all_Data.get(f"{etudiantMatricule}")[-1]["Commentaire"] #type: ignore
             
+            chargé = self.sql.getTables(f"SELECT Nom, Prenom, mail, Telephone FROM Chargé WHERE Matricule = \"{chargeMatricule}\"")[0]
+            etudiant = self.sql.getTables(f"SELECT Nom, Prenom, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC WHERE Etudiants.Matricule = \"{etudiantMatricule}\"")[0]
+            chargéName = f"{chargé[0]} {chargé[1]}"
+            chargéContact = f"{chargé[3]} {chargé[2]}"
+            
+            etudiantName = f"{etudiant[0]} {etudiant[1]}"
+            etudiantContact = f"{etudiant[3]} {etudiant[2]}"
+            etudiantClasse = f"{etudiant[4]} "
+            
             self.ligneMenu(2, TAILLE_SCREEN, 'haut')
-            print(f"| {BLUE}{'Commentaires':^{TAILLE_SCREEN-3}} |")
+            print(f"| {YELLOW}{'Commentaires':^{TAILLE_SCREEN-3}}{WHITE} |")
+            print(f"| {SUCCESS}{(etudiantName if matriculeAuteur != etudiantMatricule else chargéName):<{TAILLE_SCREEN-3}}{WHITE} |")
+            print(f"| {SUCCESS}{(etudiantContact if matriculeAuteur != etudiantMatricule else chargéContact):<{TAILLE_SCREEN-3}}{WHITE} |")
+            if matriculeAuteur != etudiantMatricule:
+                print(f"| {SUCCESS}{(etudiantClasse):<{TAILLE_SCREEN-3}}{WHITE} |")
             self.ligneMenu(2, TAILLE_SCREEN, 'milieu')
             i, show = 0, True
             for commentaire in student_commentaire:
-                if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+                if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
                 if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
-                    print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}} |")
+                    print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
                 i += 1
                 if commentaire["Auteur"] == matriculeAuteur:
                     self.chatRight(commentaire["Commentaire"])
@@ -1369,10 +1635,10 @@ class DefaultUseCases:
         else: print("error")
         print("")   
    
-    def showMsg(self,msg:str, clear:bool = True,color=SUCCESS, motif:str='═', screen:int = TAILLE_SCREEN, wait:bool = True) -> None:
+    def showMsg(self,msg:str, clear:bool = True,color=SUCCESS, motif:str='═', screen:int = TAILLE_SCREEN, wait:bool = True, sec: int = 3) -> None:
         if clear: self.clear()
         print(f"""╔{motif*(screen-2)}╗\n║{' '*(screen-2)}║\n║{color}{msg:^{screen-2}}{WHITE}║\n║{' '*(screen-2)}║\n╚{motif*(screen-2)}╝""")
-        if wait:sleep(2)
+        if wait:sleep(sec)
         
     def pause(self): os.system("pause")
     
@@ -1587,13 +1853,16 @@ class DefaultUseCases:
         return classe_libelle
         
     def createOrSearchClasse(self, libelle:str) -> tuple[int,dict] | dict:
-        all_classes = self.all_Other_Data["Classe"]
+        all_classes = self.sql.getTables("SELECT * FROM Classe")
         fin, alphabet, cpt = len(libelle), '', 0
         
         for classe in all_classes:
-            if classe.get("libelle")[0:fin] == libelle:
+            if classe[1][0:fin] == libelle:
+                infoClasse = dict()
+                for i in range(len(classe)):
+                    infoClasse[f"{self.sql.TABLES_OTHERS['Classe'][i]}"] = classe[i]
                 cpt += 1
-                if int(classe.get("effectif")) <= DEFAULT_EFFECTIF: return (classe["idC"], classe) 
+                if classe[4] <= DEFAULT_EFFECTIF: return (infoClasse["idC"], infoClasse) 
                 
         if cpt > 1: alphabet = f" {ascii_uppercase[cpt-1]}"
         if cpt == 1:
