@@ -1831,13 +1831,15 @@ class DefaultUseCases:
                         self.clear()
             
     def createUser(self,user:dict): 
-        Profil=user.get("TypeP")
+        Profil = user.get("TypeP")
+        print(Profil)
+        
         match(Profil):
             case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "ResponsableAdmin": return ResponsableAdmin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "Chargé": return Chargé(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             case "Etudiant": return Etudiant(user["Matricule"],user["Nom"],user["Prenom"],user["DateNaissance"],user["Nationnalité"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"],user["IdClasse"],user["Notes"])
-            case "Partenaire": return Partenaire(user["Id"],user["Libelle"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
+            case "partenaire": return Partenaire(user["Id"],user["Libelle"],user["Mail"],user["Telephone"],user["Login"],user["Password"],user["TypeP"])
             
     def test(self,message,text=""):
         if(text!=""): print(text)
