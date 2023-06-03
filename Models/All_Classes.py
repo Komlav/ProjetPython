@@ -575,8 +575,8 @@ class Chargé(User):
         self.classes = classes
         self.commentaires = commentaires
         self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
-        # self.traitement()
-        self.showClasseStudents(2)
+        self.traitement()
+        # self.setStudentMark()
         
     def modifyEtudiant(self):
         while True:
@@ -731,7 +731,7 @@ class Chargé(User):
             else:
                 return None
     
-    def showClasseModuleMark(self, idClasse: int):
+    def showClasseModuleMark(self, idClasse: int, idModule: int):
         pass
     
     def setClasseGroupeMark(self, idClasse: int):
@@ -747,8 +747,7 @@ class Chargé(User):
         """
         while True:
             # Saisie du type de la note...
-            self.usecase.showMsg("Nature de la note", wait= False)
-            typeNote = self.usecase.controlMenu("Ajout d'une note d'étudiant", ["Note d'Evaluation", "Note d'Examen", "quitter"])
+            typeNote = str(self.usecase.controlMenu("Ajout d'une note d'étudiant", ["Note d'Evaluation", "Note d'Examen", "quitter"]))
             if typeNote in ['1', '2']: break
             elif typeNote == '3': return
             else: self.usecase.showMsg("Veuillez entrez soit 1 ou 2 ")
@@ -795,20 +794,28 @@ class Chargé(User):
             ))
         return classeModules
     
-    def chooseModule(self, idClasse: int) -> int:
+    def chooseModule(self, session: int, idClasse: int, idModules: str = '' ) -> int:
+        if idModules == '':
+            res = self.usecase.sql.getTables(f"SELECT modules FROM Classe WHERE idC = {idClasse}")
+            if res != []: idModules = res[0][0]
         while True:
             self.usecase.showMsg("Choix du module", wait= False)
-            idModule = self.usecase.controlMenu("Choix du module", [f"{module.get('Nom')}" for module in self.usecase.loadModulesFolder().get(f"{idClasse}")])
-        return 0
+            self.showClasseModules(session, idModules[1:-1])
+            choix = self.usecase.testSaisie("Entrez l'id du libelle (ou -1 pour quitter): ", nbreChar = 0)
+            if choix != "-1":
+                if str(choix).isdigit():return int(choix)
+                else: self.usecase.showMsg("La saisie ne correspond à aucune id !")
+            elif choix == '-1': break
+            else: self.usecase.showMsg("La saisie ne correspond à aucune id !")
+        return -1
     
-    def chooseSession(self, niveau: str) -> str:
+    def chooseSession(self, niveau: str):
         session = self.usecase.setSessions(niveau)
         while True:
-            choix = self.usecase.controlMenu("Selection de la session", [session[0], session[1], "Retourner"])
-            if choix in ['1', '2']: break
-            elif choix == '3': break
-        return session[int(choix)-1]
-    
+            choix = str(self.usecase.controlMenu("Selection de la session", [session[0], session[1], "Retourner"]))
+            if choix in ['1', '2']: return session[int(choix)-1]
+            elif choix == '3': return
+        
     def showClasses(self) -> list[tuple[int, str, int]]:
         """Fonction qui affiche toutes les classes du chargé
         Returns:
@@ -827,7 +834,14 @@ class Chargé(User):
         )
         return classes
         
-    def showClasseStudents(self, idClasse: int) -> list[tuple[int, str, str, str]]:
+    def getModuleMark(self, matricule: str, session: str, idModule):
+        try: 
+            data = self.usecase.loadStudentsFolder()
+            notes = data.get(f"{matricule}")[-1].get("Période").get(f"{session}").get(f"{idModule}") #type: ignore
+            return (notes[0] if notes[0] != None else '-', notes[1] if notes[1] != None else '-')
+        except: pass
+        
+    def showClasseStudents(self, idClasse: int, idModule: int = -1, session: str = '') -> list[tuple[int, str, str, str]]:
         """Fonction qui affiche les étudiants d'un classe selon l'id de la classe
         Args:
             idClasse (int): Id de la classe
@@ -839,10 +853,17 @@ class Chargé(User):
                 - `3`: le prénom 
         """
         liste = self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom FROM Etudiants WHERE idClasse = {idClasse}")
-        liste = [(i, liste[i][0], liste[i][1], liste[i][2]) for i in range(len(liste))]
+        if idModule != -1 and session != '':
+            li = list()
+            for i in range(len(liste)):
+                notes = self.getModuleMark(liste[i][0], session, idModule)
+                if notes != None: li.append((i+1, liste[i][0], liste[i][1], liste[i][2],notes[0], notes[1] ))
+                else: li.append((i+1, liste[i][0], liste[i][1], liste[i][2], '-', '-'))
+            liste = li
+        else: liste = [(i+1, liste[i][0], liste[i][1], liste[i][2]) for i in range(len(liste))]
         self.usecase.centerTexte(
             tabulate(
-                headers= ["Position","Matricule", "Nom", "Prénom"],
+                headers= ["Position","Matricule", "Nom", "Prénom"] + (["Evalution", "Examen"] if idModule != -1 else []),
                 tabular_data= liste,
                 tablefmt= "double_outline"
             )
@@ -850,36 +871,49 @@ class Chargé(User):
         return liste
     
     def setStudentMark(self):
+        self.usecase.showMsg("Liste de vos classe", wait=False)
         self.showClasses()
         choix = self.usecase.testSaisie("Entrez la position de la classe (ou -1 pour quitter): ", nbreChar=0)
         if choix != '-1':
             if str(choix).isdigit():
-                pos = int(choix )
-                if 1 <= pos < len(self.classeChargé):
-                    classe = self.classeChargé[pos-1]
-                    
+                posClass = int(choix )
+                if 1 <= posClass < len(self.classeChargé):
                     while True:
-                        students = self.showClasseStudents(classe[-2])
-                        std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
-                        if std != '-1':
-                            if str(std).isdigit():
-                                pos = int(std)
-                                if 1 <= pos < len(students):
-                                    student = students[pos-1]  
-                                    
-                                    # Saisie du module
-                                    idModule = 0
-                                    # Saisie de la session
-                                    session = self.chooseSession(classe[3])
-                                    # Demander à l'utilisateur de saisir la note
-                                    noteEtType = self.writeMark()
-                                    if type(noteEtType) == tuple:
-                                        self.saveStudentMark(student[1], session, noteEtType[0], noteEtType[1], str(idModule))
-                                        pass
-                                    else: return 
-                            else: self.usecase.showMsg("Veuillez entrez un entier !")
-                        elif std == '-1': return 
-                        else: self.usecase.showMsg("Position incorrecte !")
+                        classe = self.classeChargé[posClass-1]
+                        session = self.chooseSession(classe[3])
+                        if session != None: 
+                            idModule = self.chooseModule(int(session[-1]), classe[0], classe[-3])
+                            while True:
+                                self.usecase.showMsg(f"Liste des étudiants de la {classe[1]}", wait=False)
+                                students = self.showClasseStudents(classe[0], idModule, session)
+                                std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
+                                if std != '-1':
+                                    if str(std).isdigit():
+                                        pos = int(std)
+                                        if 1 <= pos <= len(students):
+                                            student = students[pos-1] 
+                                            noteEtType = self.writeMark()
+                                            if type(noteEtType) == tuple:
+                                                if self.saveStudentMark(student[1], session, noteEtType[0], noteEtType[1], str(idModule)):
+                                                    # self.usecase.showMsg(f"La note a bien été attribuer à {student[2]} {student[3]}")
+                                                    module = self.usecase.sql.getTables(f'SELECT libelle FROM Modules WHERE idM = {idModule}')[0][0]
+                                                    commentaire = f"Bonjour {student[3]}, pour l'{'évaluation' if noteEtType[1] == 1 else 'examen'} de {module} de la session {session}, tu as eu {noteEtType[0]}."
+                                                    self.usecase.commentaires(student[1], self.matricule, self.matricule, False, commentaire, True)
+                                                    
+                                                    self.usecase.showMsg(f"Liste de note de {module} des élèves de la {classe[1]}")
+                                                    print("")
+                                                    self.showClasseStudents(classe[0], idModule, session)
+                                                    print("")
+                                                    if self.usecase.question(f"Attribuer une note de {module} à un autre étudiant") == 'oui':
+                                                        continue
+                                                    else: break # Nous quittons la liste des étudiants pour 
+                                                else: pass # l'enregistrement n'a pas été effectuer !
+                                            else: return 
+                                        else: self.usecase.showMsg("Position invalide, veuillez saisir une position valide !")
+                                    else: self.usecase.showMsg("Veuillez entrez un entier !")
+                                elif std == '-1': return
+                                else: self.usecase.showMsg("Position incorrecte !")
+                        else: break
                 else: self.usecase.showMsg("Saisie incorrecte !")
             else: self.usecase.showMsg("Veuillez entrez un entier !")
         elif choix == '-1': return 
@@ -916,13 +950,14 @@ class Chargé(User):
                 case 2:
                     while True:
                         match self.usecase.controlMenu("Menu Notes",CHARGE_USECASE["notes"]):
-                            case 1:
-                                self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
-                                self.showNotes()
-                            case 2:
-                                self.usecase.showMsg("Notes de l'etudiant",wait=False)
-                                self.showNotesEtu()
-                            case 3: break
+                            # case 1:
+                            #     self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
+                            #     self.showNotes()
+                            # case 2:
+                            #     self.usecase.showMsg("Notes de l'etudiant",wait=False)
+                            #     self.showNotesEtu()
+                            case 1: self.setStudentMark() 
+                            case 2: break
                 case 3:
                     while True:
                         match self.usecase.controlMenu("Menu Modification Notes",CHARGE_USECASE["edit"]):
@@ -1373,7 +1408,7 @@ class DefaultUseCases:
             self.ligneMenu(2, TAILLE_SCREEN-2, 'bas')
             return std[0]
     
-    def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str)->None:
+    def commentaires(self, etudiantMatricule:str, chargeMatricule: str, matriculeAuteur: str, show: bool= True, commentaire = '', once: bool = False)->None:
         while True:
             self.clear()
             all_Data = self.loadStudentsFolder(FOLDER_FILE)
@@ -1381,39 +1416,40 @@ class DefaultUseCases:
             charge_commentaire = all_Charges_Data.get(f"{chargeMatricule}")["Commentaire"][f"{etudiantMatricule}"] #type: ignore
             student_commentaire = all_Data.get(f"{etudiantMatricule}")[-1]["Commentaire"] #type: ignore
             
-            chargé = self.sql.getTables(f"SELECT Nom, Prenom, mail, Telephone FROM Chargé WHERE Matricule = \"{chargeMatricule}\"")[0]
-            etudiant = self.sql.getTables(f"SELECT Nom, Prenom, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC WHERE Etudiants.Matricule = \"{etudiantMatricule}\"")[0]
-            chargéName = f"{chargé[0]} {chargé[1]}"
-            chargéContact = f"{chargé[3]} {chargé[2]}"
-            
-            etudiantName = f"{etudiant[0]} {etudiant[1]}"
-            etudiantContact = f"{etudiant[3]} {etudiant[2]}"
-            etudiantClasse = f"{etudiant[4]} "
-            
-            self.ligneMenu(2, TAILLE_SCREEN, 'haut')
-            print(f"| {YELLOW}{'Commentaires':^{TAILLE_SCREEN-3}}{WHITE} |")
-            print(f"| {SUCCESS}{(etudiantName if matriculeAuteur != etudiantMatricule else chargéName):<{TAILLE_SCREEN-3}}{WHITE} |")
-            print(f"| {SUCCESS}{(etudiantContact if matriculeAuteur != etudiantMatricule else chargéContact):<{TAILLE_SCREEN-3}}{WHITE} |")
-            if matriculeAuteur != etudiantMatricule:
-                print(f"| {SUCCESS}{(etudiantClasse):<{TAILLE_SCREEN-3}}{WHITE} |")
-            self.ligneMenu(2, TAILLE_SCREEN, 'milieu')
-            i, show = 0, True
-            for commentaire in student_commentaire:
-                if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
-                if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
-                    print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
-                i += 1
-                if commentaire["Auteur"] == matriculeAuteur:
-                    self.chatRight(commentaire["Commentaire"])
-                    print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
-                else:    
-                    self.chatLeft(commentaire["Commentaire"])
-                    print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
-                if i == len(student_commentaire):
-                    self.ligneMenu(2, TAILLE_SCREEN, 'bas')
+            if show:
+                chargé = self.sql.getTables(f"SELECT Nom, Prenom, mail, Telephone FROM Chargé WHERE Matricule = \"{chargeMatricule}\"")[0]
+                etudiant = self.sql.getTables(f"SELECT Nom, Prenom, Mail, Telephone, libelle FROM Etudiants LEFT JOIN Classe ON Etudiants.idClasse = Classe.idC WHERE Etudiants.Matricule = \"{etudiantMatricule}\"")[0]
+                chargéName = f"{chargé[0]} {chargé[1]}"
+                chargéContact = f"{chargé[3]} {chargé[2]}"
+                
+                etudiantName = f"{etudiant[0]} {etudiant[1]}"
+                etudiantContact = f"{etudiant[3]} {etudiant[2]}"
+                etudiantClasse = f"{etudiant[4]} "
+                
+                self.ligneMenu(2, TAILLE_SCREEN, 'haut')
+                print(f"| {YELLOW}{'Commentaires':^{TAILLE_SCREEN-3}}{WHITE} |")
+                print(f"| {SUCCESS}{(etudiantName if matriculeAuteur != etudiantMatricule else chargéName):<{TAILLE_SCREEN-3}}{WHITE} |")
+                print(f"| {SUCCESS}{(etudiantContact if matriculeAuteur != etudiantMatricule else chargéContact):<{TAILLE_SCREEN-3}}{WHITE} |")
+                if matriculeAuteur != etudiantMatricule:
+                    print(f"| {SUCCESS}{(etudiantClasse):<{TAILLE_SCREEN-3}}{WHITE} |")
+                self.ligneMenu(2, TAILLE_SCREEN, 'milieu')
+                i, show = 0, True
+                for commentaire in student_commentaire:
+                    if i == 0: print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
+                    if student_commentaire[i-1]["Date"] != student_commentaire[i]["Date"] and i != 0:
+                        print(f"| {YELLOW}{commentaire['Date']:^{TAILLE_SCREEN-3}}{WHITE} |")
+                    i += 1
+                    if commentaire["Auteur"] == matriculeAuteur:
+                        self.chatRight(commentaire["Commentaire"])
+                        print(f"| {commentaire['Heure']:>{TAILLE_SCREEN-3}} |")
+                    else:    
+                        self.chatLeft(commentaire["Commentaire"])
+                        print(f"| {commentaire['Heure']:<{TAILLE_SCREEN-3}} |")
+                    if i == len(student_commentaire):
+                        self.ligneMenu(2, TAILLE_SCREEN, 'bas')
 
-            # Envoie d'un nouveau commentaire
-            commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
+                # Envoie d'un nouveau commentaire
+                commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
             if commentaire != '-1':
                 date = self.CurrentDate()
                 newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': matriculeAuteur, 'Commentaire': commentaire}
@@ -1422,6 +1458,7 @@ class DefaultUseCases:
                 
                 self.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
                 self.updateFile(FOLDER_FILE, all_Data)
+                if once: return 
             else:
                 break
 
@@ -1532,15 +1569,16 @@ class DefaultUseCases:
         if nbreFonction <= 3:
             options = list()
             choices = list()
+            taille_colonne = TAILLE_SCREEN//nbreFonction
             for useCase in  fonctions:
-                options.append([useCase,(TAILLE_SCREEN//3), 'center'])
-                choices.append([numChoix, (TAILLE_SCREEN//3), 'center'])
+                options.append([useCase,(taille_colonne), 'center'])
+                choices.append([numChoix, (taille_colonne), 'center'])
                 numChoix += 1
                 
-            self.ligneMenu(numChoix,(TAILLE_SCREEN//3),'haut')
+            self.ligneMenu(numChoix,(taille_colonne),'haut')
             self.showMenu(options)
             self.showMenu(choices)
-            self.ligneMenu(numChoix,(TAILLE_SCREEN//3),'bas')
+            self.ligneMenu(numChoix,(taille_colonne),'bas')
         else:
             cpt, n = 1, 0
             # numChoix, tailleCollonne = 1, len(max(fonctions))
