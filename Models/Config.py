@@ -45,12 +45,12 @@ ADMIN_USECASES = {
 }
 
 CHARGE_USECASE={
-    "main":["Lister un profil","Voir les notes","Modifier un élément","Initier Les notes d'un module","Commentaire","Supprimer un etudiant", "Se deconnecter"],
+    "main":["Lister un profil","Gérer les notes","Modifier un élément", "Commentaire","Supprimer un etudiant", "Se deconnecter"],
     "Liste":["Lister les etudiants par Classe","Lister les professeurs", "Menu général"],
     "notes":["Gérer les notes", "Menu général"],
     "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant", "Modifier un etudiant", "Menu général"],
     "insert":["Pour une classe","Pour un etudiant","Menu général"],
-    "commentaire":["Faire un commentaire","Menu général"]
+    "commentaire":["Envoyer à une classe", "Envoyer à un étudiant","Menu général"]
 }
 
 PARTENAIRE_USECASES = {

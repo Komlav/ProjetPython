@@ -387,7 +387,7 @@ class Admin(User):
     def ajoutRP(self):
         date=self.usecase.CurrentDate()
         rp = dict()
-        rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
+        rp["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['responsableAdmin'])+1}-{date[1]}{date[2]}"
         rp["Nom"] = self.usecase.testSaisie("Entrez le nom du RP : ").upper() # type: ignore
         rp["Prénom"] = self.usecase.testSaisie("Entrez le prenom du RP : ").title() # type: ignore
         rp["Telephone"] = self.usecase.agree_number("Entrez le téléphone du RP : ")
@@ -403,7 +403,7 @@ class Admin(User):
     def ajoutChargé(self):
         date = self.usecase.CurrentDate()
         charge = dict()
-        charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
+        charge["Matricule"] = f"ISM{date[0]}/staff{len(self.usecase.sql.datas['Chargé'])+1}-{date[1]}{date[2]}"
         charge["Nom"] = self.usecase.testSaisie("Entrez le nom du chargé : ").upper() # type: ignore
         charge["Prénom"] = self.usecase.testSaisie("Entrez le prenom du chargé : ").title()# type: ignore
         charge["Telephone"] = self.usecase.agree_number("Entrez le téléphone du chargé : ")
@@ -422,7 +422,7 @@ class Admin(User):
     def ajoutEtudiant(self):
         date = self.usecase.CurrentDate()
         etudiant = dict()
-        matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}{date[3].replace(':','')}-{date[1]}{date[2]}"
+        matricule = f"ISM{date[0]}/DK{len(self.usecase.sql.datas['Etudiants'])+1}-{date[1]}{date[2]}"
         classe = self.usecase.createOrSearchClasse(self.usecase.getIdClasse())
         self.usecase.showMsg("Menu d'ajout d'un etudiant", wait=False)
         self.usecase.centerTexte(f"{BLUE}Renseigner les informations de l'étudiant")
@@ -498,8 +498,10 @@ class Admin(User):
                     self.usecase.sql.insert('Classe',tuple(classe.values()), self.usecase.sql.TABLES_OTHERS["Classe"])
                     
                 self.usecase.sql.insert("Etudiants",self.user(etudiant), self.usecase.sql.TABLES_USER["Etudiants"])
-                self.usecase.initModules(etudiant["Matricule"])
+                
                 self.usecase.updateFile(FOLDER_FILE,data)
+                
+                self.usecase.initModules(etudiant["Matricule"])
                 self.usecase.sql = MySql()
                 
                 self.usecase.showMsg("Etudiant ajouté avec succes")
@@ -576,6 +578,7 @@ class Chargé(User):
         self.commentaires = commentaires
         self.classeChargé = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE chargé='{self.matricule}'")
         self.traitement()
+        # self.listeEtudiant()
         # self.setStudentMark()
         
     def modifyEtudiant(self):
@@ -871,6 +874,12 @@ class Chargé(User):
         return liste
     
     def setStudentMark(self):
+        # Choisir la classe de l'étudiant 
+        # Choisir la session 
+        # Choisir l'etudiant
+        # Choisir la nature de la note (évaluation|examen)
+        # Saisir la note...
+        # Sauvegarder la note
         self.usecase.showMsg("Liste de vos classe", wait=False)
         self.showClasses()
         choix = self.usecase.testSaisie("Entrez la position de la classe (ou -1 pour quitter): ", nbreChar=0)
@@ -882,43 +891,79 @@ class Chargé(User):
                         classe = self.classeChargé[posClass-1]
                         session = self.chooseSession(classe[3])
                         if session != None: 
-                            idModule = self.chooseModule(int(session[-1]), classe[0], classe[-3])
-                            while True:
-                                self.usecase.showMsg(f"Liste des étudiants de la {classe[1]}", wait=False)
-                                students = self.showClasseStudents(classe[0], idModule, session)
-                                std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
-                                if std != '-1':
-                                    if str(std).isdigit():
-                                        pos = int(std)
-                                        if 1 <= pos <= len(students):
-                                            student = students[pos-1] 
-                                            noteEtType = self.writeMark()
-                                            if type(noteEtType) == tuple:
-                                                if self.saveStudentMark(student[1], session, noteEtType[0], noteEtType[1], str(idModule)):
-                                                    # self.usecase.showMsg(f"La note a bien été attribuer à {student[2]} {student[3]}")
-                                                    module = self.usecase.sql.getTables(f'SELECT libelle FROM Modules WHERE idM = {idModule}')[0][0]
-                                                    commentaire = f"Bonjour {student[3]}, pour l'{'évaluation' if noteEtType[1] == 1 else 'examen'} de {module} de la session {session}, tu as eu {noteEtType[0]}."
-                                                    self.usecase.commentaires(student[1], self.matricule, self.matricule, False, commentaire, True)
-                                                    
-                                                    self.usecase.showMsg(f"Liste de note de {module} des élèves de la {classe[1]}")
-                                                    print("")
-                                                    self.showClasseStudents(classe[0], idModule, session)
-                                                    print("")
-                                                    if self.usecase.question(f"Attribuer une note de {module} à un autre étudiant") == 'oui':
-                                                        continue
-                                                    else: break # Nous quittons la liste des étudiants pour 
-                                                else: pass # l'enregistrement n'a pas été effectuer !
-                                            else: return 
-                                        else: self.usecase.showMsg("Position invalide, veuillez saisir une position valide !")
-                                    else: self.usecase.showMsg("Veuillez entrez un entier !")
-                                elif std == '-1': return
-                                else: self.usecase.showMsg("Position incorrecte !")
+                            match self.usecase.controlMenu("", ["Gérer les notes de la classe", "Gérer les notes d'un étudiant", "Menu général"]):
+                                case 1:
+                                    idModule = self.chooseModule(int(session[-1]), classe[0], classe[-3])
+                                    while True:
+                                        self.usecase.showMsg(f"Liste des étudiants de la {classe[1]}", wait=False)
+                                        students = self.showClasseStudents(classe[0], idModule, session)
+                                        std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
+                                        if std != '-1':
+                                            if str(std).isdigit():
+                                                pos = int(std)
+                                                if 1 <= pos <= len(students):
+                                                    student = students[pos-1] 
+                                                    noteEtType = self.writeMark()
+                                                    if type(noteEtType) == tuple:
+                                                        if self.saveStudentMark(student[1], session, noteEtType[0], noteEtType[1], str(idModule)):
+                                                            # self.usecase.showMsg(f"La note a bien été attribuer à {student[2]} {student[3]}")
+                                                            module = self.usecase.sql.getTables(f'SELECT libelle FROM Modules WHERE idM = {idModule}')[0][0]
+                                                            commentaire = f"Bonjour {student[3]}, pour l'{'évaluation' if noteEtType[1] == 1 else 'examen'} de {module} de la session {session}, tu as eu {noteEtType[0]}."
+                                                            self.usecase.commentaires(student[1], self.matricule, self.matricule, False, commentaire, True)
+                                                            
+                                                            self.usecase.showMsg(f"Liste de note de {module} des élèves de la {classe[1]}")
+                                                            print("")
+                                                            self.showClasseStudents(classe[0], idModule, session)
+                                                            print("")
+                                                            if self.usecase.question(f"Attribuer une note de {module} à un autre étudiant") == 'oui':
+                                                                continue
+                                                            else: break # Nous quittons la liste des étudiants pour 
+                                                        else: pass # l'enregistrement n'a pas été effectuer !
+                                                    else: return 
+                                                else: self.usecase.showMsg("Position invalide, veuillez saisir une position valide !")
+                                            else: self.usecase.showMsg("Veuillez entrez un entier !")
+                                        elif std == '-1': return
+                                        else: self.usecase.showMsg("Position incorrecte !")
+
+                                case 2: 
+                                    self.usecase.showMsg(f"Liste des étudiants de la {classe[1]}", wait = False)
+                                    students = self.showClasseStudents(classe[0])
+                                    std = self.usecase.testSaisie("Entrez la position de l'étudiant (ou -1 pour quitter): ", nbreChar=0)
+                                    if std != '-1':
+                                        if str(std).isdigit():
+                                            pos = int(std)
+                                            if 1 <= pos <= len(students):
+                                                student = students[pos-1] 
+                                                while True:
+                                                    match self.usecase.controlMenu(f"Opérations sur {student[2]} {student[3]}", ["Voir ses notes", "Envoyer un commentaire", "Menu général"]):
+                                                        case 1: 
+                                                            self.usecase.showReport(student[1], self.usecase.CurrentSchoolYear(), (0 if int(session[-1]) % 2 == 1 else 1))
+                                                        case 2: 
+                                                            self.usecase.commentaires(student[1], self.matricule, self.matricule)
+                                                        case 3: return
+                                                
+                                            else: self.usecase.showMsg("Position invalide, veuillez saisir une position valide !")
+                                        else: self.usecase.showMsg("Veuillez entrez un entier !")
+                                    elif std == '-1': return
+                                    else: self.usecase.showMsg("Position incorrecte !")
+                                case 3: break
+                                
                         else: break
                 else: self.usecase.showMsg("Saisie incorrecte !")
             else: self.usecase.showMsg("Veuillez entrez un entier !")
         elif choix == '-1': return 
         else: return 
 
+
+                
+        # Choisir la classe de l'étudiant 
+        # Choisir la session 
+        # Choisir l'etudiant
+        # Choisir la nature de la note (évaluation|examen)
+        # Saisir la note...
+        # Sauvegarder la note
+        
+        
                 
         # Choisir la classe de l'étudiant 
         # Choisir la session 
@@ -948,46 +993,43 @@ class Chargé(User):
                                 self.usecase.pause()
                             case 3: break 
                 case 2:
-                    while True:
-                        match self.usecase.controlMenu("Menu Notes",CHARGE_USECASE["notes"]):
-                            # case 1:
-                            #     self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
-                            #     self.showNotes()
-                            # case 2:
-                            #     self.usecase.showMsg("Notes de l'etudiant",wait=False)
-                            #     self.showNotesEtu()
-                            case 1: self.setStudentMark() 
-                            case 2: break
+                    self.setStudentMark() 
+                    # while True:
+                    #     match self.usecase.controlMenu("Menu Notes",CHARGE_USECASE["notes"]):
+                    #         # case 1:
+                    #         #     self.usecase.showMsg("Liste des Notes des etudiants",wait=False)
+                    #         #     self.showNotes()
+                    #         # case 2:
+                    #         #     self.usecase.showMsg("Notes de l'etudiant",wait=False)
+                    #         #     self.showNotesEtu()
+                    #         case 1: self.setStudentMark() 
+                    #         case 2: break
                 case 3:
-                    while True:
-                        match self.usecase.controlMenu("Menu Modification Notes",CHARGE_USECASE["edit"]):
-                            case 1:
-                                self.usecase.showMsg("Modifier la note d'une classe",wait=False)
-                                self.modifNotes()
-                            case 2:
-                                self.usecase.showMsg("Modifier la note d'un etudiant",wait=False)
-                                self.modifNoteEtu()
-                            case 3: 
-                                self.modifyEtudiant()
-                            case 4: break
+                    self.modifyEtudiant()
+                    # while True:
+                    #     match self.usecase.controlMenu("Menu Modification Notes",CHARGE_USECASE["edit"]):
+                    #         case 1:
+                    #             self.usecase.showMsg("Modifier la note d'une classe",wait=False)
+                    #             self.modifNotes()
+                    #         case 2:
+                    #             self.usecase.showMsg("Modifier la note d'un etudiant",wait=False)
+                    #             self.modifNoteEtu()
+                    #         case 3: 
+                                # self.modifyEtudiant()
+                            # case 4: break
+                # case 4:
+                #     while True:
+                #         match self.usecase.controlMenu("Menu initialisation Notes",CHARGE_USECASE["insert"]):
+                #             case 1:
+                #                 self.usecase.showMsg("initialisation de notes pour une classe",wait=False)
+                #                 self.InitNotesClasse()
+                #             case 2:
+                #                 self.usecase.showMsg("initialisation de notes pour un etudiant",wait=False)
+                #                 self.InitNotesMod()
+                #             case 3:break
                 case 4:
-                    while True:
-                        match self.usecase.controlMenu("Menu initialisation Notes",CHARGE_USECASE["insert"]):
-                            case 1:
-                                self.usecase.showMsg("initialisation de notes pour une classe",wait=False)
-                                self.InitNotesClasse()
-                            case 2:
-                                self.usecase.showMsg("initialisation de notes pour un etudiant",wait=False)
-                                self.InitNotesMod()
-                            case 3:break
+                    self.DoCommentaire()
                 case 5:
-                    while True:
-                        match self.usecase.controlMenu("Menu Commentaire",CHARGE_USECASE["commentaire"]):
-                            case 1:
-                                self.usecase.showMsg("Faire un Commentaire",wait=False)
-                                self.DoCommentaire()
-                            case 2: break
-                case 6:
                     self.usecase.showMsg("Suppression d'etudiant",wait=False)
                     self.deleteEtudiant()
                 case 7:
@@ -1002,51 +1044,88 @@ class Chargé(User):
             liste2=list()
             for classEtu in self.classeChargé:
                 listeMat = self.usecase.listTrans(classEtu[8],"chaine")
-                print(listeMat)
                 if listeMat != ['']:
                     for etu in self.usecase.listTrans(classEtu[8],"chaine"):
-                        etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu.strip()}' ")[0]
-                        listes.append([etu,etudiant[1],etudiant[2],classEtu[2]])
-                        liste2.append(etudiant[0])
+                        # etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu.strip()}' ")[0]
+                        etudiant=self.usecase.sql.getTables(f"select Matricule,Nom,Prenom from Etudiants where Matricule='{etu.strip()}' ")
+                        if etudiant != []:
+                            listes.append([etu,etudiant[0][1],etudiant[0][2],classEtu[2]])
+                            liste2.append(etudiant[0][0].strip())
             print(tabulate(headers=["Matricule", "Nom", "Prenom", "Classe"],tabular_data= listes, tablefmt='double_outline'))
 
-            matricule=self.usecase.testSaisie("Entrez le matricule de l'etudiant:")
+            matricule=str(self.usecase.testSaisie("Entrez le matricule de l'etudiant:")).strip()
             if matricule in liste2:
                 idClasse=self.usecase.sql.getTables(f"select IdClasse from Etudiants where Matricule='{matricule}' ")[0]
-                self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
                 et=self.usecase.sql.getTables(f"select effectif,etudiants from Classe where idC={idClasse[0]} ")[0]
                 listMat=self.usecase.listTrans(et[1],"chaine")
-                listMat.remove(matricule)
-                changement1=f'effectif={et[0]-1},etudiants="{listMat}"  '
+                listMatricule = list()
+                for mat in listMat:
+                    listMatricule.append(mat.strip())
+                listMatricule.remove(matricule)
+                changement1=f'effectif={et[0]-1},etudiants="{listMatricule}"  '
                 self.usecase.sql.updateBase("Classe",changement1,"idC",idClasse[0])
+                self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
                 self.usecase.showMsg("Etudiant supprimé avec succes")
                 return None
             self.usecase.showMsg("Le matricule saisi ne correspond à aucun Etudiant")
         
     def listeEtudiant(self)->None:
         while True:
-            att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
-            data = self.usecase.sql.getTables(f"SELECT idC, libelle FROM Classe where chargé='{self.matricule}' ")
-            print(tabulate(headers=att,tabular_data= data, tablefmt='double_outline'))
-            libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ").upper() # type: ignore
-            for classe in self.classeChargé:
-                if(classe[1]==libelle):
-                    classeEtu=list()
-                    if(self.usecase.listTrans(classe[8],"chaine")!=[]):
-                        for matricule in self.usecase.listTrans(classe[8],"chaine"):
-                            etudiant=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone FROM Etudiants Where Matricule='{matricule}' ")
-                            if(etudiant!=[]):
-                                classeEtu.append(etudiant[0])
-                            
-                    break
-                
-            if(classeEtu!=[]):#type:ignore
-                break
+            # att = self.usecase.sql.TABLES_OTHERS["Classe"][:2]
+            # data = self.usecase.sql.getTables(f"SELECT idC, libelle FROM Classe where chargé='{self.matricule}' ")
+            # print(tabulate(headers=att,tabular_data= data, tablefmt='double_outline'))
             
-        self.usecase.showMsg("Liste des étudiants", wait=False)
-        attributs=self.usecase.sql.TABLES_USER["Etudiants"][:7]
-        print(tabulate(headers=attributs,tabular_data=classeEtu, tablefmt='double_outline')) #type:ignore
-        self.usecase.pause()
+            # Affichage des classes de la chargé...
+            all_classes = self.showClasses()
+            choix = self.usecase.testSaisie("Entrez la position de la classe (ou -1 pour quitter): ", nbreChar=0)
+            if choix != '-1':
+                if str(choix).isdigit():
+                    position = int(choix)
+                    if 1 <= position <= len(all_classes):
+                        while True:
+                            self.usecase.clear()
+                            classe_student = self.showClasseStudents(self.classeChargé[position-1][0])
+                            print("")
+                            studPos = self.usecase.testSaisie("Entrez la position d'un étudiant pour continuer (ou -1 pour quitter): ", nbreChar=0)
+                            if studPos != '-1':
+                                if str(studPos).isdigit():
+                                    studPos = int(studPos)
+                                    if 1 <= studPos <= len(classe_student):
+                                        student_mat = classe_student[studPos-1][1]
+                                        match self.usecase.controlMenu(f"Opérations sur {classe_student[studPos-1][2]} {classe_student[studPos-1][2]}", ["Voir ses notes", "Envoyer un commentaire", "Menu général"]):
+                                            case 1: 
+                                                session = self.chooseSession(self.classeChargé[position-1][3])
+                                                if session!= None:
+                                                    self.usecase.showReport(student_mat, self.usecase.CurrentSchoolYear(), (0 if int(session[-1]) % 2 == 1 else 1))
+                                            case 2: 
+                                                self.usecase.commentaires(student_mat, self.matricule, self.matricule)
+                                            case 3: return
+                            elif studPos == '-1': break    
+                            else: self.usecase.showMsg("Veuillez entrez un entier !")
+                    else: self.usecase.showMsg("Veuillez entrez une position exacte du tableau !")
+                        
+            elif choix == '-1': return
+            else: self.usecase.showMsg("Veuillez entrez un entier !")
+                
+        #     libelle = self.usecase.testSaisie("Entrez le libelle de la classe : ").upper() # type: ignore
+        #     for classe in self.classeChargé:
+        #         if(classe[1]==libelle):
+        #             classeEtu=list()
+        #             if(self.usecase.listTrans(classe[8],"chaine")!=[]):
+        #                 for matricule in self.usecase.listTrans(classe[8],"chaine"):
+        #                     etudiant=self.usecase.sql.getTables(f"SELECT Matricule, Nom, Prenom, DateNaissance, Nationnalité, Mail, Telephone FROM Etudiants Where Matricule='{matricule}' ")
+        #                     if(etudiant!=[]):
+        #                         classeEtu.append(etudiant[0])
+                            
+        #             break
+                
+        #     if(classeEtu!=[]):#type:ignore
+        #         break
+            
+        # self.usecase.showMsg("Liste des étudiants", wait=False)
+        # attributs=self.usecase.sql.TABLES_USER["Etudiants"][:7]
+        # print(tabulate(headers=attributs,tabular_data=classeEtu, tablefmt='double_outline')) #type:ignore
+        # self.usecase.pause()
     
     def showNotes(self)->None:
         while True:
@@ -1191,47 +1270,45 @@ class Chargé(User):
     def DoCommentaire(self)->None:
         all_Data = self.usecase.loadStudentsFolder(FOLDER_FILE)
         all_Charges_Data = self.usecase.loadStudentsFolder(FOLDER_CHARGES_FILE)
-        
-        entite = self.usecase.testSaisie("Enter le destinataire du commentaire[Classe|Etudiant]: ").capitalize() #type:ignore
-        date = self.usecase.CurrentDate()
-        if(entite == "Classe"):
-            libelle = self.usecase.testSaisie("Entrer le libelle de la classe: ")
-            classe = self.usecase.sql.getTables(f"SELECT * FROM Classe WHERE Libelle='{libelle}' ")
-            charge_commentaire = all_Charges_Data.get(f"{self.matricule}")["Commentaire"][f"{classe[0][0]}"] #type: ignore
-            
-            print(classe[0][8])
-            self.usecase.pause()
-            commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
-            date = self.usecase.CurrentDate()
-            listCom = list()
-            newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': self.matricule, 'Commentaire': commentaire}
-            for matricule in self.usecase.listTrans(classe[0][8],"chaine"):
-                student_commentaire = all_Data.get(f"{matricule}")[-1]["Commentaire"] #type: ignore
-                student_commentaire.append(newSend)
+        while True:
+            match self.usecase.controlMenu("Faire un commentaire", ["Envoyer à une classe", "Envoyer à un étudiant", "Menu général"]):
+                case 1:
+                    while True:
+                        self.usecase.showMsg("Liste de vos classes", wait= False)
+                        classes = self.showClasses()
+                        print("")
+                        classPos = self.usecase.testSaisie("Entrez la position de la classe (ou -1 pour retourner): ", nbreChar = 0)
+                        if classPos != '-1':
+                            if str(classPos).isdigit():
+                                pos = int(classPos)
+                                if  1 <= pos <= len(classes): 
+                                    classe = self.classeChargé[pos-1]
+                                    charge_commentaire = all_Charges_Data.get(f"{self.matricule}")["Commentaire"][f"{classe[0]}"] #type: ignore
+                                    self.usecase.showMsg(f"Envoi d'un commentaire aux étudiants de la  {classe[1]}", wait= False)
+                                    commentaire = input("Entrez un nouveau commentaire (ou -1 pour quitter): \n")
+                                    date = self.usecase.CurrentDate()
+                                    newSend = {'Date': f"{date[2]}-{date[1]}-{date[0]}", 'Heure': date[3], 'Auteur': self.matricule, 'Commentaire': commentaire}
+                                    for matricule in self.usecase.listTrans(classe[8],"chaine"):
+                                        try:
+                                            student_commentaire = all_Data.get(f"{matricule.strip()}")[-1]["Commentaire"] #type: ignore
+                                            student_commentaire.append(newSend)
+                                        except: pass
                 
-            charge_commentaire.append(newSend)
-            self.usecase.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
-            self.usecase.updateFile(FOLDER_FILE, all_Data)
-                # etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
-                
-                # com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
-                # listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
-                # listCom.append(com) #02-05-2023  ('02',)
-                # changement = f'Commentaires="{listCom}" '
-                # self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
-            self.usecase.pause()
-                
-        elif(entite == "Etudiant"):
-            matricule = self.usecase.testSaisie("Saisir le matricule de l'etudiant: ")
-            self.usecase.commentaires(str(matricule), self.matricule, self.matricule)
-            
-            # commentaire = self.usecase.testSaisie("Saisir votre commentaire: ")
-            # etudiant = self.usecase.sql.getTables(f"SELECT Commentaires FROM Etudiants WHERE Matricule='{matricule}' ")
-            # com = f"{date[2]}-{date[1]}-{date[0]}---{commentaire}"
-            # listCom = self.usecase.listTrans(etudiant[0][0],"chaine")
-            # listCom.append(com) #02-05-2023  ('02',)
-            # changement = f'Commentaires="{listCom}" '
-            # self.usecase.sql.updateBase("Etudiants",changement,"Matricule",matricule)
+                                    charge_commentaire.append(newSend)
+                                    self.usecase.updateFile(FOLDER_CHARGES_FILE, all_Charges_Data)
+                                    self.usecase.updateFile(FOLDER_FILE, all_Data)
+                                    self.usecase.pause()
+                                    pass
+                            else: self.usecase.showMsg("Veuillez entrez un entier !")
+                        elif classPos == '-1': break
+                        else: self.usecase.showMsg("Position incorrecte !")
+                    
+                case 2:
+                    
+                    matricule = self.usecase.testSaisie("Saisir le matricule de l'etudiant: ")
+                    self.usecase.commentaires(str(matricule), self.matricule, self.matricule)
+                    pass
+                case 3: break
 
 ###########################################################
 ################### Quelsques classes #####################
@@ -1322,8 +1399,14 @@ class DefaultUseCases:
         """
         return tabulate(headers = headers, tabular_data=data, tablefmt='double_outline', showindex=showIndex)
     
+    def showReport(self, matricule:str, school_year: str, session: int):
+        data_session = self.consultStudentFolder(matricule, school_year, session)
+        moySession_1 = self.calculMoy(data_session)
+        print(f"\nNotes de Session {session}\n{'-'*50}\n{self.showData(['Modules', 'Note Evaluation', 'Note Examen'],data_session)}")  
+        print(f"╔{'═'*(moySession_1[1] + 11)}╗\n║ Moyenne: {SUCCESS}{str(moySession_1[0])[:5]:>{moySession_1[1]}}{WHITE} ║\n╚{'═'*(moySession_1[1] + 11)}╝\n")
+        self.pause()
     
-    def report(self, matricule:str):
+    def report(self, matricule:str, show:bool = True):
         student = self.sql.getTables(f"SELECT * FROM Etudiants WHERE Matricule = '{matricule}' ")
         if student != []:
             dossierEtudiant = self.students_data.get(f"{matricule}")
@@ -1337,13 +1420,7 @@ class DefaultUseCases:
                     while True:
                         choix = int(self.controlMenu("Liste des sessions", periode))
                         if  date > 0 and choix <= 2:
-                            annee = dat[date-1] #type: ignore
-                            attributs = ["Modules", "Note Evaluation", "Note Examen"]
-                            data_session = self.consultStudentFolder(matricule, annee, choix-1)
-                            moySession_1 = self.calculMoy(data_session)  # type: ignore
-                            print(f"\nNotes de {periode[choix-1]}\n{'-'*50}\n{self.showData(attributs,data_session)}")  # type: ignore
-                            print(f"╔{'═'*(moySession_1[1] + 11)}╗\n║ Moyenne: {SUCCESS}{str(moySession_1[0])[:5]:>{moySession_1[1]}}{WHITE} ║\n╚{'═'*(moySession_1[1] + 11)}╝\n")
-                            self.pause()
+                            self.showReport(matricule, dat[date-1], choix-1)
                         elif choix == 3: break
                 elif date == len(dat): break
                 
@@ -1558,8 +1635,8 @@ class DefaultUseCases:
     
     def opération(self,title:str): self.showMsg(title,clear=False, wait=False)
     
-    def menuUse(self,titre, fonctions:list):
-        self.clear()
+    def menuUse(self,titre, fonctions:list, clear: bool = True):
+        if clear: self.clear()
         self.opération(titre)
         numChoix, tailleCollonne, nbreFonction = 1, len(max(fonctions)), len(fonctions)
         m = tailleCollonne*nbreFonction
@@ -1832,8 +1909,6 @@ class DefaultUseCases:
             
     def createUser(self,user:dict): 
         Profil = user.get("TypeP")
-        print(Profil)
-        
         match(Profil):
             case "Admin": return Admin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
             case "ResponsableAdmin": return ResponsableAdmin(user["Matricule"],user["Nom"],user["Prenom"],user["Mail"],user["Telephone"],user["Login"],user["Password"])
@@ -1923,14 +1998,13 @@ class DefaultUseCases:
             "Annee_Scolaire":self.CurrentSchoolYear()
         }
             
-    def controlMenu(self,opération:str, fonctionnalités:list):
+    def controlMenu(self,opération:str, fonctionnalités:list[str], clear: bool = True):
         while True:
             self.ligne()
-            self.ligne()
-            self.menuUse(opération,fonctionnalités)
+            self.menuUse(opération, fonctionnalités, clear)
             choix = self.testSaisie(f"\n{push}"'Faites un choix: ',"int",1,len(fonctionnalités))
             if choix != None: return choix
-            else: self.clear()
+            else: self.showMsg("Veuillez entrez le numéro de votre choix !")
             
     def CurrentDate(self) -> tuple[str, str, str, str]:
         time = datetime.now()
@@ -1952,6 +2026,8 @@ class DefaultUseCases:
                 if len(ligne) >= CHAT_LENGHT:
                     print(f"| {BLUE}{ligne:<{TAILLE_SCREEN-3}} |")
                     ligne = ""
+            print(f"| {BLUE}{ligne:<{TAILLE_SCREEN-3}} |")
+            
         else: print(f"| {BLUE}{texte:<{TAILLE_SCREEN-3}} |")
     
     def chatRight(self, texte: str):
@@ -1964,6 +2040,9 @@ class DefaultUseCases:
                 if len(ligne) >= CHAT_LENGHT: 
                     print(f"| {BLUE}{ligne:>{TAILLE_SCREEN-3}} |")
                     ligne = ""
+            if ligne != '':
+                print(f"| {BLUE}{ligne:>{TAILLE_SCREEN-3}} |")
+            
         else:
             print(f"| {BLUE}{texte:>{TAILLE_SCREEN-3}} |")
 
@@ -2218,8 +2297,8 @@ class Partenaire:
         sessions = self.usecase.dicoTrans(data_Année.get("Période")) #[(NomSession, DicoModules), (NomSession, DicoModules)]
         session_1 = sessions[0]
         session_2 = sessions[1]
-        data_session_1 = [[module, notes[0], notes[1]] for module, notes in session_1[1].items()]
-        data_session_2 = [[module, notes[0], notes[1]] for module, notes in session_2[1].items()]
+        data_session_1 = [[self.usecase.sql.getTables(f"SELECT libelle FROM Modules WHERE idM = {idM}")[0][0], notes[0], notes[1]] for idM, notes in session_1[1].items()]
+        data_session_2 = [[self.usecase.sql.getTables(f"SELECT libelle FROM Modules WHERE idM = {idM}")[0][0], notes[0], notes[1]] for idM, notes in session_2[1].items()]
         print(f"Notes de {session_1[0]}")
         print("-"*50)
         print(tabulate(headers=attributs, tabular_data=data_session_1, tablefmt='double_outline'))
@@ -2424,9 +2503,9 @@ class ResponsableAdmin(User):
                 
                 if idProf in listId:
                     ClassProfMod=self.usecase.sql.getTables(f"select Classes,modules from professeurs where idP={idProf}")[0]
-                    if(ClassProfMod[0]!=[]):
+                    if(ClassProfMod[0] != []):
                         for classP in self.usecase.listTrans(ClassProfMod[0]):
-                            idProfs=self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
+                            idProfs = self.usecase.sql.getTables(f"select professeurs from Classe where idC='{classP}' ")[0]
                             liste=self.usecase.listTrans(idProfs[0])
                             print(liste)
                             if idProf in liste:
