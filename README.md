@@ -1,37 +1,10 @@
 # Projet-Python : Gestion des notes et du personel 
 ## Description du projet
-
+  Le projet porte sur la gestion totale du Personnel et des notes des etudiants d'un Etablissement Universitaire.
 ## Les fonctionnalités par acteur
 ### L'administrateur:
-> - Ajouter, modifier, lister les profils et supprimer le responsable administratif
+> - Ajouter,lister les profils et supprimer le responsable administratif
 > - Se connecter et se déconnecter
-
-## Modules et bibliothèques utilisées:
---------------
-## *1- Colorama*
-> Module qui nous a permis de mettre la couleur dans le script.
-> Documentation [Colorama]()
-
-## *2- Tabulate* 
-> Module permettant l'affichage des donnée dans des tableaux.
-> Documentation sur la bibliothèque [Tabulate](https://pypi.org/project/tabulate/)
-## *2- PyFliglet* 
-> Module permettant une autre affichage
-> Documentation sur la bibliothèque [PyFliglet](http://www.figlet.org/examples.html)
-
-
-### Tableau des caractères ascii utilisé
-documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-etendue-EOM.html)
-
-## Tableau des fichiers utiliser dans le projet et leur contenus...
----
-| Fichier           | Commentaire                                                                  |
-| ----------------- | ---------------------------------------------------------------------------- |
-| `Database.sqlite` | Base de donnée de l'application qui regroupe l'ensemble des données                      |
-| `All_Classes.py`  | Fichier qui contients l'ensemble des classes et fonctionnalités              |
-| `App.py`          | Fichier principal de l'application                                           |
-| `Conception du projet.mdj`| Fichier de conception de l'application                               |
-
 
 ## Les acteurs et leurs fonctionnalités
 
@@ -162,3 +135,32 @@ documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-eten
 - **Type**
   - Id
   - Libelle
+
+
+  ## Modules et bibliothèques utilisées:
+--------------
+## *1- Colorama*
+> Module qui nous a permis de mettre la couleur dans le script.
+> Documentation [Colorama]()
+
+## *2- Tabulate* 
+> Module permettant l'affichage des donnée dans des tableaux.
+> Documentation sur la bibliothèque [Tabulate](https://pypi.org/project/tabulate/)
+## *2- PyFliglet* 
+> Module permettant un autre affichage
+> Documentation sur la bibliothèque [PyFliglet](http://www.figlet.org/examples.html)
+
+
+### Tableau des caractères ascii utilisé
+documentation[ASCII](https://www.ascii33.com/liste-tables-ascii/table-ascii-etendue-EOM.html)
+
+## Tableau des fichiers utiliser dans le projet et leur contenus...
+---
+| Fichier           | Commentaire                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `Data.sqlite` | Base de donnée de l'application qui regroupe l'ensemble des données                      |
+| `All_Classes.py`  | Fichier qui contients l'ensemble des classes et fonctionnalités              |
+| `App.py`          | Fichier principal de l'application                                           |
+| `Conception du projet.mdj`| Fichier de conception de l'application                               |
+
+

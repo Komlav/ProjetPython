@@ -12,8 +12,75 @@ import colorama as color
 from colorama import init
 from pyfiglet import figlet_format
 from tabulate import tabulate 
-from Models.Config import *
+# from Models.Config import *
 init(autoreset=True)
+
+# ================================== Queslques constantes =============================== #
+
+tab = '\t'
+push = '\t'*4
+DEFAULT_PASSWORD = "passer@123"
+DEFAULT_EFFECTIF = 40
+TAILLE_SCREEN = 150
+BASE_FILE = "./DataBase/Data.sqlite3"
+FOLDER_FILE = "DataBase/JSONS/Students_Marks.json"
+FOLDER_CHARGES_FILE = "DataBase/JSONS/Chargés.json"
+CHAT_LENGHT = TAILLE_SCREEN // 2 - 10
+
+
+EGALE = "="
+
+POLICES = ['avatar', 'banner', 'banner3-D', 'banner3', 'banner4', 'big', "isometric3", 'bulbhead']
+
+
+
+# ================================== Users Functions =============================== #
+RP_USECASES = {
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Modifier un chargé","Supprimer","Plus", "Se déconnecter"],
+    "add": ["Ajouter un professeurs", "Ajouter un module", "Ajouter une filière", "Menu général"],
+    "liste": ["Lister les professeurs", "Lister les modules", "Lister les filières", "Lister les chargés", "Lister les niveaux", "Lister les étudiants", "Liste des partenaires", "Menu général"],
+    "delete": ["Supprimer un chargé","Supprimer un Professeur", "Supprimer un module", "Supprimer un partenaire","Menu général"],
+    "more": ["Attribuer des classes aux chargés","Modifier un chargé", "Voir la moyenne des etudiants d'une classe","Voir les statistiques", "Menu general"],
+    "stat":["Les Statistiques d'une classe","Les Statistiques d'une Filiere"],
+    "filtre": ["Tous","Filiere", "Classe", "Niveau", "Nationnalité"]
+    
+}
+
+NIVEAUX = {
+    "L1": "Licence 1",
+    "L2": "Licence 2",
+    "L3": "Licence 3",
+    "M1": "Master 1",
+    "M2": "Master 2"
+}
+
+ADMIN_USECASES = {
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Supprimer un Responsable", "Se déconnecter"],
+    "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable","Ajouter un partenaire", "Retourner au menu général"],
+    "liste" : ["Lister les étudiants", "Lister les chargé(e)s", "Lister les responsables","Lister les partenaires", "Retourner au menu général"],
+    "delete": ["Suppression du responsable Administratif", "Menu général"]
+}
+
+CHARGE_USECASE={
+    "main":["Lister un profil","Gérer les notes","Modifier un élément", "Commentaire","Supprimer un etudiant", "Se deconnecter"],
+    "Liste":["Lister les etudiants par Classe","Lister les professeurs", "Menu général"],
+    "notes":["Gérer les notes", "Menu général"],
+    "edit":["Modifier les notes d'une classe","Modifier les notes d'un etudiant", "Modifier un etudiant", "Menu général"],
+    "insert":["Pour une classe","Pour un etudiant","Menu général"],
+    "commentaire":["Envoyer à une classe", "Envoyer à un étudiant","Menu général"]
+}
+
+PARTENAIRE_USECASES = {
+    "main":["Consulter le dossier d'un etudiant", "Se deconnecter"],
+    "dossier":["Menu général"]
+}
+
+ETUDIANT_USECASE={
+    "main":["Voir mes notes","Commentaire","Se deconnecter"],
+    "commentaire":["Faire un commentaire","Voir mes commentaires"]
+}
+
+
 
 #Couleur utilisées dans le code !
 RED = color.Fore.RED
@@ -111,8 +178,8 @@ class MySql:
         
         self.TABLES_OTHERS = {
             "filiere": ["idF","libelle","classes"], 
-            "Modules": ["idM", "libelle", "classes", "professeurs","coefficient","credit", "Session"],
-            "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "modules", "Classes"], 
+            "Modules": ["idM", "libelle", "classes", "professeurs","notes","coefficient","credit", "Session"],
+            "professeurs": ["idP", "Nom", "Prenom", "mail", "Telephone", "Classes","modules"],
             "Classe": ["idC", 'libelle', 'Filiere', 'niveau','effectif', 'chargé','professeurs', 'modules', 'etudiants', "Annee_Scolaire"]
         }
         
@@ -302,13 +369,13 @@ class Admin(User):
                                 self.usecase.showMsg("Menu d'ajout d'un étudiants",wait=False)
                                 self.ajoutEtudiant()
                             case 2:
-                                self.usecase.showMsg("Liste des chargés")
+                                self.usecase.showMsg("Menu d'ajout d'un chargé")
                                 self.ajoutChargé()
                             case 3:
-                                self.usecase.showMsg("Liste des responsables administratifs")
+                                self.usecase.showMsg("Menu d'ajout d'un responsable administratif")
                                 self.ajoutRP()
                             case 4:
-                                self.usecase.showMsg("Liste des partenaires")
+                                self.usecase.showMsg("Menu d'ajout d'un partenaire")
                                 self.ajoutPartenaire()
                             case 5:  break
                 case 2:
@@ -1032,10 +1099,10 @@ class Chargé(User):
                 case 5:
                     self.usecase.showMsg("Suppression d'etudiant",wait=False)
                     self.deleteEtudiant()
-                case 7:
+                case 6:
                     self.usecase.quitter()
-                    self.user_connect = self.usecase.accueil()
-                    self.user_active = self.usecase.createUser(self.user_connect)
+                    # self.user_connect = self.usecase.accueil()
+                    # self.user_active = self.usecase.createUser(self.user_connect)
                     break
     
     def deleteEtudiant(self):
@@ -2900,15 +2967,24 @@ class ResponsableAdmin(User):
             break
         
     def ajoutModule(self):
+        self.usecase.lister("Filiere")
+        filiere=self.usecase.testSaisie("Entrez le libelle de la filiere du module: ").upper() # type: ignore
+        idClasses=self.usecase.sql.getTables(f"select idC from Classe where Filiere='{filiere}' ")
+        listeId=list()
+        for id in idClasses:
+            listeId.append(id[0])
         mod = dict()
         mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
-        mod["Libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
+        mod["libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
+        mod["classes"]=str(listeId)
         mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module : ","int",min=1)
         mod["credit"]=self.usecase.testSaisie("Entrer le credit du module : ","int",min=1)
+        mod["Session"]=self.usecase.testSaisie("Entrer la session du module: ","int",min=1)
+        print(mod)
         while True:
             choix = self.usecase.question("Confirmer l'enregistrement")
             if choix == "oui":
-                if self.checkMod(mod["Libelle"]) == []: 
+                if self.checkMod(mod["libelle"]) == []: 
                     self.usecase.sql.insert("Modules",self.addNewMod(mod), self.usecase.sql.TABLES_OTHERS["Modules"])
                     self.usecase.sql = MySql()
                     self.usecase.showMsg("Modules ajouté avec success")  
@@ -2923,7 +2999,7 @@ class ResponsableAdmin(User):
         prof["Nom"] = self.usecase.testSaisie("Entrez le nom du professeur : ").upper() # type: ignore
         prof["Prenom"] = self.usecase.testSaisie("Entrez le prénom du professeur : ").title() # type: ignore
         prof["Mail"] = self.usecase.testSaisie("Entrez le mail : ").lower() # type: ignore
-        prof["Telephone"] = self.usecase.agree_number("Entrez le téléphone  : ")
+        prof["Telephone"] = self.usecase.agree_number("Entrez le téléphone ")
         prof["Classes"] = []
         prof["Modules"] = []
         print('')
@@ -2982,11 +3058,13 @@ class ResponsableAdmin(User):
     def addNewMod(self, newMod: dict):
         return (
             newMod.get("IdM"),
-            newMod.get("Libelle"),
+            newMod.get("libelle"),
+            newMod.get("classes"),
             "[]",
             "[]",
             newMod.get("coefficient"),
-            newMod.get("credit")
+            newMod.get("credit"),
+            newMod.get("Session")
         )
     
     def addNewFiliere(self, newFiliere: dict):
