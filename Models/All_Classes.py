@@ -2969,29 +2969,36 @@ class ResponsableAdmin(User):
     def ajoutModule(self):
         self.usecase.lister("Filiere")
         filiere=self.usecase.testSaisie("Entrez le libelle de la filiere du module: ").upper() # type: ignore
-        idClasses=self.usecase.sql.getTables(f"select idC from Classe where Filiere='{filiere}' ")
+        niveau=self.usecase.testSaisie("Entrez le libelle du niveau du module [Ex:L1]: ",nbreChar=2)
+        idClasses=self.usecase.sql.getTables(f"select idC from Classe where Filiere='{filiere}' and niveau='{niveau}' ")
         listeId=list()
-        for id in idClasses:
-            listeId.append(id[0])
-        mod = dict()
-        mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
-        mod["libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
-        mod["classes"]=str(listeId)
-        mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module : ","int",min=1)
-        mod["credit"]=self.usecase.testSaisie("Entrer le credit du module : ","int",min=1)
-        mod["Session"]=self.usecase.testSaisie("Entrer la session du module: ","int",min=1)
-        print(mod)
-        while True:
-            choix = self.usecase.question("Confirmer l'enregistrement")
-            if choix == "oui":
-                if self.checkMod(mod["libelle"]) == []: 
-                    self.usecase.sql.insert("Modules",self.addNewMod(mod), self.usecase.sql.TABLES_OTHERS["Modules"])
-                    self.usecase.sql = MySql()
-                    self.usecase.showMsg("Modules ajouté avec success")  
-                    break
-                else:
-                    self.usecase.showMsg("Le modules existe déjà dans la base")    
-            break
+        if idClasses!="[]":
+            for id in idClasses:
+                listeId.append(id[0])
+        else:
+            print()
+        choixSave = self.usecase.question(f"la Classe {niveau}-{filiere} n'a pas encore ete creee!!!!Voulez-vous quand meme ajouter le module?")
+        if choixSave=="oui":
+            mod = dict()
+            mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
+            mod["libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
+            mod["classes"]=str(listeId)
+            mod["coefficient"]=self.usecase.testSaisie("Entrer le coefficient du module : ","int",min=1)
+            mod["credit"]=self.usecase.testSaisie("Entrer le credit du module : ","int",min=1)
+            mod["Session"]=self.usecase.testSaisie("Entrer la session du module: ","int",min=1)
+            print(mod)
+            while True:
+                choix = self.usecase.question("Confirmer l'enregistrement")
+                if choix == "oui":
+                    if self.checkMod(mod["libelle"]) == []: 
+                        self.usecase.sql.insert("Modules",self.addNewMod(mod), self.usecase.sql.TABLES_OTHERS["Modules"])
+                        self.usecase.sql = MySql()
+                        self.usecase.showMsg("Modules ajouté avec success")  
+                        break
+                    else:
+                        self.usecase.showMsg("Le modules existe déjà dans la base")    
+                break
+        
     
     def ajoutProf(self):
         prof = dict()
