@@ -62,3 +62,71 @@ ETUDIANT_USECASE={
     "main":["Voir mes notes","Commentaire","Se deconnecter"],
     "commentaire":["Faire un commentaire","Voir mes commentaires"]
 }
+
+# Session_1 = {
+#     "Algorithmique et Langages de Programmation":	[2,	3],
+#     "Business English 1":	[2,	2],
+#     "CISCO IT Essentials 1 PC Harware & Software":	[2,	2],
+#     "Comptabilité Générale 1":	[2,	3],
+#     "Conception Graphique et Multimédia 1":	[2,	2],
+#     "Droit du Numérique":	[1,	2],
+#     "Fondamentaux du Management":	[1,	2],
+#     "Informatique Appliquée":	[2,	2],
+#     "Leadership - Dév. Personnel - Techniques d'enquete - Actions de Recherche Encadrées (ARE)":	[1,	2],
+#     "Marketing 1: Concepts Fondamentaux & Comportement du Consommateur":	[1,	2],
+#     "Statistiques Descriptives":	[2,	2],
+#     "Technologies Web 1: HTLM5 - CSS3":	[2,	2],
+#     "Théories des Systèmes d'Exploitation": [2,2]
+# }
+
+# Session_2 = {
+    # Algorithmique et Langages de Programmation	19,00	19,00
+    # Business English 1	13,00	13,00
+    # CISCO IT Essentials 1 PC Harware & Software	17,00	19,00
+    # Comptabilité Générale 1	17,00	15,50
+    # Conception Graphique et Multimédia 1	16,00	17,00
+    # Droit du Numérique	17,00	17,00
+    # Fondamentaux du Management	12,50	12,50
+    # Informatique Appliquée	18,00	18,00
+    # Leadership - Dév. Personnel - Techniques d'enquete - Actions de Recherche Encadrées (ARE)	15,00	15,00
+    # Marketing 1: Concepts Fondamentaux & Comportement du Consommateur	19,00	19,00
+    # Statistiques Descriptives	15,50	15,50
+    # Technologies Web 1: HTLM5 - CSS3	18,00	18,00
+    # Théories des Systèmes d'Exploitation
+# }
+# Session_3 = {
+#         "Administration Système Windows": [2, 3],
+#         "Algo Avancée & Structures de Données": [2, 4],
+#         "Analyse Combinatoire et Lois de Probabilité": [2, 2],
+#         "Analyse et Conception 1 (UML)": [2, 3],
+#         "Architecture des Réseaux Informatiques: Certification CISCO CCNA": [2, 2],
+#         "Business English": [2, 2],
+#         "Electronique Digitale": [1, 2],
+#         "Entrepreneurship: Atelier Build Your Business (BYB)": [2, 3],
+#         "Programmation C": [2, 2],
+#         "Programmation Objet 2: Python": [2, 2],
+#         "Programmation Web 1:, PhP": [2, 2],
+#         "Systèmes de Gestion de Bases de Données": [2, 2]
+# }
+# Session_4 = {
+# "Business English 4": [2, 2, 3],
+# "AGORA - Soft Skills & Grands Projets": [3, 4, 9],
+# "Mathématiques Appliquées: Analyse 2 - Algèbre 2": [2, 3, 5],
+# "Recherche Opérationelle": [1, 2, 5],
+# "Administration Systèmes Linux": [2, 2, 4],
+# "Electronique Digitale 2": [1, 2, 7],
+# "Architecture des Réseaux Informatiques: Certification CISCO CCNA 1-2": [1, 2, 6],
+# "Algo Avancée & Structures de Données 2": [2, 3, 1],
+# "Programmation Objet 3: Python": [1,2, 2 ],
+# "Programmation Objet 4: C++": [1, 2, 2],
+# "Programmation Objet 5: JAVA": [2, 2, 1], 
+# "Analyse et Conception 2": [2, 2, 1],
+# "Technologies Web 3: PhP/MySQL": [2, 2, 1]
+# }
+# s = sqlite3.connect(BASE_FILE)
+# c = s.cursor()
+# i = 14
+# for libelle, data in Session_1.items():
+#     c.execute(f"INSERT INTO Modules (idM, libelle, classes, professeurs,notes, coefficient, credit, Session) VALUES ({i}, \"{libelle}\", '[2]', '[]', '[]', {data[0]},  {data[1]}, 1)")
+#     i += 1
+#     s.commit()

@@ -19,8 +19,8 @@
 -- UPDATE Classe SET idC = 4 WHERE Libelle = "L2-IAGE"; 
 -- UPDATE professeurs SET  Classes = "[1, 2, 3, 4, 5, 8]", modules = "[3, 4, 5, 7, 9, 11, 12, 13]" WHERE Libelle = "L3-ETSE"; 
 
-INSERT INTO Classe (idC, Libelle, Filiere, niveau, effectif, `chargé`, professeurs, modules, etudiants, Annee_Scolaire)
-VALUES (5,	"M2-CDSD","CDSD",	"M2",	1	,""	,"[]",	'[]',"['ISM2023/DK3-0601']",	'2022-2023');
+-- INSERT INTO Classe (idC, Libelle, Filiere, niveau, effectif, `chargé`, professeurs, modules, etudiants, Annee_Scolaire)
+-- VALUES (5,	"M2-CDSD","CDSD",	"M2",	1	,""	,"[]",	'[]',"['ISM2023/DK3-0601']",	'2022-2023');
 -- DELETE FROM Classe WHERE idC = 5;
 -- UPDATE Classe SET idC = 5 WHERE Libelle = "M2-CDSD"; 
 -- UPDATE professeurs SET  Classes = "[1, 2, 3, 4, 5, 8]", modules = "[3, 4, 5, 7, 9, 11, 12, 13]" WHERE Libelle = "L3-ETSE"; 
@@ -57,3 +57,15 @@ VALUES (5,	"M2-CDSD","CDSD",	"M2",	1	,""	,"[]",	'[]',"['ISM2023/DK3-0601']",	'20
 -- (1, "Institu Supérieur d'Informatique", "isi.groupe@edu.sn", 774102589, "isi.groupe@edu.sn", "passer@123", "partenaire"),
 -- (2, "BEM Management School", "bem.groupe@edu.sn", 78452820, "bem.groupe@edu.sn", "passer@123", "partenaire"),
 -- (3, "IAM", "iam.groupe@edu.sn", 701472589, "iam.groupe@edu.sn", "passer@123", "partenaire");
+ALTER TABLE ResponsableAdmin ADD COLUMN Etat VARCHAR(15) DEFAULT "Active";
+
+-- drop table professeurs;
+-- CREATE TABLE IF NOT EXISTS Professeurs (
+--     idP INTEGER PRIMARY KEY AUTOINCREMENT,
+--     Nom VARCHAR(150),
+--     Prenom VARCHAR(150),
+--     mail VARCHAR(255),
+--     Telephone INTEGER,
+--     Classes VARCHAR(255) DEFAULT "[]",
+--     modules VARCHAR(255) DEFAULT "[]"
+-- );
