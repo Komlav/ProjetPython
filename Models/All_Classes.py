@@ -57,7 +57,7 @@ NIVEAUX = {
 }
 
 ADMIN_USECASES = {
-    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Supprimer un Responsable", "Se déconnecter"],
+    "main": ["Ajouter un nouveau", "Voir toutes les listes", "Supprimer un Responsable", "Se déconnecter", "Blass"],
     "add": ["Ajouter un étudiant","Ajouter un(e) chargé","Ajouter un(e) responsable","Ajouter un partenaire", "Retourner au menu général"],
     "liste" : ["Lister les étudiants", "Lister les chargé(e)s", "Lister les responsables","Lister les partenaires", "Retourner au menu général"],
     "delete": ["Suppression du responsable Administratif", "Menu général"]
@@ -568,8 +568,8 @@ class DefaultUseCases:
             if len(mainOptions)*3 != nbreFonction:
                 x = nbreFonction - n*3
                 for i in range(len(options)):
-                    options[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2))
-                    choices[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2))
+                    options[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2)) + 1
+                    choices[i][1] = (TAILLE_SCREEN//(x)-(1 if x%2== 0 else 2)) + 1
                 mainOptions.append(options)
                 mainChoices.append(choices)
             
@@ -580,7 +580,7 @@ class DefaultUseCases:
                 self.showMenu(mainOptions[i])
                 self.showMenu(mainChoices[i])
                 if i == len(mainOptions) - 1:
-                    if x != None: self.ligneMenu(x+1,(TAILLE_SCREEN//(x)-(1 if x%2 == 0 else 2)),'bas')
+                    if x != None: self.ligneMenu(x+1,(TAILLE_SCREEN//(x)-(1 if x%2 == 0 else 2))+1,'bas')
                     else: self.ligneMenu(4,(TAILLE_SCREEN//3),'bas')
         
     def ligneMenu(self,nombreFonctionnalités:int,longueurCellule:int,niveau:str):
@@ -777,7 +777,7 @@ class DefaultUseCases:
         ver = nbre.replace("-","")
         if  ver.isdigit() and (int(nbre) >= min and int(nbre) <= max): return int(nbre)
          
-    def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3)-> int|str:
+    def testSaisie(self, message:str, catégorie: str = 'str', min: int = 0, max: int = 100, nbreChar: int = 3 ,clear: bool = True)-> int|str:
         while True:
             element = input(f"{push}{message}{SUCCESS}")
             print(f"{push}{BLUE}{'='*len(message + element)}")
@@ -785,15 +785,11 @@ class DefaultUseCases:
                 case 'int':
                     ver = element.replace("-","")
                     if ver.isdigit() and (int(element) >= min and int(element) <= max): return int(element)
-                    else:
-                        self.showMsg("Vous devez saisir un entier !", color = RED)
-                        self.clear()
+                    else: self.showMsg("Vous devez saisir un entier !", color = RED, clear=clear)
                 case 'str':
                     if(len(element) >= nbreChar): return element
-                    else:
-                        self.showMsg(f"Vous devez entrer une chaîne d'au moins {nbreChar}(s) charactères !", color = RED)
-                        self.clear()
-            
+                    else: self.showMsg(f"Vous devez entrer une chaîne d'au moins {nbreChar}(s) charactères !", color = RED, clear= clear)
+                    
     def createUser(self,user:dict): 
         Profil = user.get("TypeP")
         match(Profil):
@@ -889,7 +885,7 @@ class DefaultUseCases:
         while True:
             self.ligne()
             self.menuUse(opération, fonctionnalités, clear)
-            choix = self.testSaisie(f"\n{push}"'Faites un choix: ',"int",1,len(fonctionnalités))
+            choix = self.testSaisie(f"\n{push}"'Faites un choix: ',"int",1,len(fonctionnalités), clear=False)
             if choix != None: return choix
             else: self.showMsg("Veuillez entrez le numéro de votre choix !")
             
