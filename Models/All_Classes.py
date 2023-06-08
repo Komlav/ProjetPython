@@ -1813,15 +1813,19 @@ class Chargé(User):
             if matricule in liste2:
                 idClasse=self.usecase.sql.getTables(f"select IdClasse from Etudiants where Matricule='{matricule}' ")[0]
                 et=self.usecase.sql.getTables(f"select effectif,etudiants from Classe where idC={idClasse[0]} ")[0]
-                listMat=self.usecase.listTrans(et[1],"chaine")
-                listMatricule = list()
-                for mat in listMat: listMatricule.append(mat.strip())
-                listMatricule.remove(matricule)
-                changement1=f'effectif={et[0]-1},etudiants="{listMatricule}"  '
-                self.usecase.sql.updateBase("Classe",changement1,"idC",idClasse[0])
-                self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
-                self.usecase.showMsg("Etudiant supprimé avec succes")
-                return None
+                if et != []:
+                    listMat=self.usecase.listTrans(et[1],"chaine")
+                    changement1=f'effectif={et[0]-1},etudiants={et[1]}  '
+                    try:
+                        listMatricule = list()
+                        for mat in listMat: listMatricule.append(mat.strip())
+                        listMatricule.remove(matricule)
+                        changement1=f'effectif={et[0]-1},etudiants="{listMatricule}"  '
+                    except: print("erreur")
+                    self.usecase.sql.updateBase("Classe",changement1,"idC",idClasse[0])
+                    self.usecase.sql.getTables(f"Delete from Etudiants where Matricule='{matricule}'")
+                    self.usecase.showMsg("Etudiant supprimé avec succes")
+                    return None
             self.usecase.showMsg("Le matricule saisi ne correspond à aucun Etudiant")
         
     def listeEtudiant(self)->None:
