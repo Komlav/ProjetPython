@@ -2466,6 +2466,8 @@ class ResponsableAdmin(User):
         choixSave = self.usecase.question(f"la Classe {niveau}-{filiere} n'a pas encore ete creee!!!!Voulez-vous quand meme ajouter le module?")
         if choixSave == "oui":
             mod = dict()
+            self.usecase.showMsg("Renseignement du nouveau module", wait=False)
+            print("")
             mod["IdM"] = self.usecase.sql.getTables("SELECT count(idM) FROM Modules")[0][0] + 1
             mod["libelle"] = self.usecase.testSaisie("Entrez le libelle du module : ").title() # type: ignore
             mod["classes"]=str(listeId)
