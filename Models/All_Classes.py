@@ -2475,7 +2475,19 @@ class ResponsableAdmin(User):
             while True:
                 choix = self.usecase.question("Confirmer l'enregistrement")
                 if choix == "oui":
-                    if self.checkMod(mod["libelle"]) == []: 
+                    if self.checkMod(mod["libelle"]) == []:
+                        liste = self.usecase.sql.getTables(f"SELECT Matricule FROM Etudiants WHERE idClasse IN ({mod['classes'][1:-1]})")
+                        for mat in liste:
+                            try:
+                                self.usecase.initModules(mat[0].strip())  
+                            except: pass
+                                
+                        for idc in listeId:
+                            classeMod = self.usecase.sql.getTables(f"SELECT modules FROM Classe WHERE idC = {idc}")
+                            if classeMod != []:
+                                classeMod = classeMod[0][0][:-1] + ',' + str(mod['IdM']) + ']'
+                                self.usecase.sql.updateBase("Classe", f"modules = \'{classeMod}\'", 'idC', idc) 
+                                
                         self.usecase.sql.insert("Modules",self.addNewMod(mod), self.usecase.sql.TABLES_OTHERS["Modules"])
                         self.usecase.sql = MySql()
                         self.usecase.showMsg("Modules ajouté avec success")  
