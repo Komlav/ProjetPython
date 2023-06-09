@@ -649,7 +649,7 @@ class DefaultUseCases:
             print(f"Loading{'.'*nbrePoints}{' '*nbreEspace}" + f" {color.Back.GREEN}{' '}"*(i)+f"{color.Back.BLACK}{' '*((TAILLE_SCREEN-30)-20-(2*i))}  " + f"{2*i}%", end='\r')
             nbrePoints += 1
             if nbrePoints > 3:nbrePoints, nbreEspace = 0, 4
-            sleep(randint(1, 80)/100)
+            sleep(randint(1, 10)/100)
 
     def accueil(self):
         cpt = 1
@@ -2711,5 +2711,5 @@ class Application:
         self.user_connect = self.useCases.accueil()
         self.user_active = self.useCases.createUser(self.user_connect)
         
-# if __name__ == "__main__":
-#     Application()
+if __name__ == "__main__":
+    Application()

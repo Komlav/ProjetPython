@@ -6,6 +6,17 @@
 > - Ajouter,lister les profils et supprimer le responsable administratif
 > - Se connecter et se déconnecter
 
+### Login des profils:
+  -Admin:mohamed.sangare@groupism.sn
+  -Responsable Administratif:mame-diarra.mabaye@groupeism.sn
+  -Chargé de classe:astou.diagne@groupeism.sn
+  -Etudiant:hadjia-mariama.balarabe@ism.edu.sn |matriculeEtudiant:ISM2023/DK33-0609(si vous voulez voir son dossier avec le profil Partenaire)
+  -Partenaire:isi.groupe@edu.sn
+## NB:
+  MEME PASSWORD POUR TOUS LES PROFILS: "passer@123"
+
+
+
 ## Les acteurs et leurs fonctionnalités
 
 - **Un étudiant**
